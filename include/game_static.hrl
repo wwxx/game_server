@@ -1,0 +1,3 @@
+-define (REQUEST_LOGIN, 1).
+-define (REQUEST_SUBSCRIBE, 2).
+-define (REQUEST_UNSUBSCRIBE, 3).

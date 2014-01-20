@@ -1,0 +1,286 @@
+---
+- level: 1
+  open_armies:
+  - army_scout
+  - army_humen_1
+- level: 2
+  open_armies:
+  - army_scout
+  - army_humen_1
+- level: 3
+  open_armies:
+  - army_scout
+  - army_humen_1
+- level: 4
+  open_armies:
+  - army_scout
+  - army_humen_1
+- level: 5
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_humen_2
+- level: 6
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_humen_2
+- level: 7
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_humen_2
+- level: 8
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_humen_2
+- level: 9
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_humen_2
+  - army_light_1
+- level: 10
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_humen_2
+  - army_light_1
+- level: 11
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_humen_2
+  - army_light_1
+- level: 12
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_humen_2
+  - army_light_1
+- level: 13
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_humen_2
+  - army_light_1
+  - army_light_2
+- level: 14
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_humen_2
+  - army_light_1
+  - army_light_2
+- level: 15
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_light_2
+  - army_mecha
+- level: 16
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_light_2
+  - army_mecha
+- level: 17
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+- level: 18
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+- level: 19
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+- level: 20
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_ion
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+- level: 21
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_ion
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+  - army_iron_2
+- level: 22
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_ion
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+  - army_iron_2
+- level: 23
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_ion
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+  - army_iron_2
+- level: 24
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_ion
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+  - army_iron_2
+- level: 25
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_ion
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+  - army_iron_2
+  - army_iron_3
+- level: 26
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_ion
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+  - army_iron_2
+  - army_iron_3
+- level: 27
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_ion
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+  - army_iron_2
+  - army_iron_3
+- level: 28
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_ion
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+  - army_iron_2
+  - army_iron_3
+- level: 29
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_ion
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+  - army_iron_2
+  - army_iron_3
+- level: 30
+  open_armies:
+  - army_scout
+  - army_humen_1
+  - army_rocket
+  - army_laser
+  - army_humen_2
+  - army_light_1
+  - army_ion
+  - army_light_2
+  - army_mecha
+  - army_iron_1
+  - army_iron_2
+  - army_iron_3

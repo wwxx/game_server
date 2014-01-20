@@ -1,0 +1,2 @@
+-module(invitations_model).
+

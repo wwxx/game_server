@@ -1,0 +1,2 @@
+-module(location_manager).
+

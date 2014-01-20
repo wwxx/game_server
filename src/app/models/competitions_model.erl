@@ -1,0 +1,2 @@
+-module(competitions_model).
+

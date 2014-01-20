@@ -1,0 +1,94 @@
+---
+- name: chestbox_small_1
+  items:
+  - name: chestbox_small_1
+    amount: 30
+    object_name: speedup_1
+  - name: chestbox_small_1
+    amount: 10
+    object_name: speedup_2
+  - name: chestbox_small_1
+    amount: 10
+    object_name: speedup_3
+  - name: chestbox_small_1
+    amount: 10
+    object_name: speedup_4
+  - name: chestbox_small_1
+    amount: 1
+    object_name: resource_energy_3
+  - name: chestbox_small_1
+    amount: 1
+    object_name: resource_crystal_3
+  - name: chestbox_small_1
+    amount: 1
+    object_name: resource_gas_3
+  - name: chestbox_small_1
+    amount: 1
+    object_name: resource_metal_3
+  - name: chestbox_small_1
+    amount: 1
+    object_name: protect_buff_1
+- name: chestbox_small_2
+  items:
+  - name: chestbox_small_2
+    amount: 2
+    object_name: resource_buff_energy_3
+  - name: chestbox_small_2
+    amount: 2
+    object_name: resource_buff_crystal_3
+  - name: chestbox_small_2
+    amount: 2
+    object_name: resource_buff_gas_3
+  - name: chestbox_small_2
+    amount: 2
+    object_name: resource_buff_metal_3
+- name: chestbox_small_3
+  items:
+  - name: chestbox_small_3
+    amount: 5
+    object_name: resource_energy_2
+  - name: chestbox_small_3
+    amount: 4
+    object_name: resource_crystal_2
+  - name: chestbox_small_3
+    amount: 4
+    object_name: resource_gas_2
+  - name: chestbox_small_3
+    amount: 5
+    object_name: resource_metal_2
+- name: chestbox_small_4
+  items:
+  - name: chestbox_small_4
+    amount: 3
+    object_name: speedup_5
+  - name: chestbox_small_4
+    amount: 3
+    object_name: speedup_6
+  - name: chestbox_small_4
+    amount: 3
+    object_name: speedup_7
+  - name: chestbox_small_4
+    amount: 1
+    object_name: speedup_8
+- name: chestbox_big_1
+  items:
+  - name: chestbox_big_1
+    amount: 3
+    object_name: speedup_buff_building_3
+  - name: chestbox_big_1
+    amount: 3
+    object_name: speedup_buff_research_3
+  - name: chestbox_big_1
+    amount: 3
+    object_name: speedup_buff_buildarmy_3
+- name: chestbox_big_3
+  items:
+  - name: chestbox_big_3
+    amount: 2
+    object_name: resource_protect_buff_crystal_3
+  - name: chestbox_big_3
+    amount: 2
+    object_name: resource_protect_buff_gas_3
+  - name: chestbox_big_3
+    amount: 2
+    object_name: resource_protect_buff_metal_3

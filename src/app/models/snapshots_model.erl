@@ -1,0 +1,2 @@
+-module(snapshots_model).
+

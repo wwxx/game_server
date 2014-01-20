@@ -1,0 +1,2 @@
+-module(alliances_model).
+

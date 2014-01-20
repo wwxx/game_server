@@ -1,0 +1,9 @@
+---
+- level: 1
+  name: alliance
+  center_level: 5
+  energy: 500
+  crystal: 500
+  metal: 0
+  gas: 500
+  duration: 300

@@ -1,0 +1,2 @@
+-module(spins_model).
+

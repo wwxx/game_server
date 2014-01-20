@@ -1,0 +1,2 @@
+-module(diplomacies_model).
+
