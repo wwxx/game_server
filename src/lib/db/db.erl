@@ -61,8 +61,11 @@ execute(SQL) ->
     io:format("SQL Result: ~p~n", [Result]),
     Result.
 
-as_records(RecordName, Fields, Result) ->
+as_record(RecordName, Fields, Result) ->
     emysql_util:as_record(Result, RecordName, Fields).
+
+as_proplist(Result) ->
+    emysql_util:as_proplist(Result).
 
 %%%===================================================================
 %%% gen_server API
