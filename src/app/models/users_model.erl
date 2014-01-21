@@ -23,7 +23,7 @@ embed_models() ->
     ?EMBED_MODELS.
 
 load_data(PlayerID) ->
-    db:where(#users{'uuid' = PlayerID}).
+    db:find_by(users, uuid, PlayerID).
 
 %TODO
 create_new_user(Udid) ->

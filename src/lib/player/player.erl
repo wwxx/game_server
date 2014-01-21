@@ -147,7 +147,7 @@ load_data_from_db_to_ets(PlayerID, ModelName) ->
             Tab = player_data:table(ModelName),
             if
                 is_list(Recs) andalso Recs =/= [] ->
-                    %io:format("load_data: ~p Found Records~n", [ModelName]),
+                    io:format("load_data: ~p Found Records~n", [ModelName]),
                     true = ets:insert(Tab, Recs);
                 true ->
                     io:format("load_data: ~p Record Not Found~n", [ModelName]),

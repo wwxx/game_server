@@ -77,7 +77,7 @@ create(PlayerID, Record) ->
     track_active(PlayerID, Record),
     case validate_ownership(PlayerID, self()) of
         true ->
-            NewId = mongodb_app:gen_objectid(),
+            NewId = uuid_factory:gen(),
             RecordWithId = record_mapper:set_field(Record, '_id', NewId),
             ets_create(PlayerID, RecordWithId)
     end.
