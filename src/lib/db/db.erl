@@ -13,19 +13,21 @@
 
 %% API
 -export ([start_link/0,
-          execute/1,
-          test_sql/0]).
+          create/1,
+          delete_by/3,
+          update_by/3,
+          find_by/3,
+          sqerl_execute/1,
+          execute/1]).
+
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
          terminate/2, code_change/3]).
 
--define (DB_POOL, database_pool).
-
 -include ("include/db_schema.hrl").
 
--define(id(), '_id'=mongodb_app:gen_objectid()).
--define(mapping(Record), {Record, record_info(fields, Record)}).
+-define (DB_POOL, database_pool).
 -define(SERVER, ?MODULE).
 
 -record(state, {}).
@@ -33,22 +35,27 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
-%test() ->
-    %%% 创建记录
-    %{ok, Id} = create(#users{?id(), user_name = <<"Savin">>}),
-    %%% 高级查询
-    %{ok, Recs} = where({'$orderby', #users{user_name=1}, '$query', #users{user_name= {regex, <<"t">>, <<"i">>}}}, #users{user_name=1, '_id'=0}),
-    %{ok, User} = find_one(#users{user_name= <<"Savin">>}),
-    %%% 替换整个Document
-    %replace(User, User#users{user_name = <<"Savin-Max-By-Replace">>}),
-    %%% 修改某些字段
-    %update(User, User#users{user_name = <<"Savin-Max-By-Update">>}),
-    %% mongrel:replace(User, Book#book{reviews = [#review{comment= <<"The well known Dutch author surpasses himself!">>}]}),
-    %io:format("Recs: ~p~n", [Recs]),
-    %find_one(#users{'_id'=Id}).
 
-test_sql() ->
-    execute(<<"select hello_text from hello_table">>).
+create(Record) ->
+    [TableName|Values] = tuple_to_list(Record),
+    Fields = record_mapper:get_mapping(TableName),
+    execute(sqerl:sql({insert, TableName, map(Fields, Values)})).
+
+delete_by(TableName, Field, Value) ->
+    execute(sqerl:sql({delete, TableName, {Field, '=', Value}})).
+
+update_by(Field, Value, Record) ->
+    [TableName|Values] = tuple_to_list(Record),
+    Fields = record_mapper:get_mapping(TableName),
+    execute(sqerl:sql({update, TableName, map(Fields, Values), {where, {Field, '=', Value}}})).
+
+find_by(TableName, Field, Value) ->
+    Res = execute(sqerl:sql({select, '*', {from, TableName}, {where, {Field, '=', Value}}})),
+    Fields = record_mapper:get_mapping(TableName),
+    {ok, emysql_util:as_record(Res, TableName, Fields)}.
+
+sqerl_execute(SqlTuple) ->
+    execute(sqerl:sql(SqlTuple)).
 
 %%--------------------------------------------------------------------
 %% @doc:    Execute SQL and return Result
@@ -57,15 +64,7 @@ test_sql() ->
 %%--------------------------------------------------------------------
 -spec(execute(binary()) -> list() ).
 execute(SQL) ->
-    Result = emysql:execute(?DB_POOL, SQL),
-    io:format("SQL Result: ~p~n", [Result]),
-    Result.
-
-as_record(RecordName, Fields, Result) ->
-    emysql_util:as_record(Result, RecordName, Fields).
-
-as_proplist(Result) ->
-    emysql_util:as_proplist(Result).
+    emysql:execute(?DB_POOL, SQL).
 
 %%%===================================================================
 %%% gen_server API
@@ -117,3 +116,13 @@ init_pool() ->
 remove_pool() ->
     ok = emysql:remove_pool(?DB_POOL).
 
+
+map(Fields, Values) ->
+    map(Fields, Values, []).
+
+map([], [], Result) ->
+    Result;
+map([_Field|Fields], [Value|Values], Result) when Value =:= undefined ->
+    map(Fields, Values, Result);
+map([Field|Fields], [Value|Values], Result) ->
+    map(Fields, Values, [{Field, Value}|Result]).
