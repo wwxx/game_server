@@ -43,7 +43,9 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    {ok, {{one_for_one, 5, 10}, [?CHILD(db, db, worker, [])]}}.
+    DB = ?CHILD(db, db, worker, []),
+    UuidFactory = ?CHILD(uuid_factory, uuid_factory, worker, []),
+    {ok, {{one_for_one, 5, 10}, [DB, UuidFactory]}}.
 
 %%%===================================================================
 %%% Internal functions

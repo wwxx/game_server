@@ -9,10 +9,13 @@
 
 start() ->
     io:format("Game Server Starting~n"),
+    ok = life_cycle:before_start(),
     ok = application:start(crypto),
     ok = lager:start(), %% Logger
     ok = application:start(sync), %% Hot reload code
     ok = application:start(gproc), %% Process dictionary
     ok = application:start(yamerl), %% yaml loader and writer
     ok = application:start(emysql), %% Mysql
-    ok = application:start(game_server). %% Game Server
+    ok = life_cycle:before_start(),
+    ok = application:start(game_server), %% Game Server
+    ok = life_cycle:after_start().

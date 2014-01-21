@@ -11,6 +11,29 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 0) do
+ActiveRecord::Schema.define(:version => 20140121055124) do
+
+  create_table "towns", :id => false, :force => true do |t|
+    t.string   "uuid"
+    t.string   "user_id"
+    t.string   "name"
+    t.integer  "x"
+    t.integer  "y"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  add_index "towns", ["uuid"], :name => "index_towns_on_uuid", :unique => true
+
+  create_table "users", :id => false, :force => true do |t|
+    t.string   "uuid"
+    t.string   "name"
+    t.integer  "gem"
+    t.float    "paid"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  add_index "users", ["uuid"], :name => "index_users_on_uuid", :unique => true
 
 end
