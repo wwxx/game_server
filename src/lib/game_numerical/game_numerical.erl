@@ -29,21 +29,19 @@
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
-all(Name) ->
-    ets:match_object(table_name(Name), '$1').
+all(TableName) ->
+    ets:match_object(TableName, '$1').
 
-find(Name, Key) ->
-    Table = table_name(Name),
-    case ets:lookup(Table, Key) of
+find(TableName, Key) ->
+    case ets:lookup(TableName, Key) of
         [Object] ->
             Object;
         [] ->
             undefined
     end.
 
-find_element(Name, Key, Pos) ->
-    Table = table_name(Name),
-    ets:lookup_element(Table, Key, Pos).
+find_element(TableName, Key, Pos) ->
+    ets:lookup_element(TableName, Key, Pos).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -59,7 +57,8 @@ handle_call(load_data, _From, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-handle_info(_Info, State) ->
+handle_info(Info, State) ->
+    io:format("Info:~p~n", [Info]),
     {noreply, State}.
 
 terminate(_Reason, _State) ->
@@ -73,43 +72,26 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 load_config_data() ->
-    {ok, FileNames} = file:list_dir(?DATA_DIR),
-    lists:foreach(
-        fun(FileName) ->
-            BaseName = lists:nth(1, string:tokens(FileName, ".")),
-            FileData = load_config(FileName),
-            TableData = conver_to_table_object(FileData),
-            Tab = ets:new(table_name(BaseName), [
-                            set, named_table, protected, {read_concurrency, true}]),
-            ets:insert(Tab, TableData)
-        end, FileNames).
+    Cmd = "ruby lib/import_config.rb",
+    Port = open_port({spawn, Cmd}, [{packet, 4}, nouse_stdio, exit_status, binary]),
+    Payload = term_to_binary({import_config, <<"">>}),
+    port_command(Port, Payload),
+    receive_config_data(Port).
 
-
-conver_to_table_object(Data) ->
-    case is_list(Data) of
-        true ->
-            conver_to_table_object(Data, []);
-        false ->
-            Data
+receive_config_data(Port) ->
+    receive
+        {Port, {data, Data}} ->
+            case binary_to_term(Data) of
+                {create_table, TableName} ->
+                    io:format("TableName:~p~n~n", [TableName]),
+                    ets:new(TableName,
+                            [set, named_table, protected, {read_concurrency, true}]),
+                    receive_config_data(Port);
+                {insert, TableName, Values} ->
+                    io:format("Values:~p~n~n", [Values]),
+                    ets:insert(TableName, Values),
+                    receive_config_data(Port);
+                finish ->
+                    ok
+            end
     end.
-
-conver_to_table_object([], Result) ->
-    lists:reverse(Result);
-conver_to_table_object([Item|TailItems], Result) ->
-    case is_list(Item) of
-        true ->
-            conver_to_table_object(TailItems, [list_to_tuple(Item)|Result]);
-        false ->
-            conver_to_table_object(TailItems, [Item|Result])
-    end.
-
-load_config(FileName) ->
-    FilePath = file_path(FileName),
-    [Result] = yamerl_constr:file(FilePath),
-    Result.
-
-file_path(FileName) ->
-    ?DATA_DIR ++ FileName.
-
-table_name(Name) ->
-    list_to_atom("config_data_" ++ Name).

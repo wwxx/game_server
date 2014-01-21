@@ -6,6 +6,7 @@ gem 'mysql2', '0.3.14'
 # Roo provides an interface to Open Office, Excel, and Google Spreadsheets
 # https://github.com/Empact/roo
 gem "roo", '1.13.2'
+gem "erlectricity", :git => "git@github.com:mafei198/erlectricity.git"
 
 # Deploy with Capistrano
 

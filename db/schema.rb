@@ -11,7 +11,20 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140121055124) do
+ActiveRecord::Schema.define(:version => 20140121175722) do
+
+  create_table "config_items", :force => true do |t|
+    t.string   "title"
+    t.string   "ver"
+    t.string   "obj"
+    t.string   "number"
+    t.integer  "no"
+    t.string   "url"
+    t.string   "pc"
+    t.string   "ken"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
 
   create_table "towns", :id => false, :force => true do |t|
     t.string   "uuid"

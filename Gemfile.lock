@@ -1,3 +1,9 @@
+GIT
+  remote: git@github.com:mafei198/erlectricity.git
+  revision: 46a60c1f4ecc53490cb32a7cd41085862582a5d6
+  specs:
+    erlectricity (1.1.1)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -110,6 +116,7 @@ PLATFORMS
 
 DEPENDENCIES
   capistrano (= 2.15.4)
+  erlectricity!
   mysql2 (= 0.3.14)
   rails (= 3.2.9)
   roo (= 1.13.2)
