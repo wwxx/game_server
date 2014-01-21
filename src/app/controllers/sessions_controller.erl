@@ -27,7 +27,7 @@ login(PlayerID) ->
     login(PlayerID, User).
 
 login(PlayerID, User) ->
-    ok.
+    {PlayerID, User}.
     %Bookmarks = player_data:where(PlayerID, #bookmarks{user_id=PlayerID}),
     %Research = player_data:find(PlayerID, #researches{user_id=PlayerID}),
     %Task = player_data:find(PlayerID, #tasks{user_id=PlayerID}),
