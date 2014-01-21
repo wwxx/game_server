@@ -1,2 +1,0 @@
--module(snapshots_model).
-

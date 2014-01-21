@@ -1,2 +1,0 @@
--module(iaps_model).
-

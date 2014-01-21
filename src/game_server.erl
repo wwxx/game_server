@@ -9,7 +9,6 @@
 
 start() ->
     io:format("Game Server Starting~n"),
-    ok = life_cycle:before_start(),
     ok = application:start(crypto),
     ok = lager:start(), %% Logger
     ok = application:start(sync), %% Hot reload code

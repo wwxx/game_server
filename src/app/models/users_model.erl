@@ -21,19 +21,19 @@ next_researcher_price(ResearchAmount) ->
     ?NEW_QUEUE_BASE_PRICE * math:pow(2, ResearchAmount - 1).
 
 get_player_id(Udid) ->
-    User = case db:where(#users{udid = Udid}) of
+    User = case db:where(#users{uuid = Udid}) of
         {ok, [Rec]} ->
             Rec;
         {ok, []} ->
             create_new_user(Udid)
     end,
-    User#users.'_id'.
+    User#users.'uuid'.
 
 embed_models() ->
     ?EMBED_MODELS.
 
 load_data(PlayerID) ->
-    db:where(#users{'_id' = PlayerID}).
+    db:where(#users{'uuid' = PlayerID}).
 
 %TODO
 create_new_user(Udid) ->

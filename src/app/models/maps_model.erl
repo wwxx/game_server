@@ -1,2 +1,0 @@
--module(maps_model).
-

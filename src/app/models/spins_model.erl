@@ -1,2 +1,0 @@
--module(spins_model).
-

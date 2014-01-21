@@ -1,2 +1,0 @@
--module(activities_model).
-

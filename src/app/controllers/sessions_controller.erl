@@ -17,7 +17,7 @@
 -define(infos(Recs), record:map_attributes(Recs)).
 
 login(PlayerID) ->
-    RecordSelector = #users{'_id' = PlayerID},
+    RecordSelector = #users{'uuid' = PlayerID},
     User = case player_data:find(PlayerID, RecordSelector) of
         undefined ->
             create_new_user(PlayerID);
@@ -27,37 +27,38 @@ login(PlayerID) ->
     login(PlayerID, User).
 
 login(PlayerID, User) ->
-    Bookmarks = player_data:where(PlayerID, #bookmarks{user_id=PlayerID}),
-    Research = player_data:find(PlayerID, #researches{user_id=PlayerID}),
-    Task = player_data:find(PlayerID, #tasks{user_id=PlayerID}),
-    Heros = player_data:where(PlayerID, #heros{user_id=PlayerID}),
-    AllianceApps = player_data:where(PlayerID, #alliance_applications{user_id=PlayerID}),
-    Item = player_data:find(PlayerID, #items{user_id=PlayerID}),
-    Events = player_data:where(PlayerID, #events{user_id=PlayerID, finished=false}),
-    Towns = player_data:where(PlayerID, #towns{user_id=PlayerID, is_robot=false}),
-    FriendList = player_data:find(PlayerID, #friend_lists{user_id=PlayerID}),
-    Blacklists = player_data:where(PlayerID, #blacklists{user_id=PlayerID}),
+    ok.
+    %Bookmarks = player_data:where(PlayerID, #bookmarks{user_id=PlayerID}),
+    %Research = player_data:find(PlayerID, #researches{user_id=PlayerID}),
+    %Task = player_data:find(PlayerID, #tasks{user_id=PlayerID}),
+    %Heros = player_data:where(PlayerID, #heros{user_id=PlayerID}),
+    %AllianceApps = player_data:where(PlayerID, #alliance_applications{user_id=PlayerID}),
+    %Item = player_data:find(PlayerID, #items{user_id=PlayerID}),
+    %Events = player_data:where(PlayerID, #events{user_id=PlayerID, finished=false}),
+    %Towns = player_data:where(PlayerID, #towns{user_id=PlayerID, is_robot=false}),
+    %FriendList = player_data:find(PlayerID, #friend_lists{user_id=PlayerID}),
+    %Blacklists = player_data:where(PlayerID, #blacklists{user_id=PlayerID}),
 
-    [
-        {users, [record:attributes(User, [research, task, bookmarks, heros])]},
-        {alliance_applications, ?infos(AllianceApps)},
-        {items, ?infos([Item])},
-        {events, ?infos(Events)},
-        {researches, ?infos([Research])},
-        {bookmarks, ?infos(Bookmarks)},
-        {tasks, ?infos([Task])},
-        {heros, ?infos(Heros)},
-        {towns, record:map_attributes(Towns, [buff])},
-        {blacklists, ?infos(Blacklists)},
-        {friend_lists, ?infos([FriendList])},
-        {unread_letter_counts, letters_model:unread_letter_counts(PlayerID)},
-        {current_activity_id, users_model:current_activity_id(PlayerID)},
-        {remain_explore_times, explore_model:remain_amount(PlayerID)},
-        {remain_expedition_times, expedition_model:remain_amount(PlayerID)},
-        {buy_more_explore_price, explore_model:buy_price(PlayerID)},
-        {buy_more_expedition_price, expedition_model:buy_price(PlayerID)},
-        {server_time, time_utils:current_time()}
-    ].
+    %[
+        %{users, [record:attributes(User, [research, task, bookmarks, heros])]},
+        %{alliance_applications, ?infos(AllianceApps)},
+        %{items, ?infos([Item])},
+        %{events, ?infos(Events)},
+        %{researches, ?infos([Research])},
+        %{bookmarks, ?infos(Bookmarks)},
+        %{tasks, ?infos([Task])},
+        %{heros, ?infos(Heros)},
+        %{towns, record:map_attributes(Towns, [buff])},
+        %{blacklists, ?infos(Blacklists)},
+        %{friend_lists, ?infos([FriendList])},
+        %{unread_letter_counts, letters_model:unread_letter_counts(PlayerID)},
+        %{current_activity_id, users_model:current_activity_id(PlayerID)},
+        %{remain_explore_times, explore_model:remain_amount(PlayerID)},
+        %{remain_expedition_times, expedition_model:remain_amount(PlayerID)},
+        %{buy_more_explore_price, explore_model:buy_price(PlayerID)},
+        %{buy_more_expedition_price, expedition_model:buy_price(PlayerID)},
+        %{server_time, time_utils:current_time()}
+    %].
 
 create_new_user(_PlayerID) ->
     ok.

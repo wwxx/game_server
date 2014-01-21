@@ -1,1 +1,0 @@
--module(buffs_model).
