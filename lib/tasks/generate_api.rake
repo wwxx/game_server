@@ -35,16 +35,14 @@ map([Key|Keys], [Value|Values], Result) ->
     controller, action = path.split('#')
     routes_content << %Q{
 route(#{value['type']}) ->
-    {#{controller}, #{action}}#{punctuation}
-    }
+    {#{controller}, #{action}}#{punctuation}}
 
     decoder_content << %Q{
 decode(Bin, #{value['type']}) ->
     Keys = [#{value['attributes'].keys.join(',')}],
     Rule = {#{value['attributes'].values.join(',')}},
     Values = utils_protocol:decode(Bin, Rule),
-    map(Keys, tuple_to_list(Values), [])#{punctuation}
-    }
+    map(Keys, tuple_to_list(Values), [])#{punctuation}}
   end
 
   File.open(routes_path, 'w'){|io| io.write routes_content}
