@@ -72,26 +72,4 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 load_config_data() ->
-    Cmd = "ruby lib/import_config.rb",
-    Port = open_port({spawn, Cmd}, [{packet, 4}, nouse_stdio, exit_status, binary]),
-    Payload = term_to_binary({import_config, <<"">>}),
-    port_command(Port, Payload),
-    receive_config_data(Port).
-
-receive_config_data(Port) ->
-    receive
-        {Port, {data, Data}} ->
-            case binary_to_term(Data) of
-                {create_table, TableName} ->
-                    io:format("TableName:~p~n~n", [TableName]),
-                    ets:new(TableName,
-                            [set, named_table, protected, {read_concurrency, true}]),
-                    receive_config_data(Port);
-                {insert, TableName, Values} ->
-                    io:format("Values:~p~n~n", [Values]),
-                    ets:insert(TableName, Values),
-                    receive_config_data(Port);
-                finish ->
-                    ok
-            end
-    end.
+    ok.
