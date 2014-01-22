@@ -14,4 +14,8 @@ task :setup => :environment do
   puts ">>>>>>>>> Generate Record"
   Rake::Task['generate_record'].execute
   puts ""
+
+  puts ">>>>>>>>> Generate API"
+  Rake::Task['generate_api'].execute
+  puts ""
 end
