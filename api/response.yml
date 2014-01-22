@@ -1,0 +1,10 @@
+town:
+  name: string
+  position_x: integer
+  position_y: integer
+  user_id: string
+
+user:
+  name: string
+  age: integer
+  towns: array-town

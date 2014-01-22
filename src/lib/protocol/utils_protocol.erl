@@ -17,7 +17,6 @@
 -define (FLOAT,   32).
 -define (STRING,  16).
 -define (ARRAY,   16).
--define (REQUEST_TYPE, 8).
 
 %%整数
 encode_integer(Integer) when is_integer(Integer) ->
@@ -44,12 +43,12 @@ encode_tuple(Tuple) when is_tuple(Tuple) ->
     DataList = [encode(Item) || Item <- tuple_to_list(Tuple)],
     list_to_binary(DataList).
 
-%% 解码元组    
+%% 解码元组
 %% 例子: {1, 1.0, <<"hello">>, ...}  解码规则: {integer, float, string, ...}
 %% 例子: {1, 1.0, <<"hello">>, [{1, 1.0, <<"world">>, ...}, ...]}  解码规则: {integer, float, string, [{integer, float, string, ...}], ...}
 decode_tuple(<<Data/binary>>, DecodeRule) ->
     DecodedList = decode(Data, tuple_to_list(DecodeRule)),
-    TupleSize = tuple_size(DecodeRule), 
+    TupleSize = tuple_size(DecodeRule),
     {Array, [DataLeft]} = lists:split(TupleSize, DecodedList),
     {list_to_tuple(Array), DataLeft}.
 
@@ -67,10 +66,10 @@ encode_list(List) when is_list(List) ->
 %% 例子: [<<"a">>, <<"b">>, <<"c">>, ...]  解码规则: [string]
 %% 例子: [{1, 2.0, <<"hello">>, ...}, {2, 3.0, <<"world">>, ...}, ...]  解码规则: [{integer, float, string, ...}]
 %% =====================嵌套解码例子==========================
-%% 例子: [[1, 2, 3, ...], ...]  解码规则: [[integer]] 
-%% 例子: [[1.0, 2.0, 3.0, ...], ...]  解码规则: [[float]] 
-%% 例子: [[<<"a">>, <<"b">>, <<"c">>, ...], ...]  解码规则: [[string]] 
-%% 例子: [[{1, 2.0, <<"hello">>, ...}, {2, 3.0, <<"world">>, ...}, ...], ...]  解码规则: [[{integer, float, string, ...}]] 
+%% 例子: [[1, 2, 3, ...], ...]  解码规则: [[integer]]
+%% 例子: [[1.0, 2.0, 3.0, ...], ...]  解码规则: [[float]]
+%% 例子: [[<<"a">>, <<"b">>, <<"c">>, ...], ...]  解码规则: [[string]]
+%% 例子: [[{1, 2.0, <<"hello">>, ...}, {2, 3.0, <<"world">>, ...}, ...], ...]  解码规则: [[{integer, float, string, ...}]]
 %% 例子: ...
 decode_list(<<ListLen:?ARRAY, Data/binary>>, [RepeatElement | _]) ->
     TypeList = lists:duplicate(ListLen, RepeatElement),
@@ -95,7 +94,7 @@ encode(Info) when is_float(Info) ->
 encode(Info) when is_atom(Info) ->
     encode_string(atom_to_binary(Info, utf8));
 %% 二进制字符串
-encode(Info) when is_binary(Info) -> 
+encode(Info) when is_binary(Info) ->
     encode_string(Info);
 encode(Info) when is_tuple(Info) ->
     encode_tuple(Info);
