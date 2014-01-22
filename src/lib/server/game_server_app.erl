@@ -11,7 +11,6 @@
 %% API.
 
 start(_Type, _Args) ->
-    io:format("pusher_app start"),
 	game_server_sup:start_link().
 
 stop(_State) ->

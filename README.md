@@ -1,18 +1,14 @@
-Ranch TCP Echo
+Game Server
 ==============
 
-To compile this example you need rebar in your PATH.
+To compile this server you need rebar in your PATH.
 
 Type the following command:
 ```
-$ rebar get-deps compile
+$ ./install.sh
 ```
 
 You can then start the Erlang node with the following command:
 ```
 ./start.sh
 ```
-
-Then start telnet as indicated and type in a few lines. Be
-aware that there is a timeout of 5 seconds without receiving
-data before the example server disconnects your session.
