@@ -13,12 +13,12 @@ task :generate_api => :environment do
 
   routes_content = %Q{#{header}
 -module(routes).
--export(route/1).
+-export([route/1]).
   }
 
   decoder_content = %Q{#{header}
 -module(request_decoder).
--export(decode/2).
+-export([decode/2]).
 
 map([], [], Result) ->
     Result;
