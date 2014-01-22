@@ -17,6 +17,7 @@
           delete_by/3,
           update_by/3,
           find_by/3,
+          all/1,
           sqerl_execute/1,
           execute/1]).
 
@@ -51,6 +52,11 @@ update_by(Field, Value, Record) ->
 
 find_by(TableName, Field, Value) ->
     Res = execute(sqerl:sql({select, '*', {from, TableName}, {where, {Field, '=', Value}}})),
+    Fields = record_mapper:get_mapping(TableName),
+    {ok, emysql_util:as_record(Res, TableName, Fields)}.
+
+all(TableName) ->
+    Res = execute(sqerl:sql({select, '*', {from, TableName}})),
     Fields = record_mapper:get_mapping(TableName),
     {ok, emysql_util:as_record(Res, TableName, Fields)}.
 

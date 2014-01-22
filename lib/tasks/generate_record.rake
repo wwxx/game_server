@@ -1,9 +1,10 @@
 desc "Generate Erlang Records from Rails models"
 task :generate_record => :environment do
-  Rails.env = 'test'
-  Rake::Task['db:drop'].execute
-  Rake::Task['db:create'].execute
-  Rake::Task['db:migrate'].execute
+  #old_env = Rails.env
+  #Rails.env = 'test'
+  #Rake::Task['db:drop'].execute
+  #Rake::Task['db:create'].execute
+  #Rake::Task['db:migrate'].execute
 
   header = ""
   header << "%%%===================================================================\n"
@@ -52,4 +53,6 @@ task :generate_record => :environment do
   File.open("#{Rails.root.to_s}/src/app/generates/model_mapping.erl", "w") do |io|
     io.write m_string
   end
+
+  #Rails.env = old_env
 end

@@ -11,7 +11,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, find/2, find_element/3, all/1]).
+-export([start_link/0, find/2, find_element/3, all/1, load_data/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -19,6 +19,7 @@
 
 -define(SERVER, ?MODULE).
 -define(DATA_DIR, "config/game_data/").
+-include("include/config_names.hrl").
 
 -record(state, {table}).
 
@@ -43,15 +44,18 @@ find(TableName, Key) ->
 find_element(TableName, Key, Pos) ->
     ets:lookup_element(TableName, Key, Pos).
 
+load_data() ->
+    gen_server:call(?SERVER, load_data).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
 
 init([]) ->
-    load_config_data(),
     {ok, #state{}}.
 
 handle_call(load_data, _From, State) ->
+    load_config_data(),
     {reply, ok, State}.
 
 handle_cast(_Msg, State) ->
@@ -72,4 +76,11 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 load_config_data() ->
-    ok.
+    ModelNames = ?CONFIG_MODELS,
+    lists:foreach(fun(ModelName) -> load_config_model(ModelName) end, ModelNames).
+
+load_config_model(ModelName) ->
+    ets:new(ModelName,
+            [set, protected, named_table, {keypos, 2}, {read_concurrency, true}]),
+    {ok, Records} = db:all(ModelName),
+    ets:insert(ModelName, Records).

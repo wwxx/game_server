@@ -22,6 +22,7 @@ before_start() ->
 after_start() ->
     %% add your custom initialize at here
     model_mapping:load(),
+    game_numerical:load_data(),
     ok.
 
 %%%===================================================================
