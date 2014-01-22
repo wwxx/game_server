@@ -120,14 +120,12 @@ handle_info(timeout, State=#protocol{transport = Transport, socket = Socket}) ->
     {noreply, State};
 handle_info({tcp, Socket, RawData}, State=#protocol{transport = Transport}) ->
     ok = Transport:setopts(Socket, [{active, once}]),
-    %<<RequestType:8/integer, RequestBody/binary>> = RawData,
-    %error_logger:info_msg("RequestType: ~p, RequestBody: ~p~n", [RequestType, RequestBody]),
-    %NewState = handle_request({RequestType, RequestBody}, State),
-    Request = json:decode(RawData),
-    Path = proplists:get_value(<<"_path">>, Request),
-    Params = proplists:get_value(<<"_params">>, Request),
+    <<RequestType:8/integer, RequestBody/binary>> = RawData,
+    error_logger:info_msg("RequestType: ~p, RequestBody: ~p~n", [RequestType, RequestBody]),
+    Params = request_decoder:decode(RequestBody, RequestType),
+    Path = routes:route(RequestType),
     error_logger:info_msg("Request Path: ~p Parmas: ~p~n", [Path, Params]),
-    NewState = handle_request({path, Params}, State),
+    NewState = handle_request({Path, Params}, State),
     {noreply, NewState};
 handle_info({tcp_closed, _Socket}, State) ->
     error_logger:info_msg("DISCONNECT: tcp_closed, playerID: ~p~n", [State#protocol.playerID]),
@@ -136,10 +134,10 @@ handle_info({tcp_error, _Socket, _Msg}, State) ->
     error_logger:info_msg("DISCONNECT: tcp_error, playerID: ~p~n", [State#protocol.playerID]),
     {stop, normal, State}.
 
-handle_request({<<"sessions/login">>, Params},
+handle_request({{sessions_controller, login}, Params},
                State=#protocol{transport=Transport, socket=Socket}) ->
     %{Udid} = utils_protocol:decode(RequestBody, {string}),
-    Udid = proplists:get_value(<<"udid">>, Params),
+    Udid = proplists:get_value(udid, Params),
     io:format("Udid: ~p~n", [Udid]),
     PlayerID = player_data:get_player_id(Udid),
     register_connection(PlayerID),

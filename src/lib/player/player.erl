@@ -52,15 +52,9 @@ init([PlayerID]) ->
     Timer = erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
     {ok, #player_state{playerID=PlayerID, circulation_persist_timer = Timer}}.
 
-handle_call({request, Path, Params}, _From, State=#player_state{playerID=PlayerID}) ->
-    Response = case routes:match(Path) of
-        {Controller, Action} ->
-            Controller:Action(PlayerID, Params);
-        undefined ->
-            error_logger:error_msg("Error! Path not match, Path: ~p Params: ~p~n",
-                                   [Path, Params]),
-            [{<<"msg">>, "Request path not found."}]
-    end,
+handle_call({request, {Controller, Action}, Params}, _From,
+            State=#player_state{playerID=PlayerID}) ->
+    Response = Controller:Action(PlayerID, Params),
     {reply, Response, State};
 handle_call({load_data, ModelName}, _From, State=#player_state{playerID=PlayerID}) ->
     Result = load_data_from_db_to_ets(PlayerID, ModelName),
