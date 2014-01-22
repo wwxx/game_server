@@ -104,7 +104,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 init_pool() ->
-    [[_,_,{"production", L}]] = yamerl_constr:file("config/database.yml"),
+    [[_,_,_,{"production", L}]] = yamerl_constr:file("config/database.yml"),
     Database = proplists:get_value("database", L),
     Username = proplists:get_value("username", L),
     Password = proplists:get_value("password", L),
