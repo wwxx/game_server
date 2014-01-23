@@ -1,9 +1,11 @@
 sessions_controller#login:
   type: 1
+  response: user
   attributes:
     udid: string
 
 users_controller#public_info:
   type: 2
+  response: town
   attributes:
     user_id: string

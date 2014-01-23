@@ -125,7 +125,7 @@ handle_info({tcp, Socket, RawData}, State=#protocol{transport = Transport}) ->
     Params = request_decoder:decode(RequestBody, RequestType),
     Path = routes:route(RequestType),
     error_logger:info_msg("Request Path: ~p Parmas: ~p~n", [Path, Params]),
-    NewState = handle_request({Path, Params}, State),
+    NewState = handle_request({RequestType, Path, Params}, State),
     {noreply, NewState};
 handle_info({tcp_closed, _Socket}, State) ->
     error_logger:info_msg("DISCONNECT: tcp_closed, playerID: ~p~n", [State#protocol.playerID]),
@@ -134,7 +134,7 @@ handle_info({tcp_error, _Socket, _Msg}, State) ->
     error_logger:info_msg("DISCONNECT: tcp_error, playerID: ~p~n", [State#protocol.playerID]),
     {stop, normal, State}.
 
-handle_request({{sessions_controller, login}, Params},
+handle_request({RequestType, {sessions_controller, login}, Params},
                State=#protocol{transport=Transport, socket=Socket}) ->
     %{Udid} = utils_protocol:decode(RequestBody, {string}),
     Udid = proplists:get_value(udid, Params),
@@ -144,12 +144,16 @@ handle_request({{sessions_controller, login}, Params},
     %% Start player process
     player_manager:start_player(PlayerID),
     LoginInfo = sessions_controller:login(PlayerID),
-    Transport:send(Socket, json:encode(LoginInfo)),
+    TypeBin = utils_protocol:encode_integer(RequestType),
+    ResponseBin = utils_protocol:encode(LoginInfo),
+    Transport:send(Socket, list_to_binary([TypeBin, ResponseBin])),
     State#protocol{playerID = PlayerID};
-handle_request({Path, Params},
+handle_request({RequestType, Path, Params},
                State=#protocol{playerID = PlayerID, transport=Transport, socket=Socket}) ->
     Response = player:request(PlayerID, Path, Params),
-    Transport:send(Socket, json:encode(Response)),
+    TypeBin = utils_protocol:encode_integer(RequestType),
+    ResponseBin = utils_protocol:encode(Response),
+    Transport:send(Socket, list_to_binary([TypeBin, ResponseBin])),
     State.
 
 %%--------------------------------------------------------------------
