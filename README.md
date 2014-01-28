@@ -1,4 +1,4 @@
-Game Server
+Erlang Game Server
 ==============
 
 To compile this server you need rebar in your PATH.
