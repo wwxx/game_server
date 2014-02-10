@@ -47,7 +47,9 @@ task :generate_config => :environment do
     values = 2.upto(s.last_row).map do |row|
       row_values = []
       s.row(row).each_with_index do |value, index|
-        value = ActiveRecord::Base.sanitize(value) if field_types[index] == 'string'
+        if ['string', 'text'].include?(field_types[index])
+          value = ActiveRecord::Base.sanitize(value) 
+        end
         value = 0 if field_types[index] == 'integer' and value.blank?
         value = 0.0 if field_types[index] == 'float' and value.blank?
         row_values << value

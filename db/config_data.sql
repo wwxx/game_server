@@ -2,7 +2,7 @@
       DROP TABLE IF EXISTS `config_items`;
       CREATE TABLE `config_items` (
         `id` int(11) NOT NULL AUTO_INCREMENT,
-        `title` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+        `title` text COLLATE utf8_unicode_ci,
 `ver` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
 `obj` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
 `number` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,

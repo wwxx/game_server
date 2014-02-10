@@ -1,4 +1,4 @@
--module(player_manager).
+-module(player_factory).
 
 -behaviour(gen_server).
 

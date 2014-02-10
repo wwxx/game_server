@@ -90,7 +90,7 @@ code_change(_OldVsn, State, _Extra) ->
 player_pid(PlayerID) ->
     case ?GET_PID({player, PlayerID}) of
         undefined ->
-            {ok, Pid} = player_manager:start_player(PlayerID),
+            {ok, Pid} = player_factory:start_player(PlayerID),
             Pid;
         PlayerPid ->
             PlayerPid

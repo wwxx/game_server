@@ -1,4 +1,4 @@
--module(player_manager_sup).
+-module(player_factory_sup).
 
 -behaviour(supervisor).
 
@@ -43,9 +43,9 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    player_manager = ets:new(player_manager, [
+    player_factory = ets:new(player_factory, [
         ordered_set, public, named_table, {read_concurrency, true}]),
-    PlayerManagerSpec = ?CHILD(player_manager, player_manager, worker, []),
+    PlayerManagerSpec = ?CHILD(player_factory, player_factory, worker, []),
     {ok, {{one_for_one, 5, 10}, [PlayerManagerSpec]}}.
 
 %%%===================================================================

@@ -43,9 +43,9 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    PlayerManagerSupSpec = ?CHILD(player_manager_sup, player_manager_sup, supervisor, []),
+    PlayerFactorySupSpec = ?CHILD(player_factory_sup, player_factory_sup, supervisor, []),
     PlayerSupSpec = ?CHILD(player_super, player_sup, supervisor, []),
-    Specs = [PlayerManagerSupSpec, PlayerSupSpec],
+    Specs = [PlayerFactorySupSpec, PlayerSupSpec],
     {ok, {{one_for_one, 5, 10}, Specs}}.
 
 %%%===================================================================

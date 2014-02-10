@@ -18,6 +18,7 @@
           update_by/3,
           find_by/3,
           all/1,
+          update_all/1,
           sqerl_execute/1,
           execute/1]).
 
@@ -49,6 +50,11 @@ update_by(Field, Value, Record) ->
     [TableName|Values] = tuple_to_list(Record),
     Fields = record_mapper:get_mapping(TableName),
     execute(sqerl:sql({update, TableName, map(Fields, Values), {where, {Field, '=', Value}}})).
+
+update_all(Record) ->
+    [TableName|Values] = tuple_to_list(Record),
+    Fields = record_mapper:get_mapping(TableName),
+    execute(sqerl:sql({update, TableName, map(Fields, Values)})).
 
 find_by(TableName, Field, Value) ->
     Res = execute(sqerl:sql({select, '*', {from, TableName}, {where, {Field, '=', Value}}})),

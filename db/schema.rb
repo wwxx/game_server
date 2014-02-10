@@ -14,7 +14,7 @@
 ActiveRecord::Schema.define(:version => 20140121055124) do
 
   create_table "config_items", :force => true do |t|
-    t.string  "title"
+    t.text    "title"
     t.string  "ver"
     t.string  "obj"
     t.string  "number"
@@ -38,6 +38,7 @@ ActiveRecord::Schema.define(:version => 20140121055124) do
 
   create_table "users", :id => false, :force => true do |t|
     t.string   "uuid"
+    t.string   "udid"
     t.string   "name"
     t.integer  "gem"
     t.float    "paid"
@@ -45,6 +46,8 @@ ActiveRecord::Schema.define(:version => 20140121055124) do
     t.datetime "updated_at", :null => false
   end
 
+  add_index "users", ["name"], :name => "index_users_on_name", :unique => true
+  add_index "users", ["udid"], :name => "index_users_on_udid", :unique => true
   add_index "users", ["uuid"], :name => "index_users_on_uuid", :unique => true
 
 end

@@ -142,7 +142,7 @@ handle_request({RequestType, {sessions_controller, login}, Params},
     PlayerID = player_data:get_player_id(Udid),
     register_connection(PlayerID),
     %% Start player process
-    player_manager:start_player(PlayerID),
+    player_factory:start_player(PlayerID),
     LoginInfo = sessions_controller:login(PlayerID),
     TypeBin = utils_protocol:encode_integer(RequestType),
     ResponseBin = utils_protocol:encode(LoginInfo),
@@ -168,7 +168,7 @@ handle_request({RequestType, Path, Params},
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State=#protocol{playerID=PlayerID}) ->
-    player_manager:del_con_pid(PlayerID),
+    player_factory:del_con_pid(PlayerID),
     ok.
 
 %%--------------------------------------------------------------------
