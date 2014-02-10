@@ -8,3 +8,6 @@ current_time() ->
 
 time_to_seconds(MegaSecs, Secs, MicroSecs) ->
     MegaSecs * 1000000 + Secs.
+
+datetime() ->
+	{datetime, {erlang:date(), erlang:time()}}.

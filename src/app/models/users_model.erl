@@ -11,17 +11,26 @@ info([User]) ->
     model_utils:info(User).
 
 get_player_id(Udid) ->
-    User = case db:find_by(users, uuid, Udid) of
+    case db:find_by(users, udid, Udid) of
         {ok, [Rec]} ->
-            Rec;
+            Rec#users.uuid;
         {ok, []} ->
             create_new_user(Udid)
-    end,
-    User#users.uuid.
+    end.
 
 load_data(PlayerID) ->
     db:find_by(users, uuid, PlayerID).
 
 % TODO
 create_new_user(Udid) ->
-    db:create(#users{uuid=uuid_factory:gen(), name="Guest", gem=0, paid=0}).
+    Uuid = uuid_factory:gen(),
+    db:create(#users{
+        uuid=Uuid, 
+        udid=Udid,
+        name="Guest", 
+        gem=0, 
+        paid=0,
+        created_at = time_utils:datetime(),
+        updated_at = time_utils:datetime()
+        }),
+    Uuid.
