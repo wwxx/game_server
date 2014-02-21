@@ -5,6 +5,7 @@
           decode_integer/1,
           encode_float/1,
           decode_float/1,
+          encode_array/2,
           encode_tuple/1,
           decode_tuple/2,
           encode_list/1,
@@ -37,6 +38,13 @@ encode_string(String) when is_binary(String) ->
 decode_string(<<Length:?STRING/unsigned-big-integer, Data/binary>>) ->
     {StringData, StringLeftData} = split_binary(Data, Length),
     {StringData, StringLeftData}.
+
+encode_array(Array, Fun) when is_list(Array) ->
+    Len = length(Array),
+    DataList = [Fun(Item) || Item <- Array],
+    list_to_binary([<<Len:?ARRAY/integer>>, DataList]).
+% decode_array(<<ArrayLen:?ARRAY, Data/binary>>, Fun) ->
+
 
 %% 编码元组
 encode_tuple(Tuple) when is_tuple(Tuple) ->

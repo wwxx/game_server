@@ -1,10 +1,14 @@
 town:
-  name: string
-  position_x: integer
-  position_y: integer
-  user_id: string
+  type: 1
+  attributes:
+    name: string
+    position_x: integer
+    position_y: integer
+    user_id: string
 
 user:
-  name: string
-  age: integer
-  towns: array-town
+  type: 2
+  attributes:
+    name: string
+    age: integer
+    towns: array-town

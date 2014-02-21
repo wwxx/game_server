@@ -1,10 +1,13 @@
 desc "Generate API"
 task :generate_api => :environment do
   api_path = "#{Rails.root.to_s}/api/request.yml"
+  response_path = "#{Rails.root.to_s}/api/response.yml"
   routes_path = "#{Rails.root.to_s}/src/app/generates/routes.erl"
   request_decoder_path = "#{Rails.root.to_s}/src/app/generates/request_decoder.erl"
+  response_encoder_path = "#{Rails.root.to_s}/src/app/generates/response_encoder.erl"
 
   api = YAML.load_file(api_path)
+  response = YAML.load_file(response_path)
 
   header = ""
   header << "%%%===================================================================\n"
@@ -27,6 +30,11 @@ map([Key|Keys], [Value|Values], Result) ->
 
   }
 
+  encoder_content = %Q{#{header}
+-module(response_encoder).
+-export([encode/2]).
+  }
+
   size = api.size
   api.each_with_index do |packet, idx|
     path, value = packet
@@ -45,6 +53,36 @@ decode(Bin, #{value['type']}) ->
     map(Keys, tuple_to_list(Values), [])#{punctuation}}
   end
 
+  size = response.size
+  response.each_with_index do |packet, idx|
+    response_name, value = packet
+    punctuation = (size - 1 == idx ? '.' : ';')
+    list = ["utils_protocol:encode_integer(Type)"]
+    value['attributes'].each do |key, data_type|
+      case data_type
+      when 'string'
+        list << "utils_protocol:encode_string(#{key.camelcase})"
+      when 'integer'
+        list << "utils_protocol:encode_integer(#{key.camelcase})"
+      when 'float'
+        list << "utils_protocol:encode_float(#{key.camelcase})"
+      else
+        type, element_name = data_type.split('-')
+        raise "Wrong Data Type: #{type}" unless type == 'array'
+        list << "utils_protocol:encode_array(#{key.camelcase}, fun(Item) -> response_encoder:encode(#{element_name}, Item) end)"
+      end
+    end
+    encoder_content << %Q{
+encode(#{response_name}, Value) ->
+    Type = #{value['type']},
+    {#{value['attributes'].keys.map(&:camelcase).join(', ')}} = Value,
+    DataList = [
+#{list.map{|s|" " * 8 + s}.join(",\n")}
+    ],
+    list_to_binary(DataList)#{punctuation}}
+  end
+
   File.open(routes_path, 'w'){|io| io.write routes_content}
   File.open(request_decoder_path, 'w'){|io| io.write decoder_content}
+  File.open(response_encoder_path, 'w'){|io| io.write encoder_content}
 end
