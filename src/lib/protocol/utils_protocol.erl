@@ -26,7 +26,7 @@ decode_integer(<<Integer:?INTEGER, Data/binary>>) ->
     {Integer, Data}.
 
 %%浮点数
-encode_float(Float) when is_float(Float) ->
+encode_float(Float) ->
     <<Float:?FLOAT/float>>.
 decode_float(<<Float:?FLOAT/float, Data/binary>>) ->
     {Float, Data}.

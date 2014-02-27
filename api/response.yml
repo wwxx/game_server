@@ -6,9 +6,18 @@ town:
     position_y: integer
     user_id: string
 
+#user:
+  #type: 2
+  #attributes:
+    #name: string
+    #age: integer
+    #towns: array-town
+
 user:
   type: 2
   attributes:
+    uuid: string
+    udid: string
     name: string
-    age: integer
-    towns: array-town
+    gem: integer
+    paid: float

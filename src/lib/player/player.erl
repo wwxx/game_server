@@ -76,8 +76,9 @@ handle_cast(_Msg, State) ->
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(_Reason, _State=#player_state{circulation_persist_timer=Timer}) ->
+terminate(_Reason, _State=#player_state{circulation_persist_timer=Timer, playerID=PlayerID}) ->
     erlang:cancel_timer(Timer),
+    ?UNREG({player, PlayerID}),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
@@ -138,6 +139,7 @@ load_data_from_db_to_ets(PlayerID, ModelName) ->
         undefined ->
             ModuleName = model_module_name(ModelName),
             {ok, Recs} = ModuleName:load_data(PlayerID),
+            io:format("PlayerID: ~p, Recs: ~p~n", [PlayerID, Recs]),
             Tab = player_data:table(ModelName),
             if
                 is_list(Recs) andalso Recs =/= [] ->

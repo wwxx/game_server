@@ -239,6 +239,7 @@ ets_update(PlayerID, SelectorRecord, ModifierRecord) ->
 
 ets_find(SelectorRecord) ->
     {Tab, _ValueList, _Name, Key} = model_info(SelectorRecord),
+    io:format("Tab: ~p, Key: ~p~n", [Tab, Key]),
     case id_present(Key) of
         true ->
             case ets:lookup(Tab, Key) of

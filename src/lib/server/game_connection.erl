@@ -21,6 +21,7 @@
 
 -include ("include/game_static.hrl").
 -include("include/gproc_macros.hrl").
+-include("include/secure.hrl").
 
 
 %%%===================================================================
@@ -101,7 +102,7 @@ handle_cast(stop, State) ->
     {stop, normal, State};
 handle_cast({send_data, Data}, State=#protocol{transport = Transport, socket = Socket}) ->
     io:format("send_data: ~p~n", [Data]),
-    Transport:send(Socket, utils_protocol:encode(Data)),
+    send_socket_data(Transport, Socket, Data),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -118,14 +119,16 @@ handle_info(timeout, State=#protocol{transport = Transport, socket = Socket}) ->
     ok = ranch:accept_ack(State#protocol.ref),
     ok = Transport:setopts(Socket, [{active, once}, {packet, 4}]),
     {noreply, State};
-handle_info({tcp, Socket, RawData}, State=#protocol{transport = Transport}) ->
+handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) ->
     ok = Transport:setopts(Socket, [{active, once}]),
-    <<RequestType:8/integer, RequestBody/binary>> = RawData,
+    io:format("CipherData: ~p~n", [CipherData]),
+    RawData = secure:decrypt(?AES_KEY, ?AES_IVEC, CipherData),
+    <<RequestType:32/integer, RequestBody/binary>> = RawData,
     error_logger:info_msg("RequestType: ~p, RequestBody: ~p~n", [RequestType, RequestBody]),
     Params = request_decoder:decode(RequestBody, RequestType),
     Path = routes:route(RequestType),
     error_logger:info_msg("Request Path: ~p Parmas: ~p~n", [Path, Params]),
-    NewState = handle_request({RequestType, Path, Params}, State),
+    NewState = handle_request({Path, Params}, State),
     {noreply, NewState};
 handle_info({tcp_closed, _Socket}, State) ->
     error_logger:info_msg("DISCONNECT: tcp_closed, playerID: ~p~n", [State#protocol.playerID]),
@@ -134,7 +137,7 @@ handle_info({tcp_error, _Socket, _Msg}, State) ->
     error_logger:info_msg("DISCONNECT: tcp_error, playerID: ~p~n", [State#protocol.playerID]),
     {stop, normal, State}.
 
-handle_request({RequestType, {sessions_controller, login}, Params},
+handle_request({{sessions_controller, login}, Params},
                State=#protocol{transport=Transport, socket=Socket}) ->
     %{Udid} = utils_protocol:decode(RequestBody, {string}),
     Udid = proplists:get_value(udid, Params),
@@ -144,16 +147,11 @@ handle_request({RequestType, {sessions_controller, login}, Params},
     %% Start player process
     player_factory:start_player(PlayerID),
     LoginInfo = sessions_controller:login(PlayerID),
-    TypeBin = utils_protocol:encode_integer(RequestType),
-    ResponseBin = utils_protocol:encode(LoginInfo),
-    Transport:send(Socket, list_to_binary([TypeBin, ResponseBin])),
+    send_socket_data(Transport, Socket, LoginInfo),
     State#protocol{playerID = PlayerID};
-handle_request({RequestType, Path, Params},
-               State=#protocol{playerID = PlayerID, transport=Transport, socket=Socket}) ->
+handle_request({Path, Params}, State=#protocol{playerID = PlayerID, transport=Transport, socket=Socket}) ->
     Response = player:request(PlayerID, Path, Params),
-    TypeBin = utils_protocol:encode_integer(RequestType),
-    ResponseBin = utils_protocol:encode(Response),
-    Transport:send(Socket, list_to_binary([TypeBin, ResponseBin])),
+    send_socket_data(Transport, Socket, Response),
     State.
 
 %%--------------------------------------------------------------------
@@ -168,7 +166,10 @@ handle_request({RequestType, Path, Params},
 %% @end
 %%--------------------------------------------------------------------
 terminate(_Reason, _State=#protocol{playerID=PlayerID}) ->
-    player_factory:del_con_pid(PlayerID),
+    case PlayerID =:= undefined of
+        false -> ?UNREG({connection, PlayerID});
+        true -> ok
+    end,
     ok.
 
 %%--------------------------------------------------------------------
@@ -188,7 +189,11 @@ code_change(_OldVsn, State, _Extra) ->
 
 register_connection(PlayerID) ->
     case ?GET_PID({connection, PlayerID}) of
-        OldConPid when OldConPid =/= undefined ->
-            game_connection:sync_stop(OldConPid)
+        undefined -> ok;
+        OldConPid -> game_connection:sync_stop(OldConPid)
     end,
     ?REG_PID({connection, PlayerID}).
+
+send_socket_data(Transport, Socket, Data) ->
+    CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, Data),
+    Transport:send(Socket, CipherData).

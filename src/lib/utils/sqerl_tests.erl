@@ -4,6 +4,7 @@
 
 -define(_safe_test(Expr),
     (fun(Expect, _) ->
+        io:format("----value~p~n", [sqerl:sql(Expr, true)]),
         {Expect, ?_assertEqual(Expect, sqerl:sql(Expr, true))}
     end)).
 
@@ -137,9 +138,7 @@ safe_test_() ->
                                                  {select,distinct,name,{from,gymnast}}}}})
             },
 
-            {<<"SELECT name FROM developer WHERE name IN ((SELECT DISTINCT name FROM gymnast)"
-               "UNION (SELECT name FROM dancer WHERE ((name LIKE 'Mikhail%') OR (country = 'Russia')))"
-               "WHERE (name LIKE 'M%') ORDER BY name DESC LIMIT 5, 10)">>,
+            {<<"SELECT name FROM developer WHERE name IN ((SELECT DISTINCT name FROM gymnast) UNION (SELECT name FROM dancer WHERE ((name LIKE 'Mikhail%') OR (country = 'Russia'))) WHERE (name LIKE 'M%') ORDER BY name DESC LIMIT 5, 10)">>,
                 ?_safe_test({select,name,
                                 {from,developer},
                                 {where,
