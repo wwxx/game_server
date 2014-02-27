@@ -1,6 +1,6 @@
 %% The MIT License (MIT)
 %%
-%% Copyright (c) 2014-2014
+%% Copyright (c) 2014-2024
 %% Savin Max <mafei.198@gmail.com>
 %%
 %% Permission is hereby granted, free of charge, to any person obtaining a copy
