@@ -14,7 +14,7 @@ You can then start the Erlang node with the following command:
 ```
 
 ## License
-The MIT License (MIT)
+Erlang Game Server is under The MIT License (MIT)
 
 Copyright (c) 2014-2014
 Savin Max <mafei.198@gmail.com>

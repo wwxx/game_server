@@ -1,6 +1,6 @@
 ## License
 
-The MIT License (MIT)
+Erlang Game Server under The MIT License (MIT)
 
 Copyright (c) 2014-2024 Savin Max
 
