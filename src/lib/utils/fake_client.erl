@@ -42,7 +42,7 @@ send_request(Path, Sock, Value) ->
 recv_response(Sock) ->
     {ok, Packet} = gen_tcp:recv(Sock, 0),
     Data = decrypt(Packet),
-    {Response, _LeftData} = response_decoder:decode(Data),
+    {Response, _LeftData} = api_decoder:decode(Data),
     io:format("Response: ~p~n", [Response]),
     Response.
 

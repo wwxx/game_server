@@ -16,6 +16,7 @@ user:
   paid: float
   building: building
   towns: array-town
+  team: array-integer
 
 login_params:
   udid: string

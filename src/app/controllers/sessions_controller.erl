@@ -54,6 +54,6 @@ login(_PlayerID, User) ->
               User#users.gem,
               User#users.paid,
               {<<"builidng name">>, 1},
-              [{<<"town name">>, 1, 2, User#users.uuid}]
-              },
-    response_encoder:encode(user, Value).
+              [{<<"town name">>, 1, 2, User#users.uuid}],
+              [1,2,3,4]},
+    api_encoder:encode(user, Value).

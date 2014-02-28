@@ -23,6 +23,35 @@
 
 
 desc "Generate API"
+
+COMMON_TYPE = ['string', 'integer', 'float', 'short']
+
+def common_protocol(field_type, variable, code)
+  case field_type
+  when 'string'
+    "utils_protocol:#{code}_string(#{variable})"
+  when 'integer'
+    "utils_protocol:#{code}_integer(#{variable})"
+  when 'float'
+    "utils_protocol:#{code}_float(#{variable})"
+  when 'short'
+    "utils_protocol:#{code}_short(#{variable})"
+  end
+end
+
+def common_decode_with_index(field_type, variable, field_idx)
+  case field_type
+  when 'string'
+    "{#{variable}, Bin#{field_idx+1}} = utils_protocol:decode_string(Bin#{field_idx})"
+  when 'integer'
+    "{#{variable}, Bin#{field_idx+1}} = utils_protocol:decode_integer(Bin#{field_idx})"
+  when 'float'
+    "{#{variable}, Bin#{field_idx+1}} = utils_protocol:decode_float(Bin#{field_idx})"
+  when 'short'
+    "{#{variable}, Bin#{field_idx+1}} = utils_protocol:decode_short(Bin#{field_idx})"
+  end
+end
+
 task :generate_api => :environment do
   routes = "#{Rails.root.to_s}/api/routes.yml"
   extension_types = "#{Rails.root.to_s}/api/extension_types.yml"
@@ -76,30 +105,23 @@ task :generate_api => :environment do
     decode_list = []
     fields_definition.each_with_index do |field_definition, field_idx|
       field, field_type = field_definition
-      case field_type
-      when 'string'
-        list << "utils_protocol:encode_string(#{field.camelcase})"
-        decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = utils_protocol:decode_string(Bin#{field_idx})"
-      when 'integer'
-        list << "utils_protocol:encode_integer(#{field.camelcase})"
-        decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = utils_protocol:decode_integer(Bin#{field_idx})"
-      when 'float'
-        list << "utils_protocol:encode_float(#{field.camelcase})"
-        decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = utils_protocol:decode_float(Bin#{field_idx})"
-      when 'short'
-        list << "utils_protocol:encode_short(#{field.camelcase})"
-        decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = utils_protocol:decode_short(Bin#{field_idx})"
-      else
-        if fields_definition.keys.include?(field_type)
-          list << "encode(#{field}, #{field.camelcase})"
-          decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = api_decoder:decode(Bin#{field_idx})"
-        elsif field_type.index("array-") == 0
-          _type, element_name = field_type.split('-')
+      if COMMON_TYPE.include?(field_type)
+        list << common_protocol(field_type, field.camelcase, 'encode')
+        decode_list << common_decode_with_index(field_type, field.camelcase, field_idx)
+      elsif fields_definition.keys.include?(field_type)
+        list << "encode(#{field}, #{field.camelcase})"
+        decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = api_decoder:decode(Bin#{field_idx})"
+      elsif field_type.index("array-") == 0
+        _type, element_name = field_type.split('-')
+        if COMMON_TYPE.include?(element_name)
+          list << "utils_protocol:encode_array(#{field.camelcase}, fun(Item) -> #{common_protocol(element_name, 'Item', 'encode')} end)"
+          decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = utils_protocol:decode_array(Bin#{field_idx}, fun(Data) -> #{common_protocol(element_name, 'Data', 'decode')} end)"
+        else
           list << "utils_protocol:encode_array(#{field.camelcase}, fun(Item) -> api_encoder:encode(#{element_name}, Item) end)"
           decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = utils_protocol:decode_array(Bin#{field_idx}, fun(Data) -> api_decoder:decode(Data) end)"
-        else
-          raise "Wrong Data Type: #{field_type}"
         end
+      else
+        raise "Wrong Data Type: #{field_type}"
       end
     end
 
