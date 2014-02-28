@@ -52,5 +52,8 @@ login(_PlayerID, User) ->
               User#users.udid,
               User#users.name,
               User#users.gem,
-              User#users.paid },
+              User#users.paid,
+              {<<"builidng name">>, 1},
+              [{<<"town name">>, 1, 2, User#users.uuid}]
+              },
     response_encoder:encode(user, Value).

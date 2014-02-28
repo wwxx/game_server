@@ -31,12 +31,20 @@ client() ->
     SomeHostInNet = "localhost", % to make it runnable on one machine
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
                                  [{active, false}, {packet, 4}]),
-    Data = list_to_binary([utils_protocol:encode_short(1), utils_protocol:encode_string(<<"test_udid">>)]),
-    ok = gen_tcp:send(Sock, encrypt(Data)),
-    {ok, Packet} = gen_tcp:recv(Sock, 0),
-    Response = decrypt(Packet),
-    io:format("Response: ~p~n", [Response]),
+    send_request("sessions_controller#login", Sock, {<<"test_udid">>}),
+    _Response = recv_response(Sock),
     ok = gen_tcp:close(Sock).
+
+send_request(Path, Sock, Value) ->
+    Data = request_encoder:encode(Path, Value),
+    gen_tcp:send(Sock, encrypt(Data)).
+
+recv_response(Sock) ->
+    {ok, Packet} = gen_tcp:recv(Sock, 0),
+    Data = decrypt(Packet),
+    {Response, _LeftData} = response_decoder:decode(Data),
+    io:format("Response: ~p~n", [Response]),
+    Response.
 
 encrypt(Data) ->
     secure:encrypt(?AES_KEY, ?AES_IVEC, Data).

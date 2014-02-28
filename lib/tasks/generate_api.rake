@@ -108,7 +108,7 @@ decode(Bin, #{value['protocol_id']}) ->
     end
 
     request_encoder_content << %Q{
-encode(<<"#{path}">>, Value) ->
+encode("#{path}", Value) ->
     Type = #{value['protocol_id']},
     {#{value['attributes'].keys.map(&:camelcase).join(', ')}} = Value,
     DataList = [
@@ -139,10 +139,16 @@ encode(<<"#{path}">>, Value) ->
         list << "utils_protocol:encode_short(#{key.camelcase})"
         decode_list << "{#{key.camelcase}, Bin#{key_no+1}} = utils_protocol:decode_short(Bin#{key_no})"
       else
-        type, element_name = data_type.split('-')
-        raise "Wrong Data Type: #{type}" unless type == 'array'
-        list << "utils_protocol:encode_array(#{key.camelcase}, fun(Item) -> response_encoder:encode(#{element_name}, Item) end)"
-        decode_list << "{#{key.camelcase}, Bin#{key_no+1}} = utils_protocol:decode_array(Bin#{key_no}, fun(Data) -> response_decoder:decode(Data) end)"
+        if response.keys.include?(data_type)
+          list << "encode(#{key}, #{key.camelcase})"
+          decode_list << "{#{key.camelcase}, Bin#{key_no+1}} = response_decoder:decode(Bin#{key_no})"
+        elsif data_type.index("array-") == 0
+          type, element_name = data_type.split('-')
+          list << "utils_protocol:encode_array(#{key.camelcase}, fun(Item) -> response_encoder:encode(#{element_name}, Item) end)"
+          decode_list << "{#{key.camelcase}, Bin#{key_no+1}} = utils_protocol:decode_array(Bin#{key_no}, fun(Data) -> response_decoder:decode(Data) end)"
+        else
+          raise "Wrong Data Type: #{type}" unless type == 'array'
+        end
       end
     end
     response_encoder_content << %Q{
@@ -155,7 +161,7 @@ encode(#{response_name}, Value) ->
     list_to_binary(DataList)#{punctuation}}
 
     response_decoder_content << %Q{
-decode(<<#{value['protocol_id']}:?SHORT, Bin0>>) ->
+decode(<<#{value['protocol_id']}:?SHORT, Bin0/binary>>) ->
     #{decode_list.join(",\n    ")},
     {[#{value['attributes'].keys.map{|key| "{#{key}, #{key.camelcase}}"}.join(", ")}], Bin#{value['attributes'].keys.size}}#{punctuation}}
   end

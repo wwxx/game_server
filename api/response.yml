@@ -6,15 +6,25 @@ town:
     position_y: integer
     user_id: string
 
-user:
+building:
   protocol_id: 2
   attributes:
     name: string
-    age: integer
+    position: integer
+
+user:
+  protocol_id: 3
+  attributes:
+    uuid: string
+    udid: string
+    name: string
+    gem: integer
+    paid: float
+    building: building
     towns: array-town
 
 # user:
-#   protocol_id: 2
+#   protocol_id: 3
 #   attributes:
 #     uuid: string
 #     udid: string
