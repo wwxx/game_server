@@ -6,3 +6,4 @@ rel/pusher*
 log
 *@nohost
 .DS_Store
+.eunit

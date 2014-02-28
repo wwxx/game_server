@@ -32,6 +32,7 @@
           encode_float/1,
           decode_float/1,
           encode_array/2,
+          decode_array/2,
           encode_tuple/1,
           decode_tuple/2,
           encode_list/1,
@@ -39,12 +40,7 @@
           encode_string/1,
           decode_string/1]).
 
-%%Protocol
--define (SHORT,   16).
--define (INTEGER, 32).
--define (FLOAT,   32).
--define (STRING,  16).
--define (ARRAY,   16).
+-include("include/protocol.hrl").
 
 %%短整数
 encode_short(Short) when is_integer(Short) ->
@@ -76,8 +72,15 @@ encode_array(Array, Fun) when is_list(Array) ->
     Len = length(Array),
     DataList = [Fun(Item) || Item <- Array],
     list_to_binary([<<Len:?ARRAY/integer>>, DataList]).
-% decode_array(<<ArrayLen:?ARRAY, Data/binary>>, Fun) ->
+decode_array(<<ArrayLen:?ARRAY, Data/binary>>, Fun) ->
+    {Array, LeftData} = decode_array(ArrayLen, Data, Fun, []),
+    {Array, LeftData}.
 
+decode_array(0, DataLeft, _Fun, Result) ->
+    {lists:reverse(Result), DataLeft};
+decode_array(ArrayLen, Data, Fun, Result) ->
+    {Item, Bin} = Fun(Data),
+    decode_array(ArrayLen - 1, Bin, Fun, [Item|Result]).
 
 %% 编码元组
 encode_tuple(Tuple) when is_tuple(Tuple) ->
