@@ -24,16 +24,14 @@
 
 desc "Generate API"
 task :generate_api => :environment do
-  api_path = "#{Rails.root.to_s}/api/request.yml"
-  response_path = "#{Rails.root.to_s}/api/response.yml"
+  routes = "#{Rails.root.to_s}/api/routes.yml"
+  extension_types = "#{Rails.root.to_s}/api/extension_types.yml"
   routes_path = "#{Rails.root.to_s}/src/app/generates/routes.erl"
-  request_encoder_path = "#{Rails.root.to_s}/src/app/generates/request_encoder.erl"
-  request_decoder_path = "#{Rails.root.to_s}/src/app/generates/request_decoder.erl"
-  response_encoder_path = "#{Rails.root.to_s}/src/app/generates/response_encoder.erl"
-  response_decoder_path = "#{Rails.root.to_s}/src/app/generates/response_decoder.erl"
+  encoder_path = "#{Rails.root.to_s}/src/app/generates/api_encoder.erl"
+  decoder_path = "#{Rails.root.to_s}/src/app/generates/api_decoder.erl"
 
-  api = YAML.load_file(api_path)
-  response = YAML.load_file(response_path)
+  routes = YAML.load_file(routes)
+  extension_types = YAML.load_file(extension_types)
 
   header = ""
   header << "%%%===================================================================\n"
@@ -43,132 +41,83 @@ task :generate_api => :environment do
   routes_content = %Q{#{header}
 -module(routes).
 -export([route/1]).
-  }
 
-  request_encoder_content = %Q{#{header}
--module(request_encoder).
+}
+
+  encoder_content = %Q{#{header}
+-module(api_encoder).
 -export([encode/2]).
-  }
 
-  request_decoder_content = %Q{#{header}
--module(request_decoder).
--export([decode/2]).
+}
 
-map([], [], Result) ->
-    Result;
-map([Key|Keys], [Value|Values], Result) ->
-    map(Keys, Values, [{Key, Value}|Result]).
-
-  }
-
-  response_encoder_content = %Q{#{header}
--module(response_encoder).
--export([encode/2]).
-  }
-
-  response_decoder_content = %Q{#{header}
--module(response_decoder).
+  decoder_content = %Q{#{header}
+-module(api_decoder).
 -export([decode/1]).
 -include("include/protocol.hrl").
-  }
 
-  size = api.size
-  api.each_with_index do |packet, idx|
-    path, value = packet
-    punctuation = (size - 1 == idx ? '.' : ';')
+}
+
+  size = routes.size
+  extension_type_keys = extension_types.keys
+  routes.each_with_index do |packet, idx|
+    path, extension_type_key = packet
+    symbol = (size - 1 == idx ? '.' : ';')
 
     controller, action = path.split('#')
-    routes_content << %Q{
-route(#{value['protocol_id']}) ->
-    {#{controller}, #{action}}#{punctuation}}
-
-    request_decoder_content << %Q{
-decode(Bin, #{value['protocol_id']}) ->
-    Keys = [#{value['attributes'].keys.join(',')}],
-    Rule = {#{value['attributes'].values.join(',')}},
-    Values = utils_protocol:decode(Bin, Rule),
-    map(Keys, tuple_to_list(Values), [])#{punctuation}}
-
-    list = ["utils_protocol:encode_short(Type)"]
-    value['attributes'].each do |key, data_type|
-      case data_type
-      when 'string'
-        list << "utils_protocol:encode_string(#{key.camelcase})"
-      when 'integer'
-        list << "utils_protocol:encode_integer(#{key.camelcase})"
-      when 'float'
-        list << "utils_protocol:encode_float(#{key.camelcase})"
-      when 'short'
-        list << "utils_protocol:encode_short(#{key.camelcase})"
-      else
-        type, element_name = data_type.split('-')
-        raise "Wrong Data Type: #{type}" unless type == 'array'
-        list << "utils_protocol:encode_array(#{key.camelcase}, fun(Item) -> request_encoder:encode(#{element_name}, Item) end)"
-      end
-    end
-
-    request_encoder_content << %Q{
-encode("#{path}", Value) ->
-    Type = #{value['protocol_id']},
-    {#{value['attributes'].keys.map(&:camelcase).join(', ')}} = Value,
-    DataList = [
-#{list.map{|s|" " * 8 + s}.join(",\n")}
-    ],
-    list_to_binary(DataList)#{punctuation}}
+    routes_content << "route(#{extension_type_keys.index(extension_type_key)}) ->\n"
+    routes_content << "    {#{controller}, #{action}}#{symbol}\n"
   end
 
-  size = response.size
-  response.each_with_index do |packet, idx|
-    response_name, value = packet
-    punctuation = (size - 1 == idx ? '.' : ';')
-    list = ["utils_protocol:encode_short(Type)"]
+  size = extension_types.size
+  extension_types.each_with_index do |packet, idx|
+    extension_type, fields_definition = packet
+    symbol = (size - 1 == idx ? '.' : ';')
+    list = ["utils_protocol:encode_short(#{idx})"]
     decode_list = []
-    value['attributes'].each_with_index do |attributes_packet, key_no|
-      key, data_type = attributes_packet
-      case data_type
+    fields_definition.each_with_index do |field_definition, field_idx|
+      field, field_type = field_definition
+      case field_type
       when 'string'
-        list << "utils_protocol:encode_string(#{key.camelcase})"
-        decode_list << "{#{key.camelcase}, Bin#{key_no+1}} = utils_protocol:decode_string(Bin#{key_no})"
+        list << "utils_protocol:encode_string(#{field.camelcase})"
+        decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = utils_protocol:decode_string(Bin#{field_idx})"
       when 'integer'
-        list << "utils_protocol:encode_integer(#{key.camelcase})"
-        decode_list << "{#{key.camelcase}, Bin#{key_no+1}} = utils_protocol:decode_integer(Bin#{key_no})"
+        list << "utils_protocol:encode_integer(#{field.camelcase})"
+        decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = utils_protocol:decode_integer(Bin#{field_idx})"
       when 'float'
-        list << "utils_protocol:encode_float(#{key.camelcase})"
-        decode_list << "{#{key.camelcase}, Bin#{key_no+1}} = utils_protocol:decode_float(Bin#{key_no})"
+        list << "utils_protocol:encode_float(#{field.camelcase})"
+        decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = utils_protocol:decode_float(Bin#{field_idx})"
       when 'short'
-        list << "utils_protocol:encode_short(#{key.camelcase})"
-        decode_list << "{#{key.camelcase}, Bin#{key_no+1}} = utils_protocol:decode_short(Bin#{key_no})"
+        list << "utils_protocol:encode_short(#{field.camelcase})"
+        decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = utils_protocol:decode_short(Bin#{field_idx})"
       else
-        if response.keys.include?(data_type)
-          list << "encode(#{key}, #{key.camelcase})"
-          decode_list << "{#{key.camelcase}, Bin#{key_no+1}} = response_decoder:decode(Bin#{key_no})"
-        elsif data_type.index("array-") == 0
-          type, element_name = data_type.split('-')
-          list << "utils_protocol:encode_array(#{key.camelcase}, fun(Item) -> response_encoder:encode(#{element_name}, Item) end)"
-          decode_list << "{#{key.camelcase}, Bin#{key_no+1}} = utils_protocol:decode_array(Bin#{key_no}, fun(Data) -> response_decoder:decode(Data) end)"
+        if fields_definition.keys.include?(field_type)
+          list << "encode(#{field}, #{field.camelcase})"
+          decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = api_decoder:decode(Bin#{field_idx})"
+        elsif field_type.index("array-") == 0
+          _type, element_name = field_type.split('-')
+          list << "utils_protocol:encode_array(#{field.camelcase}, fun(Item) -> api_encoder:encode(#{element_name}, Item) end)"
+          decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = utils_protocol:decode_array(Bin#{field_idx}, fun(Data) -> api_decoder:decode(Data) end)"
         else
-          raise "Wrong Data Type: #{type}" unless type == 'array'
+          raise "Wrong Data Type: #{field_type}"
         end
       end
     end
-    response_encoder_content << %Q{
-encode(#{response_name}, Value) ->
-    Type = #{value['protocol_id']},
-    {#{value['attributes'].keys.map(&:camelcase).join(', ')}} = Value,
-    DataList = [
-#{list.map{|s|" " * 8 + s}.join(",\n")}
-    ],
-    list_to_binary(DataList)#{punctuation}}
 
-    response_decoder_content << %Q{
-decode(<<#{value['protocol_id']}:?SHORT, Bin0/binary>>) ->
-    #{decode_list.join(",\n    ")},
-    {[#{value['attributes'].keys.map{|key| "{#{key}, #{key.camelcase}}"}.join(", ")}], Bin#{value['attributes'].keys.size}}#{punctuation}}
+    variables = fields_definition.keys.map(&:camelcase)
+    encoder_content << "encode(#{extension_type}, Value) ->\n"
+    encoder_content << "    {#{variables.join(', ')}} = Value,\n"
+    encoder_content << "    DataList = [\n"
+    encoder_content << %Q{    #{list.join(",\n        ")}\n}
+    encoder_content << "    ],\n"
+    encoder_content << "    list_to_binary(DataList)#{symbol}\n"
+
+    decoder_content << "decode(<<#{idx}:?SHORT, Bin0/binary>>) ->\n"
+    decoder_content << "    #{decode_list.join(",\n    ")},\n"
+    fields_amount = fields_definition.keys.size
+    decoder_content << %Q{    {[#{fields_definition.keys.map{|field| "{#{field}, #{field.camelcase}}"}.join(", ")}], Bin#{fields_amount}}#{symbol}\n}
   end
 
   File.open(routes_path, 'w'){|io| io.write routes_content}
-  File.open(request_encoder_path, 'w'){|io| io.write request_encoder_content}
-  File.open(request_decoder_path, 'w'){|io| io.write request_decoder_content}
-  File.open(response_encoder_path, 'w'){|io| io.write response_encoder_content}
-  File.open(response_decoder_path, 'w'){|io| io.write response_decoder_content}
+  File.open(encoder_path, 'w'){|io| io.write encoder_content}
+  File.open(decoder_path, 'w'){|io| io.write decoder_content}
 end

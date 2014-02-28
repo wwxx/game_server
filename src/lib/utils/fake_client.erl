@@ -31,12 +31,12 @@ client() ->
     SomeHostInNet = "localhost", % to make it runnable on one machine
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
                                  [{active, false}, {packet, 4}]),
-    send_request("sessions_controller#login", Sock, {<<"test_udid">>}),
+    send_request(login_params, Sock, {<<"test_udid">>}),
     _Response = recv_response(Sock),
     ok = gen_tcp:close(Sock).
 
 send_request(Path, Sock, Value) ->
-    Data = request_encoder:encode(Path, Value),
+    Data = api_encoder:encode(Path, Value),
     gen_tcp:send(Sock, encrypt(Data)).
 
 recv_response(Sock) ->

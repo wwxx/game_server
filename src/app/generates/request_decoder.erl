@@ -9,7 +9,6 @@ map([], [], Result) ->
 map([Key|Keys], [Value|Values], Result) ->
     map(Keys, Values, [{Key, Value}|Result]).
 
-  
 decode(Bin, 1) ->
     Keys = [udid],
     Rule = {string},

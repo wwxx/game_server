@@ -1,0 +1,24 @@
+town:
+  name: string
+  position_x: integer
+  position_y: integer
+  user_id: string
+
+building:
+  name: string
+  position: integer
+
+user:
+  uuid: string
+  udid: string
+  name: string
+  gem: integer
+  paid: float
+  building: building
+  towns: array-town
+
+login_params:
+  udid: string
+
+public_info_params:
+  user_id: string

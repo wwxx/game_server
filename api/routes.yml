@@ -1,0 +1,2 @@
+sessions_controller#login: login_params
+users_controller#public_info: public_info_params

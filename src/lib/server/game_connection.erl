@@ -149,8 +149,8 @@ handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) -
     RawData = secure:decrypt(?AES_KEY, ?AES_IVEC, CipherData),
     {RequestType, RequestBody} = utils_protocol:decode_short(RawData),
     error_logger:info_msg("RequestType: ~p, RequestBody: ~p~n", [RequestType, RequestBody]),
-    Params = request_decoder:decode(RequestBody, RequestType),
     Path = routes:route(RequestType),
+    {Params, _LeftData} = api_decoder:decode(RawData),
     error_logger:info_msg("Request Path: ~p Parmas: ~p~n", [Path, Params]),
     NewState = handle_request({Path, Params}, State),
     {noreply, NewState};
