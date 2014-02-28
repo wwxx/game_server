@@ -1,9 +1,9 @@
 sessions_controller#login:
-  type: 1
+  protocol_id: 1
   attributes:
     udid: string
 
 users_controller#public_info:
-  type: 2
+  protocol_id: 2
   attributes:
     user_id: string

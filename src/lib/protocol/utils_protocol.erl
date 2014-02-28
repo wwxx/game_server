@@ -25,6 +25,8 @@
 -module (utils_protocol).
 -export ([encode/1,
           decode/2,
+          encode_short/1,
+          decode_short/1,
           encode_integer/1,
           decode_integer/1,
           encode_float/1,
@@ -38,10 +40,17 @@
           decode_string/1]).
 
 %%Protocol
+-define (SHORT,   16).
 -define (INTEGER, 32).
 -define (FLOAT,   32).
 -define (STRING,  16).
 -define (ARRAY,   16).
+
+%%短整数
+encode_short(Short) when is_integer(Short) ->
+    <<Short:?SHORT>>.
+decode_short(<<Short:?SHORT, Data/binary>>) ->
+    {Short, Data}.
 
 %%整数
 encode_integer(Integer) when is_integer(Integer) ->

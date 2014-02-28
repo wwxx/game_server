@@ -147,7 +147,7 @@ handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) -
     ok = Transport:setopts(Socket, [{active, once}]),
     io:format("CipherData: ~p~n", [CipherData]),
     RawData = secure:decrypt(?AES_KEY, ?AES_IVEC, CipherData),
-    <<RequestType:32/integer, RequestBody/binary>> = RawData,
+    {RequestType, RequestBody} = utils_protocol:decode_short(RawData),
     error_logger:info_msg("RequestType: ~p, RequestBody: ~p~n", [RequestType, RequestBody]),
     Params = request_decoder:decode(RequestBody, RequestType),
     Path = routes:route(RequestType),

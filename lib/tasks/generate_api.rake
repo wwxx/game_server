@@ -66,11 +66,11 @@ map([Key|Keys], [Value|Values], Result) ->
 
     controller, action = path.split('#')
     routes_content << %Q{
-route(#{value['type']}) ->
+route(#{value['protocol_id']}) ->
     {#{controller}, #{action}}#{punctuation}}
 
     decoder_content << %Q{
-decode(Bin, #{value['type']}) ->
+decode(Bin, #{value['protocol_id']}) ->
     Keys = [#{value['attributes'].keys.join(',')}],
     Rule = {#{value['attributes'].values.join(',')}},
     Values = utils_protocol:decode(Bin, Rule),
@@ -81,7 +81,7 @@ decode(Bin, #{value['type']}) ->
   response.each_with_index do |packet, idx|
     response_name, value = packet
     punctuation = (size - 1 == idx ? '.' : ';')
-    list = ["utils_protocol:encode_integer(Type)"]
+    list = ["utils_protocol:encode_short(Type)"]
     value['attributes'].each do |key, data_type|
       case data_type
       when 'string'
@@ -98,7 +98,7 @@ decode(Bin, #{value['type']}) ->
     end
     encoder_content << %Q{
 encode(#{response_name}, Value) ->
-    Type = #{value['type']},
+    Type = #{value['protocol_id']},
     {#{value['attributes'].keys.map(&:camelcase).join(', ')}} = Value,
     DataList = [
 #{list.map{|s|" " * 8 + s}.join(",\n")}

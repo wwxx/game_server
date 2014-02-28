@@ -1,5 +1,5 @@
 town:
-  type: 1
+  protocol_id: 1
   attributes:
     name: string
     position_x: integer
@@ -7,14 +7,14 @@ town:
     user_id: string
 
 #user:
-  #type: 2
+  #protocol_id: 2
   #attributes:
     #name: string
     #age: integer
     #towns: array-town
 
 user:
-  type: 2
+  protocol_id: 2
   attributes:
     uuid: string
     udid: string
