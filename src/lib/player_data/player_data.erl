@@ -48,11 +48,8 @@
          set_data_status/2,
          del_record_status/3,
          get_loaded/2,
-         set_loaded/3
-        ]).
-
--export([ets_update/3,
-         ets_find/1
+         set_loaded/3,
+         flush_to_mysql/0
         ]).
 
 %% gen_server callbacks
@@ -164,7 +161,7 @@ clean(PlayerID, ModelName) ->
             Record = list_to_tuple([ModelName|EmptyFieldValues]),
             SelectorRecord = if
                 ModelName =:= users ->
-                    record_mapper:set_field(Record, '_id', PlayerID);
+                    record_mapper:set_field(Record, uuid, PlayerID);
                 true ->
                     record_mapper:set_field(Record, user_id, PlayerID)
             end,
@@ -189,6 +186,15 @@ get_player_record_status(PlayerID, ModelName) ->
 get_player_records_status(PlayerID) ->
     ets:match(?STATE_TAB, {{record_status, PlayerID, '$1', '$2'}, {'$3', '$4'}}).
     % ets:match(?STATE_TAB, {{record_status, PlayerID, '$1', '$2'}, $3}).
+
+%% Flush all the cached data to mysql.
+%% Need to optimize speed, currently is flushed one by one.
+flush_to_mysql() ->
+    lists:foreach(
+        fun([ModelName, PlayerID, _LastActive]) ->
+            player:clean_data_sync(PlayerID, ModelName)
+        end, active_specs()).
+
 
 %%%===================================================================
 %%% gen_server callbacks

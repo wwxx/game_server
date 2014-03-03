@@ -28,7 +28,11 @@
 
 -module(life_cycle).
 
--export([before_start/0, after_start/0]).
+-export([before_start/0, 
+		 after_start/0,
+		 before_stop/0,
+		 after_stop/0
+		 ]).
 
 %%%===================================================================
 %%% Framework Callbacks
@@ -45,6 +49,20 @@ after_start() ->
     model_mapping:load(),
     game_numerical:load_data(),
     ok.
+
+before_stop() ->
+    %% shutdown tcp server
+    supervisor:terminate_child(game_server_sup, {ranch_listener_sup, ranch_tcp_listener}),
+    supervisor:terminate_child(game_server_sup, ranch_sup),
+    %% shutdown auto executing events server
+    %% ......
+    %% flush ets cached data to mysql
+    player_data:flush_to_mysql(),
+	ok.
+
+after_stop() ->
+    %% add your custom stopping at here
+	ok.
 
 %%%===================================================================
 %%% Private Custom initialize functions

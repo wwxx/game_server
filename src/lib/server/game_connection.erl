@@ -141,7 +141,7 @@ handle_cast({send_data, Data}, State=#protocol{transport = Transport, socket = S
 %%--------------------------------------------------------------------
 handle_info(timeout, State=#protocol{transport = Transport, socket = Socket}) ->
     ok = ranch:accept_ack(State#protocol.ref),
-    ok = Transport:setopts(Socket, [{active, once}, {packet, 0}]),
+    ok = Transport:setopts(Socket, [{active, once}, {packet, 2}]),
     {noreply, State};
 handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) ->
     io:format("CipherData: ~p~n", [CipherData]),

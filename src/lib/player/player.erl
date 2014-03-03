@@ -32,8 +32,10 @@
          send_data/2,
          load_data/2,
          clean_data/2,
+         clean_data_sync/2,
          save_data/1,
-         player_pid/1
+         player_pid/1,
+         proxy/4
         ]).
 
 %% gen_server callbacks
@@ -47,7 +49,7 @@
 -record(player_state, {playerID, circulation_persist_timer}).
 
 % -define(PERSIST_DURATION, 1800000). %% 30 minutes
--define(PERSIST_DURATION, 10000). %% 30 minutes
+-define(PERSIST_DURATION, 200000). %% 30 minutes
 
 -include("include/gproc_macros.hrl").
 
@@ -68,8 +70,14 @@ load_data(PlayerID, ModelName) ->
 clean_data(PlayerID, ModelName) ->
     gen_server:cast(player_pid(PlayerID), {clean_data, ModelName}).
 
+clean_data_sync(PlayerID, ModelName) ->
+    gen_server:call(player_pid(PlayerID), {clean_data, ModelName}).
+
 save_data(PlayerID) ->
     gen_server:cast(player_pid(PlayerID), {save_data}).
+
+proxy(PlayerID, Module, Fun, Args) ->
+    gen_server:call(player_pid(PlayerID), {proxy, Module, Fun, Args}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -88,6 +96,12 @@ handle_call({request, {Controller, Action}, Params}, _From,
 handle_call({load_data, ModelName}, _From, State=#player_state{playerID=PlayerID}) ->
     Result = load_data_from_db_to_ets(PlayerID, ModelName),
     {reply, Result, State};
+handle_call({proxy, Module, Fun, Args}, _From, State) ->
+    Result = erlang:apply(Module, Fun, Args),
+    {reply, Result, State};
+handle_call({clean_data, ModelName}, _From, State=#player_state{playerID=PlayerID}) ->
+    clean_data_from_ets(PlayerID, ModelName),
+    {reply, ok, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.

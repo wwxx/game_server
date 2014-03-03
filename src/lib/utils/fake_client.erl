@@ -30,7 +30,7 @@
 login() ->
     SomeHostInNet = "localhost", % to make it runnable on one machine
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
-                                 [{active, false}, {packet, 4}]),
+                                 [{active, false}, {packet, 2}]),
     send_request(login_params, Sock, {<<"test_udid">>}),
     _Response = recv_response(Sock),
     ok = gen_tcp:close(Sock).

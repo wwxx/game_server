@@ -39,7 +39,6 @@ start_stop_test_() ->
 %%% SETUP FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%
 start() ->
-    % ok.
     game_server:start().
 
 stop(_Pid) ->
@@ -49,24 +48,13 @@ stop(_Pid) ->
 %%% ACTUAL TESTS %%%
 %%%%%%%%%%%%%%%%%%%%
 tests(_Pid) ->
-    login().
+    PlayerID = player_data:get_player_id(<<"eunit_test_udid">>),
+    [?_assert(erlang:is_binary(PlayerID)),
+     ?_assertNotEqual(PlayerID, <<"">>)
+    ].
 
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% HELPER FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
 login() ->
-    {ok, Sock} = gen_tcp:connect("localhost", 5555,
-                                 [{active, false}, {packet, 4}]),
-    Data = list_to_binary([utils_protocol:encode_short(1), 
-                           utils_protocol:encode_string(<<"test_udid">>)]),
-    ok = gen_tcp:send(Sock, encrypt(Data)),
-    {ok, Packet} = gen_tcp:recv(Sock, 0),
-    Response = decrypt(Packet),
-    io:format("Response: ~p~n", [Response]),
-    ok = gen_tcp:close(Sock).
-
-encrypt(Data) ->
-    secure:encrypt(?AES_KEY, ?AES_IVEC, Data).
-
-decrypt(Data) ->
-    secure:decrypt(?AES_KEY, ?AES_IVEC, Data).
+    ok.
