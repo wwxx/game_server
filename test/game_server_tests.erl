@@ -42,7 +42,7 @@ start() ->
     game_server:start().
 
 stop(_Pid) ->
-    ok.
+	game_server:stop().
 
 %%%%%%%%%%%%%%%%%%%%
 %%% ACTUAL TESTS %%%
