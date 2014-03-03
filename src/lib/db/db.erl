@@ -49,6 +49,7 @@
          terminate/2, code_change/3]).
 
 -include ("include/db_schema.hrl").
+-include ("include/db_config.hrl").
 
 -define (DB_POOL, database_pool).
 -define(SERVER, ?MODULE).
@@ -137,12 +138,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 init_pool() ->
-    [[_,_,_,{"production", L}]] = yamerl_constr:file("config/database.yml"),
-    Database = proplists:get_value("database", L),
-    Username = proplists:get_value("username", L),
-    Password = proplists:get_value("password", L),
-    Encoding = list_to_atom(proplists:get_value("encoding", L)),
-    PoolSize = proplists:get_value("pool",L),
+    L = ?DB_PRODUCTION,
+    Database = atom_to_list(proplists:get_value(database, L)),
+    Username = atom_to_list(proplists:get_value(username, L)),
+    Password = atom_to_list(proplists:get_value(password, L)),
+    Encoding = proplists:get_value(encoding, L),
+    PoolSize = proplists:get_value(pool,L),
     ok = emysql:add_pool(?DB_POOL, PoolSize, Username, Password,
                          "localhost", 3306, Database, Encoding).
 

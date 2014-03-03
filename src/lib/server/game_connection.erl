@@ -141,11 +141,11 @@ handle_cast({send_data, Data}, State=#protocol{transport = Transport, socket = S
 %%--------------------------------------------------------------------
 handle_info(timeout, State=#protocol{transport = Transport, socket = Socket}) ->
     ok = ranch:accept_ack(State#protocol.ref),
-    ok = Transport:setopts(Socket, [{active, once}, {packet, 4}]),
+    ok = Transport:setopts(Socket, [{active, once}, {packet, 0}]),
     {noreply, State};
 handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) ->
-    ok = Transport:setopts(Socket, [{active, once}]),
     io:format("CipherData: ~p~n", [CipherData]),
+    ok = Transport:setopts(Socket, [{active, once}]),
     RawData = secure:decrypt(?AES_KEY, ?AES_IVEC, CipherData),
     {RequestType, RequestBody} = utils_protocol:decode_short(RawData),
     error_logger:info_msg("RequestType: ~p, RequestBody: ~p~n", [RequestType, RequestBody]),
@@ -159,7 +159,10 @@ handle_info({tcp_closed, _Socket}, State) ->
     {stop, normal, State};
 handle_info({tcp_error, _Socket, _Msg}, State) ->
     error_logger:info_msg("DISCONNECT: tcp_error, playerID: ~p~n", [State#protocol.playerID]),
-    {stop, normal, State}.
+    {stop, normal, State};
+handle_info(Msg, State) ->
+    io:format("unhandled Msg: ~p~n", Msg),
+    {noreply, State}.
 
 handle_request({{sessions_controller, login}, Params},
                State=#protocol{transport=Transport, socket=Socket}) ->

@@ -47,7 +47,7 @@
 -record(player_state, {playerID, circulation_persist_timer}).
 
 % -define(PERSIST_DURATION, 1800000). %% 30 minutes
--define(PERSIST_DURATION, 200000). %% 30 minutes
+-define(PERSIST_DURATION, 10000). %% 30 minutes
 
 -include("include/gproc_macros.hrl").
 
