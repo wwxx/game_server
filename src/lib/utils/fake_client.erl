@@ -27,7 +27,7 @@
 -include("include/secure.hrl").
 
 
-client() ->
+login() ->
     SomeHostInNet = "localhost", % to make it runnable on one machine
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
                                  [{active, false}, {packet, 4}]),
@@ -37,17 +37,11 @@ client() ->
 
 send_request(Path, Sock, Value) ->
     Data = api_encoder:encode(Path, Value),
-    gen_tcp:send(Sock, encrypt(Data)).
+    gen_tcp:send(Sock, secure:encrypt(Data)).
 
 recv_response(Sock) ->
     {ok, Packet} = gen_tcp:recv(Sock, 0),
-    Data = decrypt(Packet),
+    Data = secure:decrypt(Packet),
     {Response, _LeftData} = api_decoder:decode(Data),
     io:format("Response: ~p~n", [Response]),
     Response.
-
-encrypt(Data) ->
-    secure:encrypt(?AES_KEY, ?AES_IVEC, Data).
-
-decrypt(Data) ->
-    secure:decrypt(?AES_KEY, ?AES_IVEC, Data).

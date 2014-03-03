@@ -53,7 +53,9 @@ data_persist(ModelName, Id, Status, _Value) when Status =:= delete ->
     db:delete_by(ModelName, uuid, Id);
 data_persist(ModelName, Id, Status, ChangedFields) when Status =:= update ->
     SelectorRecord = make_selector(ModelName, Id),
-    case player_data:find(SelectorRecord) of
+    io:format("ModelName: ~p, Id: ~p~n", [ModelName, Id]),
+    io:format("SelectorRecord: ~p~n", [SelectorRecord]),
+    case player_data:ets_find(SelectorRecord) of
         undefined ->
             ok;
         Rec ->
@@ -62,7 +64,7 @@ data_persist(ModelName, Id, Status, ChangedFields) when Status =:= update ->
     end;
 data_persist(ModelName, Id, Status, _Value) when Status =:= create ->
     SelectorRecord = make_selector(ModelName, Id),
-    case player_data:find(SelectorRecord) of
+    case player_data:ets_find(SelectorRecord) of
         undefined -> ok;
         Rec -> db:create(Rec)
     end.
@@ -70,4 +72,4 @@ data_persist(ModelName, Id, Status, _Value) when Status =:= create ->
 make_selector(ModelName, Id) ->
     EmptyFieldValues = record_mapper:get_empty_field_values(ModelName),
     Record = list_to_tuple([ModelName|EmptyFieldValues]),
-    record_mapper:set_field(Record, '_id', Id).
+    record_mapper:set_field(Record, 'uuid', Id).

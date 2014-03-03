@@ -24,7 +24,20 @@
 
 -module(secure).
 
--export([encrypt/3, decrypt/3]).
+-export([encrypt/1,
+		 decrypt/1,
+		 encrypt/3, 
+		 decrypt/3]).
+
+-include("include/secure.hrl").
+
+-spec(encrypt(BinaryString::binary()) -> Cipher::binary()).
+encrypt(BinaryString) ->
+	encrypt(?AES_KEY, ?AES_IVEC, BinaryString).
+	
+-spec(decrypt(Cipher::binary()) -> BinaryString::binary()).
+decrypt(Cipher) ->
+	decrypt(?AES_KEY, ?AES_IVEC, Cipher).
 
 %% Key: 32 byte, IVec: 16 byte
 -spec(encrypt(Key::binary()|iolist(), IVec::binary(), Text::binary()) -> Cipher::binary()).

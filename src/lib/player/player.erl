@@ -32,6 +32,7 @@
          send_data/2,
          load_data/2,
          clean_data/2,
+         save_data/1,
          player_pid/1
         ]).
 
@@ -45,7 +46,8 @@
 
 -record(player_state, {playerID, circulation_persist_timer}).
 
--define(PERSIST_DURATION, 1800000). %% 30 minutes
+% -define(PERSIST_DURATION, 1800000). %% 30 minutes
+-define(PERSIST_DURATION, 200000). %% 30 minutes
 
 -include("include/gproc_macros.hrl").
 
@@ -66,12 +68,15 @@ load_data(PlayerID, ModelName) ->
 clean_data(PlayerID, ModelName) ->
     gen_server:cast(player_pid(PlayerID), {clean_data, ModelName}).
 
+save_data(PlayerID) ->
+    gen_server:cast(player_pid(PlayerID), {save_data}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
 
 init([PlayerID]) ->
-    io:format("playerID: ~p~n", [PlayerID]),
+    io:format("Player: ~p started with Pid: ~p~n", [PlayerID, self()]),
     ?REG_PID({player, PlayerID}),
     Timer = erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
     {ok, #player_state{playerID=PlayerID, circulation_persist_timer = Timer}}.
@@ -90,13 +95,18 @@ handle_call(_Request, _From, State) ->
 handle_cast({clean_data, ModelName}, State=#player_state{playerID=PlayerID}) ->
     clean_data_from_ets(PlayerID, ModelName),
     {noreply, State};
-handle_cast(circulation_persist_data, State=#player_state{playerID=PlayerID}) ->
+handle_cast({save_data}, State=#player_state{playerID=PlayerID}) ->
     persist_player_all_models_data(PlayerID),
-    erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
+    io:format("Manually saved player's data (PlayerID: ~p)~n", [PlayerID]),
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
+handle_info(circulation_persist_data, State=#player_state{playerID=PlayerID}) ->
+    io:format("====================circulation_persist_data===================~n"),
+    persist_player_all_models_data(PlayerID),
+    erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
+    {noreply, State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -134,7 +144,7 @@ persist_model_from_ets_to_db(PlayerID, ModelName) ->
             ok;
         Changes ->
             lists:foreach(
-                fun({Id, Status, Value}) ->
+                fun([Id, Status, Value]) ->
                     data_persister:persist(ModelName, Id, Status, Value),
                     player_data:del_record_status(PlayerID, ModelName, Id)
                 end, Changes)
@@ -144,10 +154,12 @@ persist_model_from_ets_to_db(PlayerID, ModelName) ->
 persist_player_all_models_data(PlayerID) ->
     case player_data:get_player_records_status(PlayerID) of
         [] ->
+            io:format("No Records Changed!~n"),
             ok;
         Changes ->
+            io:format("Player Records Changes: ~p~n", [Changes]),
             lists:foreach(
-                fun({ModelName, Id, Status, Value}) ->
+                fun([ModelName, Id, Status, Value]) ->
                     data_persister:persist(ModelName, Id, Status, Value),
                     player_data:del_record_status(PlayerID, ModelName, Id)
                 end, Changes)

@@ -51,6 +51,10 @@
          set_loaded/3
         ]).
 
+-export([ets_update/3,
+         ets_find/1
+        ]).
+
 %% gen_server callbacks
 -export([init/1,
          handle_call/3,
@@ -99,21 +103,23 @@ create(PlayerID, Record) ->
         true ->
             NewId = uuid_factory:gen(),
             RecordWithId = record_mapper:set_field(Record, '_id', NewId),
-            ets_create(PlayerID, RecordWithId)
+            ets_create(PlayerID, RecordWithId);
+        false -> 
+            io:format("Permission deny: you are not the owner of this player~n") 
     end.
 
 delete(PlayerID, SelectorRecord) ->
     track_active(PlayerID, SelectorRecord),
     case validate_ownership(PlayerID, self()) of
-        true ->
-            ets_delete(PlayerID, SelectorRecord)
+        true -> ets_delete(PlayerID, SelectorRecord);
+        false -> io:format("Permission deny: you are not the owner of this player~n") 
     end.
 
 update(PlayerID, SelectorRecord, ModifierRecord) ->
     track_active(PlayerID, SelectorRecord),
     case validate_ownership(PlayerID, self()) of
-        true ->
-            ets_update(PlayerID, SelectorRecord, ModifierRecord)
+        true -> ets_update(PlayerID, SelectorRecord, ModifierRecord);
+        false -> io:format("Permission deny: you are not the owner of this player~n") 
     end.
 
 find(PlayerID, SelectorRecord) ->
@@ -162,7 +168,9 @@ clean(PlayerID, ModelName) ->
                 true ->
                     record_mapper:set_field(Record, user_id, PlayerID)
             end,
-            true = ets:match_delete(Tab, ets_utils:makepat(SelectorRecord))
+            true = ets:match_delete(Tab, ets_utils:makepat(SelectorRecord));
+        false -> 
+            io:format("Permission deny: you are not the owner of this player~n") 
     end.
 
 -spec(get_single_record_status(PlayerID::binary(), ModelName::atom(), Id::any()) ->
@@ -173,12 +181,14 @@ get_single_record_status(PlayerID, ModelName, Id) ->
 -spec(get_player_record_status(PlayerID::binary(), ModelName::atom()) ->
       [{Id::any(), Status::atom, Value::[atom()]|undefined}]).
 get_player_record_status(PlayerID, ModelName) ->
-    ets:match(?STATE_TAB, {{record_status, PlayerID, ModelName, '%2'}, '$3', '$4'}).
+    ets:match(?STATE_TAB, {{record_status, PlayerID, ModelName, '$1'}, {'$2', '$3'}}).
+    % ets:match(?STATE_TAB, {{record_status, PlayerID, ModelName, '$1'}, $2}).
 
 -spec(get_player_records_status(PlayerID::binary()) ->
       [{ModelName::atom(), Id::any(), Status::atom, Value::[atom()]|undefined}]).
 get_player_records_status(PlayerID) ->
-    ets:match(?STATE_TAB, {{record_status, PlayerID, '$1', '%2'}, '$3', '$4'}).
+    ets:match(?STATE_TAB, {{record_status, PlayerID, '$1', '$2'}, {'$3', '$4'}}).
+    % ets:match(?STATE_TAB, {{record_status, PlayerID, '$1', '$2'}, $3}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -214,12 +224,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 ets_create(PlayerID, Record) ->
-    {Tab, ValueList, Key, Name} = model_info(Record),
+    {Tab, ValueList, Name, Key} = model_info(Record),
     put_record_status(PlayerID, Name, Key, create, undefined),
     true = ets:insert_new(Tab, ValueList).
 
 ets_delete(PlayerID, SelectorRecord) ->
-    {Tab, _ValueList, Key, Name} = model_info(SelectorRecord),
+    {Tab, _ValueList, Name, Key} = model_info(SelectorRecord),
     if
         is_binary(Key) andalso Key =/= <<"">> ->
             put_record_status(PlayerID, Name, Key, delete, undefined),
@@ -238,9 +248,10 @@ ets_delete(PlayerID, SelectorRecord) ->
     true.
 
 ets_update(PlayerID, SelectorRecord, ModifierRecord) ->
-    {Tab, _ValueList, Key, Name} = model_info(SelectorRecord),
+    {Tab, _ValueList, Name, Key} = model_info(SelectorRecord),
     ElementSpec = ets_utils:make_element_spec(ModifierRecord),
-    Fields = [Field || {Field, _Value} <- ElementSpec],
+    RecordFields = record_mapper:get_mapping(Name),
+    Fields = [lists:nth(FieldPosition - 1, RecordFields) || {FieldPosition, _Value} <- ElementSpec],
     case  id_present(Key) of
         true ->
             put_record_status_update(PlayerID, Name, Key, update, Fields),
@@ -270,6 +281,7 @@ ets_find(SelectorRecord) ->
             end;
         false ->
             Pat = ets_utils:makepat(SelectorRecord),
+            io:format("Pat: ~p~n", [Pat]),
             ets:match_object(Tab, Pat),
             case ets:match_object(Tab, Pat, 1) of
                 {[Rec], _Continuation} ->
@@ -342,14 +354,21 @@ get_record_status(PlayerID, ModelName, Id) ->
     end.
 
 put_record_status_update(PlayerID, ModelName, Id, update, Fields) ->
+    io:format("put_record_status_update: PlayerID: ~p, ModelName: ~p, Id: ~p, Fields: ~p~n", [PlayerID, ModelName, Id, Fields]),
     case get_record_status(PlayerID, ModelName, Id) of
         undefined ->
             put_record_status(PlayerID, ModelName, Id, update, Fields);
         {update, ChangedFields} ->
+            io:format("ChangedFields: ~p~n", [ChangedFields]),
             Set = gb_sets:from_list(ChangedFields),
-            NewFields = [Field || Field <- ChangedFields,
-                                  not gb_sets:is_element(Field, Set)],
-            put_record_status(PlayerID, ModelName, Id, update, [NewFields|ChangedFields])
+            NewFields = [Field || Field <- Fields, not gb_sets:is_element(Field, Set)],
+            case NewFields =:= [] of
+                true -> 
+                    ok;
+                false ->
+                    NewChangedFields = lists:flatten([NewFields|ChangedFields]),
+                    put_record_status(PlayerID, ModelName, Id, update, NewChangedFields)
+            end
     end.
 
 %% Only can be invoked by the owner

@@ -191,7 +191,9 @@ handle_request({Path, Params}, State=#protocol{playerID = PlayerID, transport=Tr
 %%--------------------------------------------------------------------
 terminate(_Reason, _State=#protocol{playerID=PlayerID}) ->
     case PlayerID =:= undefined of
-        false -> ?UNREG({connection, PlayerID});
+        false -> 
+            io:format("unreg player id: ~p~n", [PlayerID]),
+            ?UNREG({connection, PlayerID});
         true -> ok
     end,
     ok.
