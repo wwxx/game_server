@@ -7,3 +7,4 @@ log
 *@nohost
 .DS_Store
 .eunit
+rel/game_server
