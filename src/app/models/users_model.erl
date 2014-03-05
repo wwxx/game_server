@@ -36,8 +36,10 @@ info([User]) ->
 get_player_id(Udid) ->
     case db:find_by(users, udid, Udid) of
         {ok, [Rec]} ->
+            io:format("Found user with udid: ~p~n", [Udid]),
             Rec#users.uuid;
         {ok, []} ->
+            io:format("Create new user with udid: ~p~n", [Udid]),
             create_new_user(Udid)
     end.
 
@@ -50,7 +52,7 @@ create_new_user(Udid) ->
     db:create(#users{
         uuid=Uuid,
         udid=Udid,
-        name="Guest",
+        name=list_to_binary(["Guest_", Udid]),
         gem=0,
         paid=0,
         created_at = time_utils:datetime(),
