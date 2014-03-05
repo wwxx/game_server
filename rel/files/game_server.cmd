@@ -1,6 +1,6 @@
 @setlocal
 
-@set node_name=pusher
+@set node_name=game_server
 
 @rem Get the absolute path to the parent directory,
 @rem which is assumed to be the node root.

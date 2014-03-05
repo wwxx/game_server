@@ -40,17 +40,20 @@
 
 %% before start game_server
 before_start() ->
+    io:format("Game Server Life Cycle Callback: before_start!~n"),
     %% add your custom initialize at here
     ok.
 
 %% after start game_server
 after_start() ->
+    io:format("Game Server Life Cycle Callback: after_start!~n"),
     %% add your custom initialize at here
     model_mapping:load(),
     game_numerical:load_data(),
     ok.
 
 before_stop() ->
+    io:format("Game Server Life Cycle Callback: before_stop!~n"),
     %% shutdown tcp server
     supervisor:terminate_child(game_server_sup, {ranch_listener_sup, ranch_tcp_listener}),
     supervisor:terminate_child(game_server_sup, ranch_sup),
@@ -61,6 +64,7 @@ before_stop() ->
 	ok.
 
 after_stop() ->
+    io:format("Game Server Life Cycle Callback: after_stop!~n"),
     %% add your custom stopping at here
 	ok.
 

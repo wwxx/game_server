@@ -26,10 +26,30 @@
 -behaviour(application).
 
 -export([start/2]).
--export([stop/1]).
+-export([prep_stop/1, stop/1]).
 
 start(_Type, _Args) ->
-	game_server_sup:start_link().
+	io:format("Game Server Starting~n"),
+    ensure_started(crypto),
+    ok = lager:start(), %% Logger
+    ensure_started(gproc), %% Process dictionary
+    ensure_started(emysql), %% Mysql
+    ok = life_cycle:before_start(),
+	R = game_server_sup:start_link(),
+    ok = life_cycle:after_start(),
+    R.
+
+prep_stop(State) ->
+	life_cycle:before_stop(),
+	State.
 
 stop(_State) ->
+	life_cycle:after_stop(),
 	ok.
+
+-spec ensure_started(module()) -> ok.
+ensure_started(App) ->
+    case application:start(App) of
+        ok -> ok;
+        {error, {already_started, App}} -> ok
+    end.

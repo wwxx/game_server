@@ -31,22 +31,28 @@
 
 start() ->
     io:format("Game Server Starting~n"),
-    % ok = application:start(crypto),
-    application:start(crypto),
-    ok = lager:start(), %% Logger
-    ok = application:start(sync), %% Hot reload code
-    ok = application:start(gproc), %% Process dictionary
-    ok = application:start(emysql), %% Mysql
-    ok = life_cycle:before_start(),
-    ok = application:start(game_server), %% Game Server
-    ok = life_cycle:after_start().
+    % ensure_started(crypto),
+    % ok = lager:start(), %% Logger
+    ensure_started(sync), %% Hot reload code
+    % ensure_started(gproc), %% Process dictionary
+    % ensure_started(emysql), %% Mysql
+    % ok = life_cycle:before_start(),
+    ok = application:start(game_server). %% Game Server
+    % ok = life_cycle:after_start().
 
 stop() ->
 	io:format("Game Server Stopping~n"),
-	ok = life_cycle:before_stop(),
+	% ok = life_cycle:before_stop(),
 	application:stop(game_server),
-	ok = life_cycle:after_stop(),
+	% ok = life_cycle:after_stop(),
 	application:stop(crypto),
 	application:stop(sync),
 	application:stop(gproc),
 	application:stop(emysql).
+
+-spec ensure_started(module()) -> ok.
+ensure_started(App) ->
+    case application:start(App) of
+        ok -> ok;
+        {error, {already_started, App}} -> ok
+    end.
