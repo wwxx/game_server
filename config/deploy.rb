@@ -1,17 +1,15 @@
 @target = :dev
 
 @servers = {
-  g001: "106.186.20.50",
-  cn001: "121.199.57.143"
 }
 
-@dev_server = "42.96.138.143"
+@dev_server = "115.29.14.9"
 
 set :application,   "erlangService"
-set :repository,    "git@42.96.138.143:/data/git/erlangServer.git"
+set :repository,    "git@115.29.14.9:/home/git/server_001.git"
 set :scm,           :git
 set :keep_releases, 5
-set :deploy_to,     "/home/ubuntu/www/erlangService"
+set :deploy_to,     "/home/ubuntu/www/game_server"
 set :runner,        "ubuntu"
 set :branch,        @git_branch
 set :use_sudo,      false
@@ -52,22 +50,23 @@ after "deploy:create_symlink", "deploy:install"
 
 namespace :deploy do
  task :install do
-   run "cd #{current_path}/pusher && rebar clean && ./install.sh && rebar generate"
+   ruby "cd #{current_path} && rebar clean && rebar compile"
+ end
+
+ task :setup_server do
+   run "cd #{current_path} && ./install.sh"
  end
 
  task :start do
-   run_silent "cd #{current_path}/pusher && ./rel/pusher/bin/pusher start"
+   run "cd #{current_path} && ./start"
  end
 
  task :stop do
-   run_silent "cd #{current_path}/pusher && ./rel/pusher/bin/pusher stop"
+   run "cd #{current_path} && ./stop"
  end
 
- task :restart, :roles => :app, :except => { :no_release => true } do
-   #run_silent "#{current_path}/pusher/rel/pusher/bin/pusher stop"
-   #run_silent "#{current_path}/pusher/rel/pusher/bin/pusher start"
-   #run_silent "#{current_path}/pusher/rel/pusher/bin/pusher restart"
- end
+ #task :restart, :roles => :app, :except => { :no_release => true } do
+ #end
 end
 
 def run_silent(command)
