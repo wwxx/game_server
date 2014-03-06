@@ -51,7 +51,7 @@ after "deploy:create_symlink", "deploy:install"
 
 namespace :deploy do
  task :install do
-   ruby "cd #{current_path} && rebar clean && rebar compile"
+   #run "cd #{current_path} && rebar clean && rebar compile"
  end
 
  task :setup_server do
