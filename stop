@@ -1,0 +1,7 @@
+#!/usr/bin/env escript
+%% -*- erlang -*-
+%%! -name ctl
+
+main([N]) ->
+     Res = rpc:call(list_to_atom(N), init, stop, []),
+     io:fwrite("==> ~p~n", [Res]).
