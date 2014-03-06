@@ -23,16 +23,17 @@ remotes.each do |name|
 	`git remote remove #{name}` unless SERVERS.include?(name)
 end
 
-cmd 		= ARGV[0]
+cmd 	= ARGV[0]
 branch 	= ARGV[1] || 'master'
 
 if cmd == 'setup'
 	scope 	= (ARGV[1] || 'game_server_debug').to_sym
 elsif cmd == 'deploy'
 	scope 	= (ARGV[2] || 'game_server_debug').to_sym
-elsif cmd == 'help'
-	puts "Usage: #{__FILE__} setup [scope]"
-	puts "Usage: #{__FILE__} deploy [branch, [scope]]"
+else
+	puts "USAGE:"
+	puts "	Setup remotes with scope: #{__FILE__} setup [scope]"
+	puts "	Deploy remotes with branch and scope: #{__FILE__} deploy [branch, [scope]]"
 end
 
 # Select targets by scope.
