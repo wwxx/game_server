@@ -6,7 +6,8 @@
 @dev_server = "115.29.14.9"
 
 set :application,   "erlangService"
-set :repository,    "git@115.29.14.9:/home/git/server_001.git"
+#set :repository,    "git@115.29.14.9:/home/git/server_001.git"
+set :repository,    "git@github.com:mafei198/game_server.git"
 set :scm,           :git
 set :keep_releases, 5
 set :deploy_to,     "/home/ubuntu/www/game_server"
