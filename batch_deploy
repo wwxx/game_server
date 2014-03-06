@@ -1,0 +1,44 @@
+#!/usr/bin/env ruby
+
+SERVERS = {
+	game_server_debug: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server",
+	game_server_1: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_1",
+	game_server_2: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_2",
+	game_server_3: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_3",
+	game_server_4: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_4"
+}
+
+remotes = `git remote`.split("\n").map(&:to_sym)
+
+# Add the missing servers to git remote
+SERVERS.each do |name, addr|
+	`git remote add #{name} "#{addr}"` unless remotes.include?(name)
+end
+
+# Remove the unused git remotes
+remotes.each do |name|
+	next if name == :origin
+	`git remote remove #{name}` unless SERVERS.include?(name)
+end
+
+cmd 		= 'deploy'
+branch 	= 'master'
+targets = SERVERS.keys
+
+ts = targets.map do |target|
+	Thread.new do 
+		if cmd == 'deploy'
+			puts "------------>Begin to deploy #{target}"
+			`git push #{target} #{branch}` 
+			puts "<-----------Finished to deploy #{target}"
+		elsif cmd == 'setup'
+			puts "------------>Begin to deploy #{target}"
+			`git deploy setup -r #{target}` 
+			puts "<-----------Finished to deploy #{target}"
+		end
+	end
+end
+
+
+ts.each(&:join)
+
