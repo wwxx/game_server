@@ -28,7 +28,7 @@
 
 
 login() ->
-    io:format("--------------Fake Client called login!~n"),
+    io:format("Fake Client called login!~n"),
     SomeHostInNet = "localhost", % to make it runnable on one machine
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
                                  [{active, false}, {packet, 2}]),
