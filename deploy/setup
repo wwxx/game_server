@@ -1,4 +1,8 @@
 #!/bin/sh
 
-echo "Setup Game Server"
-./install.sh
+echo "==============Begin To Setup Game Server==============="
+bundle install
+rake setup
+./rebar get-deps
+./rebar compile
+echo "==============Finished To Setup Game Server==============="
