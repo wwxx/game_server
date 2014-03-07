@@ -1,4 +1,4 @@
 #!/bin/sh
 
-# Setup Game Server
+echo "Setup Game Server"
 ./install.sh
