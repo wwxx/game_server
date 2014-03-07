@@ -3,4 +3,4 @@
 # This script is invoked on first push.
 # You can do some initialize in this file.
 
-`./install.sh`
+`/bin/sh ./install.sh`
