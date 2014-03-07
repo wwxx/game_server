@@ -1,16 +1,21 @@
 Erlang Game Server
 ==============
 
-To compile this server you need rebar in your PATH.
+### Requirements
+1. Erlang R16B03
+2. Ruby   1.9.3
+3. Rails  3.2.9
 
-Type the following command:
+At this project's root dir type the following command to setup:
+
 ```
-$ ./install
+$ ./cmd_install
 ```
 
-You can then start the Erlang node with the following command:
+And then you can start the Game Server with the following command:
+
 ```
-./start
+./cmd_start
 ```
 
 ## License
