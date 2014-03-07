@@ -1,3 +1,4 @@
 #!/bin/sh
 touch tmp/restart.txt
+puts "restarting Server------------------"
 echo "restarting Passenger app"
