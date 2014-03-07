@@ -55,6 +55,7 @@ unless ['setup', 'deploy', 'rollback'].include?(cmd)
 	puts "USAGE:"
 	puts "	Setup remotes with scope: #{__FILE__} setup [scope]"
 	puts "	Deploy remotes with branch and scope: #{__FILE__} deploy [scope, [branch]]"
+	puts "	Rollback remotes with scope to previous revision: #{__FILE__} rollback [scope]"
 end
 
 # Select targets by scope.
