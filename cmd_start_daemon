@@ -1,3 +1,5 @@
+#!/bin/sh
+
 ## The MIT License (MIT)
 ##
 ## Copyright (c) 2014-2024
@@ -21,6 +23,6 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
-
-#!/bin/sh
-rebar compile eunit skip_deps=true
+erl -pa ebin deps/*/ebin -config game_server.config -s game_server \
+  -sname game_server -setcookie server_local_cookie \
+  -detached -eval "io:format(\"Game Server successfully started!~n\")."

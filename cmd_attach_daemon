@@ -1,3 +1,5 @@
+#!/bin/sh
+
 ## The MIT License (MIT)
 ##
 ## Copyright (c) 2014-2024
@@ -21,8 +23,5 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
-
-bundle install
-rake setup
-./rebar get-deps
-./rebar compile
+host=`hostname -s`
+erl -sname console -remsh "game_server@$host" -setcookie server_local_cookie

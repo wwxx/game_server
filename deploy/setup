@@ -5,4 +5,5 @@ bundle install
 rake setup
 ./rebar get-deps
 ./rebar compile
+./start_on_daemon
 echo "==============Finished To Setup Game Server==============="
