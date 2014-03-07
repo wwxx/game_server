@@ -24,13 +24,10 @@ remotes.each do |name|
 end
 
 cmd 	= ARGV[0]
-branch 	= ARGV[1] || 'master'
+scope   = (ARGV[1] || 'game_server_debug').to_sym
+branch 	= ARGV[2] || 'master'
 
-if cmd == 'setup'
-	scope 	= (ARGV[1] || 'game_server_debug').to_sym
-elsif cmd == 'deploy'
-	scope 	= (ARGV[2] || 'game_server_debug').to_sym
-else
+unless ['setup', 'deploy'].include?(cmd)
 	puts "USAGE:"
 	puts "	Setup remotes with scope: #{__FILE__} setup [scope]"
 	puts "	Deploy remotes with branch and scope: #{__FILE__} deploy [branch, [scope]]"
