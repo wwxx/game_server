@@ -29,7 +29,6 @@
 -export([prep_stop/1, stop/1]).
 
 start(_Type, _Args) ->
-	io:format("Game Server Starting~n"),
     ensure_started(crypto),
     ok = lager:start(), %% Logger
     ensure_started(gproc), %% Process dictionary

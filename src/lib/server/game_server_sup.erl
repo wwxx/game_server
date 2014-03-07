@@ -38,7 +38,6 @@
 
 -spec start_link() -> {ok, pid()}.
 start_link() ->
-    io:format("pusher_sup start_link"),
 	supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %% supervisor.
