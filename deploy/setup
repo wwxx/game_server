@@ -1,4 +1,0 @@
-#!/usr/bin/env ruby
-
-raise 'error test'
-puts "------------setup"
