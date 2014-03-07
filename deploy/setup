@@ -3,4 +3,6 @@
 # This script is invoked on first push.
 # You can do some initialize in this file.
 
+puts "#{File.expand_path("./")}"
+puts "#{File.expand_path("../install.sh")}"
 `/bin/sh ../install.sh`
