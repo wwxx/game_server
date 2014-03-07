@@ -24,10 +24,7 @@
 ## SOFTWARE.
 
 
-echo "==============Begin To Setup Game Server==============="
-bundle install
-rake setup
-./rebar get-deps
-./rebar compile
-./start_on_daemon
-echo "==============Finished To Setup Game Server==============="
+echo ">>>>>>>>>>>>Setup Game Server>>>>>>>>>>>>>>>>"
+./cmd_install
+echo ">>>>>>>>>>>>Start Daemon Server>>>>>>>>>>>>>>"
+./cmd_start_daemon

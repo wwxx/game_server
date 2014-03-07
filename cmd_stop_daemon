@@ -23,10 +23,7 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
+host=`hostname -s`
 
-# NOTE: uncomment following sentences when deploy production server!
-#       and remember to don't start sync application.
-#
-# ./cmd_stop_daemon
-# ./cmd_install
-# ./cmd_start_daemon
+echo "Stop node: game_server@$host"
+./stop "game_server@$host"

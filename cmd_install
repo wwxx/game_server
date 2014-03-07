@@ -24,7 +24,7 @@
 ## SOFTWARE.
 
 
-bundle install
-rake setup
+RAILS_ENV=production bundle install
+RAILS_ENV=production rake setup
 ./rebar get-deps
 ./rebar compile

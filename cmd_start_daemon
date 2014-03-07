@@ -23,6 +23,7 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
+echo "Start daemon server!"
 erl -pa ebin deps/*/ebin -config game_server.config -s game_server \
   -sname game_server -setcookie server_local_cookie \
   -detached -eval "io:format(\"Game Server successfully started!~n\")."

@@ -1,7 +1,7 @@
 #!/usr/bin/env escript
 %% -*- erlang -*-
-%%! -name ctl
+%%! -sname console -setcookie server_local_cookie
 
-main([N]) ->
-     Res = rpc:call(list_to_atom(N), init, stop, []),
+main([Node]) ->
+     Res = rpc:call(list_to_atom(Node), init, stop, []),
      io:fwrite("==> ~p~n", [Res]).
