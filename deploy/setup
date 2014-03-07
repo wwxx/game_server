@@ -1,3 +1,4 @@
 #!/usr/bin/env ruby
 
 puts "setup in ruby script"
+touch setup_test.txt
