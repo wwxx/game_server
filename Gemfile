@@ -10,5 +10,5 @@ gem "roo", '1.13.2'
 # Deploy with Capistrano
 
 group :develop do
-  #gem 'git-deploy', '0.6.1'
+  gem 'git-deploy', '0.6.1'
 end
