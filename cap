@@ -51,7 +51,7 @@ cmd 	= ARGV[0]
 scope   = (ARGV[1] || 'game_server_debug').to_sym
 branch 	= ARGV[2] || 'master'
 
-unless ['setup', 'deploy'].include?(cmd)
+unless ['setup', 'deploy', 'rollback'].include?(cmd)
 	puts "USAGE:"
 	puts "	Setup remotes with scope: #{__FILE__} setup [scope]"
 	puts "	Deploy remotes with branch and scope: #{__FILE__} deploy [scope, [branch]]"
@@ -82,6 +82,10 @@ cmd and targets and targets.map do |target|
 			puts "------------>Begin to SETUP #{target}"
 			`git deploy setup -r #{target}` 
 			puts "<-----------Finished to SETUP #{target}"
+		elsif cmd == 'rollback'
+			puts "------------>Begin to ROLLBACK #{target}"
+			`git deploy rollback -r #{target}`
+			puts "<-----------Finished to ROLLBACK #{target}"
 		else
 			raise "Invalid cmd: #{cmd}"
 		end
