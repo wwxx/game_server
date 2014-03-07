@@ -30,7 +30,7 @@ branch 	= ARGV[2] || 'master'
 unless ['setup', 'deploy'].include?(cmd)
 	puts "USAGE:"
 	puts "	Setup remotes with scope: #{__FILE__} setup [scope]"
-	puts "	Deploy remotes with branch and scope: #{__FILE__} deploy [branch, [scope]]"
+	puts "	Deploy remotes with branch and scope: #{__FILE__} deploy [scope, [branch]]"
 end
 
 # Select targets by scope.
@@ -48,7 +48,7 @@ elsif scope == :all
 end
 
 # Operate multi server with threads.
-targets and targets.map do |target|
+cmd and targets and targets.map do |target|
 	Thread.new do 
 		if cmd == 'deploy'
 			puts "------------>Begin to DEPLOY #{target}"
