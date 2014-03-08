@@ -30,6 +30,11 @@ current_time() ->
     {MegaSecs, Secs, _MicroSecs} = os:timestamp(),
     MegaSecs * 1000000 + Secs.
 
+current_time_to_now(CurrentTime) ->
+	MegaSecs = CurrentTime div 1000000,
+	Secs = CurrentTime rem 1000000,
+	{MegaSecs, Secs, 0}.
+
 time_to_seconds(MegaSecs, Secs, MicroSecs) ->
     MegaSecs * 1000000 + Secs.
 

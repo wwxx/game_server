@@ -37,6 +37,7 @@
          delete/2,
          update/3,
          find/2,
+         ets_find/1,
          where/2,
          count/2,
          table/1,
@@ -99,7 +100,8 @@ create(PlayerID, Record) ->
     case validate_ownership(PlayerID, self()) of
         true ->
             NewId = uuid_factory:gen(),
-            RecordWithId = record_mapper:set_field(Record, '_id', NewId),
+            RecordWithId = record_mapper:set_field(Record, 'uuid', NewId),
+            io:format("RecordWithId: ~p~n", [RecordWithId]),
             ets_create(PlayerID, RecordWithId);
         false -> 
             io:format("Permission deny: you are not the owner of this player~n") 
@@ -232,9 +234,10 @@ code_change(_OldVsn, State, _Extra) ->
 ets_create(PlayerID, Record) ->
     {Tab, ValueList, Name, Key} = model_info(Record),
     put_record_status(PlayerID, Name, Key, create, undefined),
-    true = ets:insert_new(Tab, ValueList).
+    true = ets:insert_new(Tab, Record).
 
 ets_delete(PlayerID, SelectorRecord) ->
+    io:format("PlayerID: ~p, SelectorRecord: ~p~n", [PlayerID, SelectorRecord]),
     {Tab, _ValueList, Name, Key} = model_info(SelectorRecord),
     if
         is_binary(Key) andalso Key =/= <<"">> ->
@@ -243,6 +246,7 @@ ets_delete(PlayerID, SelectorRecord) ->
         true ->
             %true = ets:match_delete(Tab, ets_utils:makepat(SelectorRecord))
             Recs = ets_where(SelectorRecord),
+            io:format("ets_delete: Recs: ~p~n", [Recs]),
             lists:foreach(
                 fun(Rec) ->
                     RecValues = tuple_to_list(Rec),

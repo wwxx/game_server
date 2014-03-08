@@ -25,6 +25,7 @@
 -module(game_server_tests).
 -include_lib("eunit/include/eunit.hrl").
 -include ("include/secure.hrl").
+-include ("include/db_schema.hrl").
 
 -define(setup(F), {setup, fun start/0, fun stop/1, F}).
 
@@ -49,6 +50,7 @@ stop(_Pid) ->
 %%%%%%%%%%%%%%%%%%%%
 tests(_Pid) ->
     PlayerID = player_data:get_player_id(<<"eunit_test_udid">>),
+    fake_client:login(),
     [?_assert(erlang:is_binary(PlayerID)),
      ?_assertNotEqual(PlayerID, <<"">>)
     ].
