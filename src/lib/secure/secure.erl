@@ -26,7 +26,7 @@
 
 -export([encrypt/1,
 		 decrypt/1,
-		 encrypt/3, 
+		 encrypt/3,
 		 decrypt/3]).
 
 -include("include/secure.hrl").
@@ -34,7 +34,7 @@
 -spec(encrypt(BinaryString::binary()) -> Cipher::binary()).
 encrypt(BinaryString) ->
 	encrypt(?AES_KEY, ?AES_IVEC, BinaryString).
-	
+
 -spec(decrypt(Cipher::binary()) -> BinaryString::binary()).
 decrypt(Cipher) ->
 	decrypt(?AES_KEY, ?AES_IVEC, Cipher).
@@ -42,12 +42,10 @@ decrypt(Cipher) ->
 %% Key: 32 byte, IVec: 16 byte
 -spec(encrypt(Key::binary()|iolist(), IVec::binary(), Text::binary()) -> Cipher::binary()).
 encrypt(Key, IVec, Text) ->
-    io:format("Data Will Be Encrypted: ~p~n", [Text]),
     PadedText = pkcs7:pad(Text),
     crypto:block_encrypt(aes_cbc256, Key, IVec, PadedText).
 
 -spec(decrypt(Key::binary()|iolist(), IVec::binary(), Cipher::binary()) -> Text::binary()).
 decrypt(Key, IVec, Cipher) ->
     Text = crypto:block_decrypt(aes_cbc256, Key, IVec, Cipher),
-    io:format("Decrypted Result: ~p~n", [Text]),
     pkcs7:unpad(Text).

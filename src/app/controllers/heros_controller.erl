@@ -8,8 +8,7 @@
 
 info(PlayerID, Params) ->
     HeroId = proplists:get_value(id, Params),
-    io:format("requested hero info~n"),
-    case player_data:find(PlayerID, HeroId) of
+    case player_data:find(PlayerID, #heros{uuid = HeroId}) of
         undefined ->
             api_encoder:encode(error, {?ERROR_HERO_NOT_FOUND, <<"">>});
         Hero ->
@@ -17,8 +16,6 @@ info(PlayerID, Params) ->
     end.
 
 infos(PlayerID, _Params) ->
-    io:format("requested heros info~n"),
-    io:format("PlayerID: ~p~n", [PlayerID]),
     case  player_data:where(PlayerID, #heros{user_id = PlayerID}) of
       [] ->
           api_encoder:encode(heros_info, {[]});

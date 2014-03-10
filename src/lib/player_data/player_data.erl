@@ -104,22 +104,22 @@ create(PlayerID, Record) ->
             RecordWithId = record_mapper:set_field(Record, 'uuid', NewId),
             io:format("RecordWithId: ~p~n", [RecordWithId]),
             ets_create(PlayerID, RecordWithId);
-        false -> 
-            io:format("Permission deny: you are not the owner of this player~n") 
+        false ->
+            io:format("Permission deny: you are not the owner of this player~n")
     end.
 
 delete(PlayerID, SelectorRecord) ->
     track_active(PlayerID, SelectorRecord),
     case validate_ownership(PlayerID, self()) of
         true -> ets_delete(PlayerID, SelectorRecord);
-        false -> io:format("Permission deny: you are not the owner of this player~n") 
+        false -> io:format("Permission deny: you are not the owner of this player~n")
     end.
 
 update(PlayerID, SelectorRecord, ModifierRecord) ->
     track_active(PlayerID, SelectorRecord),
     case validate_ownership(PlayerID, self()) of
         true -> ets_update(PlayerID, SelectorRecord, ModifierRecord);
-        false -> io:format("Permission deny: you are not the owner of this player~n") 
+        false -> io:format("Permission deny: you are not the owner of this player~n")
     end.
 
 find(PlayerID, SelectorRecord) ->
@@ -170,8 +170,8 @@ clean(PlayerID, ModelName) ->
                     record_mapper:set_field(Record, user_id, PlayerID)
             end,
             true = ets:match_delete(Tab, ets_utils:makepat(SelectorRecord));
-        false -> 
-            io:format("Permission deny: you are not the owner of this player~n") 
+        false ->
+            io:format("Permission deny: you are not the owner of this player~n")
     end.
 
 -spec(get_single_record_status(PlayerID::binary(), ModelName::atom(), Id::any()) ->
@@ -312,7 +312,7 @@ ets_where(SelectorRecord) ->
 
 ets_count(SelectorRecord) ->
     {Tab, _, _, _} = model_info(SelectorRecord),
-    ets:select_count(Tab, ets_utils:makepat(SelectorRecord)).
+    ets:select_count(Tab, [{ets_utils:makepat(SelectorRecord), [], [true]}]).
 
 id_present(Key) when is_binary(Key) andalso Key =/= <<"">> ->
     true;
@@ -381,7 +381,7 @@ put_record_status_update(PlayerID, ModelName, Id, update, Fields) ->
             Set = gb_sets:from_list(ChangedFields),
             NewFields = [Field || Field <- Fields, not gb_sets:is_element(Field, Set)],
             case NewFields =:= [] of
-                true -> 
+                true ->
                     ok;
                 false ->
                     NewChangedFields = lists:flatten([NewFields|ChangedFields]),

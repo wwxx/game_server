@@ -36,6 +36,7 @@
 -export ([start_link/0,
           create/1,
           delete_by/3,
+          delete_all/1,
           update_by/3,
           find_by/3,
           all/1,
@@ -67,6 +68,9 @@ create(Record) ->
 
 delete_by(TableName, Field, Value) ->
     execute(sqerl:sql({delete, TableName, {Field, '=', Value}})).
+
+delete_all(TableName) ->
+    execute(sqerl:sql({delete, TableName})).
 
 update_by(Field, Value, Record) ->
     [TableName|Values] = tuple_to_list(Record),

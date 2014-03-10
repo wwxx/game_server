@@ -33,18 +33,18 @@ start(_Type, _Args) ->
     ok = lager:start(), %% Logger
     ensure_started(gproc), %% Process dictionary
     ensure_started(emysql), %% Mysql
-    ok = life_cycle:before_start(),
-	R = game_server_sup:start_link(),
-    ok = life_cycle:after_start(),
+    life_cycle:before_start(),
+    R = game_server_sup:start_link(),
+    life_cycle:after_start(),
     R.
 
 prep_stop(State) ->
-	life_cycle:before_stop(),
-	State.
+    life_cycle:before_stop(),
+    State.
 
 stop(_State) ->
-	life_cycle:after_stop(),
-	ok.
+    life_cycle:after_stop(),
+    ok.
 
 -spec ensure_started(module()) -> ok.
 ensure_started(App) ->

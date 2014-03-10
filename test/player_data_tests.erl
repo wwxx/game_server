@@ -27,26 +27,24 @@
 -include ("include/db_schema.hrl").
 
 -define(setup(F), {setup, fun start/0, fun stop/1, F}).
--define (UDID, <<"eunit_self_udid">>). 
+-define (UDID, <<"eunit_self_udid">>).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% TESTS DESCRIPTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 player_data_api_test_() ->
     % [{"Player Data API test.", ?setup(fun tests/1)}].
-    {foreach, 
+    {foreach,
      fun start/0,
      fun stop/1,
-     [
-      fun true_test/1
-      % fun create_test/1,
-      % fun delete_test/1
-      % fun update_test/1,
-      % fun search_test/1,
-      % fun count_test/1,
-      % fun clean_test/1,
-      % fun record_status_test/1,
-      % fun data_persist_test/1
+     [fun create_test/1,
+      fun delete_test/1,
+      fun update_test/1,
+      fun search_test/1,
+      fun count_test/1
+      %fun clean_test/1
+      %fun record_status_test/1,
+      %fun data_persist_test/1
      ]}.
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -56,19 +54,17 @@ start() ->
     game_server:start().
 
 stop(_Pid) ->
-	game_server:stop().
+    game_server:stop().
 
 %%%%%%%%%%%%%%%%%%%%
 %%% ACTUAL TESTS %%%
 %%%%%%%%%%%%%%%%%%%%
-true_test(_Pid) ->
-    [?_assert(true)].
-
 create_test(_Pid) ->
     NewUdid = <<"new_user_udid">>,
     NewName = <<"new_user_name">>,
     PlayerID = player_data:get_player_id(?UDID),
 
+    player_data:find(PlayerID, #users{udid = NewUdid}),
     player:proxy(PlayerID, player_data, delete, [PlayerID, #users{udid = NewUdid, name = NewName}]),
     player:proxy(PlayerID, player_data, create, [PlayerID, #users{udid = NewUdid}]),
 
@@ -80,33 +76,47 @@ create_test(_Pid) ->
 
 delete_test(_Pid) ->
     PlayerID = player_data:get_player_id(?UDID),
+    player_data:find(PlayerID, #users{udid = ?UDID}), %% load user from db to ets
     player:proxy(PlayerID, player_data, delete, [PlayerID, #users{udid = ?UDID}]),
-    R = player_data:find(PlayerID, #users{udid = ?UDID}),
+    NewUser = player_data:find(PlayerID, #users{udid = ?UDID}),
     player_data:flush_to_mysql(),
     {ok, Users} = db:find_by(users, udid, ?UDID),
-    [?_assertEqual(R, undefined),
+    [?_assertEqual(NewUser, undefined),
      ?_assertEqual(Users, [])].
-    
 
-tests(_Pid) ->
-    Udid = <<"eunit_test_udid">>,
-    NewUdid = <<"new_user_udid">>,
-    NewName = <<"new_user_name">>,
-    PlayerID = player_data:get_player_id(Udid),
+update_test(_Pid) ->
+    PlayerID = player_data:get_player_id(?UDID),
+    User = player_data:find(PlayerID, #users{udid = ?UDID}), %% load user from db to ets
+    player:proxy(PlayerID, player_data, update, [PlayerID, #users{udid = ?UDID}, #users{name = <<"new savin test">>}]),
+    NewUser = player_data:find(PlayerID, #users{udid = ?UDID}),
+    [?_assertEqual(NewUser#users.name, <<"new savin test">>),
+     ?_assertNotEqual(User#users.name, NewUser#users.name)].
 
-    player:proxy(PlayerID, player_data, delete, [PlayerID, #users{udid = NewUdid, name = NewName}]),
-    player:proxy(PlayerID, player_data, create, [PlayerID, #users{udid = NewUdid}]),
-
-    R = player_data:find(PlayerID, #users{udid = NewUdid}),
-
-    [?_assert(erlang:is_binary(PlayerID)),
-     ?_assertEqual(R#users.udid, NewUdid),
-     ?_assertNotEqual(PlayerID, <<"">>)
+search_test(_Pid) ->
+    PlayerID = player_data:get_player_id(?UDID),
+    Users = player_data:where(PlayerID, #users{udid = ?UDID}),
+    User  = player_data:find(PlayerID, #users{udid = ?UDID}),
+    [?_assertEqual(Users, [User]),
+     ?_assertNotEqual(Users, []),
+     ?_assertNotEqual(User, undefined)
     ].
 
-% find_test() ->
-%     PlayerID = player_data:get_player_id(Udid),
-%     ?_
+count_test(_Pid) ->
+    db:delete_all(users),
+    PlayerID = player_data:get_player_id(?UDID),
+    NewUdid = <<"new_user_udid">>,
+    C1 = player_data:count(PlayerID, #users{udid = ?UDID}),
+    player:proxy(PlayerID, player_data, create, [PlayerID, #users{udid = NewUdid}]),
+    C2 = player_data:count(PlayerID, #users{}),
+    player:proxy(PlayerID, player_data, delete, [PlayerID, #users{udid = NewUdid}]),
+    C3 = player_data:count(PlayerID, #users{}),
+    [?_assertEqual(C1, 1),
+     ?_assertEqual(C2, 2),
+     ?_assertEqual(C3, 1)].
+
+%clean_test(_Pid) ->
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%

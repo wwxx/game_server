@@ -25,11 +25,11 @@
 
 
 SERVERS = {
-	game_server_debug: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server", locale: 'en'},
-	game_server_1: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_1", locale: 'en'},
-	game_server_2: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_2", locale: 'en'},
-	game_server_3: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_3", locale: 'en'},
-	game_server_4: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_4", locale: 'en'}
+	game_server_debug: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server", locale: 'en'}
+	#game_server_1: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_1", locale: 'en'},
+	#game_server_2: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_2", locale: 'en'},
+	#game_server_3: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_3", locale: 'en'},
+	#game_server_4: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_4", locale: 'en'}
 }
 
 remotes = `git remote`.split("\n").map(&:to_sym)
@@ -74,14 +74,14 @@ end
 
 # Operate multi server with threads.
 cmd and targets and targets.map do |target|
-	Thread.new do 
+	Thread.new do
 		if cmd == 'deploy'
 			puts "------------>Begin to DEPLOY #{target}"
-			`git push #{target} #{branch}` 
+			`git push #{target} #{branch}`
 			puts "<-----------Finished to DEPLOY #{target}"
 		elsif cmd == 'setup'
 			puts "------------>Begin to SETUP #{target}"
-			`git deploy setup -r #{target}` 
+			`git deploy setup -r #{target}`
 			puts "<-----------Finished to SETUP #{target}"
 		elsif cmd == 'rollback'
 			puts "------------>Begin to ROLLBACK #{target}"

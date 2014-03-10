@@ -64,7 +64,13 @@ request(PlayerID, Path, Params) ->
     gen_server:call(player_pid(PlayerID), {request, Path, Params}).
 
 load_data(PlayerID, ModelName) ->
-    gen_server:call(player_pid(PlayerID), {load_data, ModelName}).
+    OwnerPid = ?GET_PID({player, PlayerID}),
+    case self() =:= OwnerPid of
+        true ->
+          load_data_from_db_to_ets(PlayerID, ModelName);
+        false ->
+          gen_server:call(player_pid(PlayerID), {load_data, ModelName})
+    end.
 
 clean_data(PlayerID, ModelName) ->
     gen_server:cast(player_pid(PlayerID), {clean_data, ModelName}).
@@ -182,7 +188,6 @@ load_data_from_db_to_ets(PlayerID, ModelName) ->
         undefined ->
             ModuleName = model_module_name(ModelName),
             {ok, Recs} = ModuleName:load_data(PlayerID),
-            io:format("PlayerID: ~p, Recs: ~p~n", [PlayerID, Recs]),
             Tab = player_data:table(ModelName),
             if
                 is_list(Recs) andalso Recs =/= [] ->
