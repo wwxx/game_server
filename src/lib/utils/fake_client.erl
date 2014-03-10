@@ -28,13 +28,25 @@
 
 
 login() ->
-    % io:format("Fake Client called login!~n"),
     SomeHostInNet = "localhost", % to make it runnable on one machine
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
                                  [{active, false}, {packet, 2}]),
     send_request(login_params, Sock, {<<"test_udid">>}),
     _Response = recv_response(Sock),
     ok = gen_tcp:close(Sock).
+
+request(Udid, Protocol, Params) ->
+    SomeHostInNet = "localhost", % to make it runnable on one machine
+    {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
+                                 [{active, false}, {packet, 2}]),
+    send_request(login_params, Sock, {Udid}),
+    LoginResponse = recv_response(Sock),
+    io:format("LoginResponse: ~p~n", [LoginResponse]),
+    send_request(Protocol, Sock, Params),
+    Response = recv_response(Sock),
+    io:format("Response: ~p~n", [Response]),
+    ok = gen_tcp:close(Sock),
+    Response.
 
 send_request(Path, Sock, Value) ->
     Data = api_encoder:encode(Path, Value),

@@ -45,6 +45,7 @@
          get_single_record_status/3,
          get_player_record_status/2,
          get_player_records_status/1,
+         all_record_status/0,
          get_data_status/1,
          set_data_status/2,
          del_record_status/3,
@@ -126,6 +127,7 @@ find(PlayerID, SelectorRecord) ->
     [ModelName|_] = tuple_to_list(SelectorRecord),
     case get_loaded(PlayerID, ModelName) of
         undefined ->
+            io:format("PlayerID: ~p, ModelName: ~p~n", [PlayerID, ModelName]),
             player:load_data(PlayerID, ModelName);
         _ ->
             ok
@@ -187,15 +189,17 @@ get_player_record_status(PlayerID, ModelName) ->
       [{ModelName::atom(), Id::any(), Status::atom, Value::[atom()]|undefined}]).
 get_player_records_status(PlayerID) ->
     ets:match(?STATE_TAB, {{record_status, PlayerID, '$1', '$2'}, {'$3', '$4'}}).
-    % ets:match(?STATE_TAB, {{record_status, PlayerID, '$1', '$2'}, $3}).
 
 %% Flush all the cached data to mysql.
 %% Need to optimize speed, currently is flushed one by one.
 flush_to_mysql() ->
     lists:foreach(
-        fun([ModelName, PlayerID, _LastActive]) ->
-            player:clean_data_sync(PlayerID, ModelName)
-        end, active_specs()).
+        fun([PlayerID, ModelName, Id, Status, Value]) ->
+            io:format("PlayerID: ~p, ModelName: ~p, Id: ~p, Status: ~p, Value: ~p~n",
+                      [PlayerID, ModelName, Id, Status, Value]),
+            data_persister:persist(ModelName, Id, Status, Value),
+            del_record_status(PlayerID, ModelName, Id)
+        end, all_record_status()).
 
 
 %%%===================================================================
@@ -346,6 +350,10 @@ check_active() ->
 -spec(active_specs() -> [{ModelName::atom(), PlayerID::binary(), LastActive::integer()}]).
 active_specs() ->
     ets:match(?STATE_TAB, {{track_active, '$1', '$2'}, '$3'}).
+
+-spec(all_record_status() -> [{PlayerID::binary(), ModelName::atom(), Id::binary(), Status::atom(), Value::tuple()}]).
+all_record_status() ->
+    ets:match(?STATE_TAB, {{record_status, '$1', '$2', '$3'}, {'$4', '$5'}}).
 
 %% Key = {ModelName, ID}, Status = delete|update|create, Value = undefined|ChangedFields
 %% ChangedFields = [atom()]

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20140121055124) do
+ActiveRecord::Schema.define(:version => 20140310075524) do
 
   create_table "config_items", :force => true do |t|
     t.text    "title"
@@ -24,17 +24,76 @@ ActiveRecord::Schema.define(:version => 20140121055124) do
     t.string  "ken"
   end
 
+  create_table "config_player_grows", :force => true do |t|
+    t.integer "config_id"
+    t.string  "name"
+    t.string  "name_desc"
+    t.integer "health"
+    t.integer "attack"
+    t.integer "defense"
+    t.integer "recover"
+    t.integer "skill_power"
+    t.integer "crit"
+    t.integer "crit_damage"
+    t.integer "accurate"
+    t.integer "dodge"
+    t.integer "parry"
+    t.integer "block"
+  end
+
   create_table "config_players", :force => true do |t|
-    t.integer "level"
-    t.float   "exp"
-    t.string  "title"
-    t.text    "title_desc"
+    t.integer "config_id"
+    t.string  "name"
+    t.string  "name_desc"
+    t.integer "profession"
+    t.integer "skill_id"
+    t.integer "attack_type"
+    t.integer "rare"
+    t.integer "health"
+    t.integer "attack"
+    t.integer "defense"
+    t.integer "recover"
+    t.integer "skill_power"
+    t.integer "crit"
+    t.integer "crit_damage"
+    t.integer "accurate"
+    t.integer "dodge"
+    t.integer "parry"
+    t.integer "block"
   end
 
   create_table "config_stores", :force => true do |t|
     t.string  "name"
     t.integer "amount"
   end
+
+  create_table "config_users", :force => true do |t|
+    t.integer "level"
+    t.float   "exp"
+    t.string  "title"
+    t.text    "title_desc"
+  end
+
+  create_table "formations", :id => false, :force => true do |t|
+    t.string "uuid"
+    t.string "user_id"
+    t.string "matrix"
+  end
+
+  add_index "formations", ["user_id"], :name => "index_formations_on_user_id"
+  add_index "formations", ["uuid"], :name => "index_formations_on_uuid", :unique => true
+
+  create_table "heros", :id => false, :force => true do |t|
+    t.string   "uuid"
+    t.string   "user_id"
+    t.integer  "level"
+    t.integer  "config_id"
+    t.datetime "created_at", :null => false
+    t.datetime "updated_at", :null => false
+  end
+
+  add_index "heros", ["user_id"], :name => "index_heros_on_user_id"
+  add_index "heros", ["uuid"], :name => "index_heros_on_uuid", :unique => true
 
   create_table "towns", :id => false, :force => true do |t|
     t.string   "uuid"

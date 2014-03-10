@@ -32,7 +32,6 @@
          send_data/2,
          load_data/2,
          clean_data/2,
-         clean_data_sync/2,
          save_data/1,
          player_pid/1,
          proxy/4
@@ -70,9 +69,6 @@ load_data(PlayerID, ModelName) ->
 clean_data(PlayerID, ModelName) ->
     gen_server:cast(player_pid(PlayerID), {clean_data, ModelName}).
 
-clean_data_sync(PlayerID, ModelName) ->
-    gen_server:call(player_pid(PlayerID), {clean_data, ModelName}).
-
 save_data(PlayerID) ->
     gen_server:cast(player_pid(PlayerID), {save_data}).
 
@@ -99,9 +95,6 @@ handle_call({load_data, ModelName}, _From, State=#player_state{playerID=PlayerID
 handle_call({proxy, Module, Fun, Args}, _From, State) ->
     Result = erlang:apply(Module, Fun, Args),
     {reply, Result, State};
-handle_call({clean_data, ModelName}, _From, State=#player_state{playerID=PlayerID}) ->
-    clean_data_from_ets(PlayerID, ModelName),
-    {reply, ok, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.

@@ -58,4 +58,28 @@ create_new_user(Udid) ->
         created_at = time_utils:datetime(),
         updated_at = time_utils:datetime()
         }),
+    init_heros(Uuid),
+    Hero = player_data:find(Uuid, #heros{user_id = Uuid}),
+     init_formation(Uuid, Hero#heros.uuid),
     Uuid.
+
+init_heros(PlayerID) ->
+    % ConfigId = game_numerical:find_element(config_player, 1, 2),
+    Uuid = uuid_factory:gen(),
+    Hero = #heros{uuid = Uuid,
+                  user_id = PlayerID,
+                  % config_id = ConfigId,
+                  config_id = 1,
+                  level = 1,
+                  created_at = time_utils:datetime(),
+                  updated_at = time_utils:datetime()
+    },
+    io:format("Hero: ~p~n", [Hero]),
+    db:create(Hero).
+
+init_formation(PlayerID, HeroId) ->
+    Uuid = uuid_factory:gen(),
+    Formation = #formations{uuid = Uuid,
+                            user_id = PlayerID,
+                            matrix = [HeroId, <<"">>, <<"">>, <<"">>, <<"">>, <<"">>, <<"">>, <<"">>, <<"">>]},
+    db:create(Formation).

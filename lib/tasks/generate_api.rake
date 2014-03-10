@@ -109,6 +109,11 @@ decode(<<ProtocolId:?SHORT, Data/binary>>) ->
 
     controller, action = path.split('#')
     protocol_id = extension_type_keys.index(extension_type_key)
+    if protocol_id.blank?
+      msg = "Routes or ExtentionTypes definition error! \n"
+      msg << "Can't match '#{extension_type_key}' in extension_types.yml."
+      raise msg
+    end
     routes_content << "route(#{protocol_id}) ->\n"
     routes_content << "    {#{controller}, #{action}}#{symbol}\n"
   end
