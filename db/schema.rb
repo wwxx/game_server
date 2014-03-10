@@ -13,6 +13,29 @@
 
 ActiveRecord::Schema.define(:version => 20140121055124) do
 
+  create_table "config_items", :force => true do |t|
+    t.text    "title"
+    t.string  "ver"
+    t.string  "obj"
+    t.string  "number"
+    t.integer "no"
+    t.string  "url"
+    t.string  "pc"
+    t.string  "ken"
+  end
+
+  create_table "config_players", :force => true do |t|
+    t.integer "level"
+    t.float   "exp"
+    t.string  "title"
+    t.text    "title_desc"
+  end
+
+  create_table "config_stores", :force => true do |t|
+    t.string  "name"
+    t.integer "amount"
+  end
+
   create_table "towns", :id => false, :force => true do |t|
     t.string   "uuid"
     t.string   "user_id"

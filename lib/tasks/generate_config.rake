@@ -32,7 +32,6 @@ task :generate_config => :environment do
 
   Dir.foreach(config_dir) do |config_file_path|
     extname = File.extname(config_file_path)
-    puts "config_file_path: #{config_file_path}"
     if extname == '.xlsx'
       s = Roo::Excelx.new(File.expand_path("./config/game_data/" + config_file_path))
     elsif extname == '.xls'
@@ -57,7 +56,6 @@ task :generate_config => :environment do
       field_types = []
       field_names = []
       s.row(2).each do |field|
-        puts "field: #{field}"
         name, type = field.split(":")
         field_names << name
         field_types << type
@@ -105,8 +103,6 @@ task :generate_config => :environment do
         io.write sql
       end
       database_name = Rails.configuration.database_configuration[Rails.env]["database"]
-
-      puts "sql: #{sql}"
 
       # Make sure mysql path is: '/usr/bin/mysql'
       `mysql -u root #{database_name} < #{file_path}`

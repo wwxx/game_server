@@ -26,4 +26,4 @@
 host=`hostname -s`
 
 echo "Stop node: game_server@$host"
-./stop "game_server@$host"
+./tools/stop "game_server@$host"

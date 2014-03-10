@@ -25,6 +25,6 @@
 
 
 echo ">>>>>>>>>>>>Setup Game Server>>>>>>>>>>>>>>>>"
-./cmd_install
+./tools/install
 echo ">>>>>>>>>>>>Start Daemon Server>>>>>>>>>>>>>>"
-./cmd_start_daemon
+./tools/start_daemon
