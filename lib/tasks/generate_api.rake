@@ -53,8 +53,8 @@ def common_decode_with_index(field_type, variable, field_idx)
 end
 
 task :generate_api => :environment do
-  routes = "#{Rails.root.to_s}/api/routes.yml"
-  extension_types = "#{Rails.root.to_s}/api/extension_types.yml"
+  routes = "#{Rails.root.to_s}/src/app/api/routes.yml"
+  extension_types = "#{Rails.root.to_s}/src/app/api/protocol/extension_types.yml"
   routes_path = "#{Rails.root.to_s}/src/app/generates/routes.erl"
   encoder_path = "#{Rails.root.to_s}/src/app/generates/api_encoder.erl"
   decoder_path = "#{Rails.root.to_s}/src/app/generates/api_decoder.erl"
