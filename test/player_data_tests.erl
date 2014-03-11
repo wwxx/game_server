@@ -44,7 +44,6 @@ player_data_api_test_() ->
       fun count_test/1,
       fun clean_test/1,
       fun record_status_test/1
-      %fun data_persist_test/1
      ]}.
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -73,6 +72,7 @@ create_test(_Pid) ->
     R = player_data:find(PlayerID, #users{udid = NewUdid}),
 
     player_data:flush_to_mysql(),
+    [] = player_data:all_record_status(),
     {ok, [DBUser]} = db:find_by(users, udid, NewUdid),
 
     [?_assert(erlang:is_binary(PlayerID)),
