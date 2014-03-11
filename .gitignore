@@ -9,3 +9,8 @@ log
 .eunit
 rel/game_server
 db/config_data.sql
+
+app/models/config_*
+include/config_names.hrl
+include/db_config.hrl
+include/db_schema.hrl

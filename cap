@@ -25,11 +25,11 @@
 
 
 SERVERS = {
-	game_server_debug: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server", locale: 'en'}
-	#game_server_1: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_1", locale: 'en'},
-	#game_server_2: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_2", locale: 'en'},
-	#game_server_3: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_3", locale: 'en'},
-	#game_server_4: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_4", locale: 'en'}
+  game_server_debug: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server", locale: 'en'}
+  #game_server_1: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_1", locale: 'en'},
+  #game_server_2: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_2", locale: 'en'},
+  #game_server_3: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_3", locale: 'en'},
+  #game_server_4: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_4", locale: 'en'}
 }
 
 remotes = `git remote`.split("\n").map(&:to_sym)
@@ -38,13 +38,13 @@ server_names = SERVERS.keys
 
 # Add the missing servers to git remote
 SERVERS.each do |name, addr|
-	`git remote add #{name} "#{addr}"` unless remotes.include?(name)
+  `git remote add #{name} "#{addr}"` unless remotes.include?(name)
 end
 
 # Remove the unused git remotes
 remotes.each do |name|
-	next if name == :origin
-	`git remote remove #{name}` unless SERVERS.include?(name)
+  next if name == :origin
+  `git remote remove #{name}` unless SERVERS.include?(name)
 end
 
 cmd 	= ARGV[0]
@@ -52,44 +52,44 @@ scope   = (ARGV[1] || 'game_server_debug').to_sym
 branch 	= ARGV[2] || 'master'
 
 unless ['setup', 'deploy', 'rollback'].include?(cmd)
-	puts "USAGE:"
-	puts "	Setup remotes with scope: #{__FILE__} setup [scope]"
-	puts "	Deploy remotes with branch and scope: #{__FILE__} deploy [scope, [branch]]"
-	puts "	Rollback remotes with scope to previous revision: #{__FILE__} rollback [scope]"
+  puts "USAGE:"
+  puts "	Setup remotes with scope: #{__FILE__} setup [scope]"
+  puts "	Deploy remotes with branch and scope: #{__FILE__} deploy [scope, [branch]]"
+  puts "	Rollback remotes with scope to previous revision: #{__FILE__} rollback [scope]"
 end
 
 # Select targets by scope.
 if server_names.include?(scope)
-	targets = [scope]
+  targets = [scope]
 elsif locales.include?(scope)
-	targets = []
-	SERVERS.each do |k, v|
-		if v[:locale].to_sym == scope
-			targets << k
-		end
-	end
+  targets = []
+  SERVERS.each do |k, v|
+    if v[:locale].to_sym == scope
+      targets << k
+    end
+  end
 elsif scope == :all
-	targets = server_names
+  targets = server_names
 end
 
 # Operate multi server with threads.
 cmd and targets and targets.map do |target|
-	Thread.new do
-		if cmd == 'deploy'
-			puts "------------>Begin to DEPLOY #{target}"
-			`git push #{target} #{branch}`
-			puts "<-----------Finished to DEPLOY #{target}"
-		elsif cmd == 'setup'
-			puts "------------>Begin to SETUP #{target}"
-			`git deploy setup -r #{target}`
-			puts "<-----------Finished to SETUP #{target}"
-		elsif cmd == 'rollback'
-			puts "------------>Begin to ROLLBACK #{target}"
-			`git deploy rollback -r #{target}`
-			puts "<-----------Finished to ROLLBACK #{target}"
-		else
-			raise "Invalid cmd: #{cmd}"
-		end
-	end
+  Thread.new do
+    if cmd == 'deploy'
+      puts "------------>Begin to DEPLOY #{target}"
+      `git push #{target} #{branch}`
+      puts "<-----------Finished to DEPLOY #{target}"
+    elsif cmd == 'setup'
+      puts "------------>Begin to SETUP #{target}"
+      `git deploy setup -r #{target}`
+      puts "<-----------Finished to SETUP #{target}"
+    elsif cmd == 'rollback'
+      puts "------------>Begin to ROLLBACK #{target}"
+      `git deploy rollback -r #{target}`
+      puts "<-----------Finished to ROLLBACK #{target}"
+    else
+      raise "Invalid cmd: #{cmd}"
+    end
+  end
 end.each(&:join)
 
