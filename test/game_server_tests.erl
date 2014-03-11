@@ -43,7 +43,7 @@ start() ->
     game_server:start().
 
 stop(_Pid) ->
-	game_server:stop().
+    game_server:stop().
 
 %%%%%%%%%%%%%%%%%%%%
 %%% ACTUAL TESTS %%%
@@ -58,5 +58,3 @@ tests(_Pid) ->
 %%%%%%%%%%%%%%%%%%%%%%%%
 %%% HELPER FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%
-login() ->
-    ok.

@@ -37,11 +37,11 @@
          delete/2,
          update/3,
          find/2,
-         ets_find/1,
          where/2,
          count/2,
          table/1,
          clean/2,
+         ets_find/1,
          get_single_record_status/3,
          get_player_record_status/2,
          get_player_records_status/1,
@@ -110,6 +110,7 @@ create(PlayerID, Record) ->
 
 delete(PlayerID, SelectorRecord) ->
     track_active(PlayerID, SelectorRecord),
+    ensure_data_loaded(PlayerID, SelectorRecord),
     case validate_ownership(PlayerID, self()) of
         true -> ets_delete(PlayerID, SelectorRecord);
         false -> io:format("Permission deny: you are not the owner of this player~n")
@@ -117,6 +118,7 @@ delete(PlayerID, SelectorRecord) ->
 
 update(PlayerID, SelectorRecord, ModifierRecord) ->
     track_active(PlayerID, SelectorRecord),
+    ensure_data_loaded(PlayerID, SelectorRecord),
     case validate_ownership(PlayerID, self()) of
         true -> ets_update(PlayerID, SelectorRecord, ModifierRecord);
         false -> io:format("Permission deny: you are not the owner of this player~n")
@@ -124,36 +126,17 @@ update(PlayerID, SelectorRecord, ModifierRecord) ->
 
 find(PlayerID, SelectorRecord) ->
     track_active(PlayerID, SelectorRecord),
-    [ModelName|_] = tuple_to_list(SelectorRecord),
-    case get_loaded(PlayerID, ModelName) of
-        undefined ->
-            io:format("PlayerID: ~p, ModelName: ~p~n", [PlayerID, ModelName]),
-            player:load_data(PlayerID, ModelName);
-        _ ->
-            ok
-    end,
+    ensure_data_loaded(PlayerID, SelectorRecord),
     ets_find(SelectorRecord).
 
 where(PlayerID, SelectorRecord) ->
     track_active(PlayerID, SelectorRecord),
-    [ModelName|_] = tuple_to_list(SelectorRecord),
-    case get_loaded(PlayerID, ModelName) of
-        undefined ->
-            player:load_data(PlayerID, ModelName);
-        _ ->
-            ok
-    end,
+    ensure_data_loaded(PlayerID, SelectorRecord),
     ets_where(SelectorRecord).
 
 count(PlayerID, SelectorRecord) ->
     track_active(PlayerID, SelectorRecord),
-    [ModelName|_] = tuple_to_list(SelectorRecord),
-    case get_loaded(PlayerID, ModelName) of
-        undefined ->
-            player:load_data(PlayerID, ModelName);
-        _ ->
-            ok
-    end,
+    ensure_data_loaded(PlayerID, SelectorRecord),
     ets_count(SelectorRecord).
 
 clean(PlayerID, ModelName) ->
@@ -272,6 +255,7 @@ ets_update(PlayerID, SelectorRecord, ModifierRecord) ->
             true = ets:update_element(Tab, Key, ElementSpec);
         false ->
             Recs = ets_where(SelectorRecord),
+            io:format("ets_update Recs: ~p~n", [Recs]),
             lists:foreach(
                 fun(Rec) ->
                     RecValues = tuple_to_list(Rec),
@@ -284,7 +268,6 @@ ets_update(PlayerID, SelectorRecord, ModifierRecord) ->
 
 ets_find(SelectorRecord) ->
     {Tab, _ValueList, _Name, Key} = model_info(SelectorRecord),
-    io:format("Tab: ~p, Key: ~p~n", [Tab, Key]),
     case id_present(Key) of
         true ->
             case ets:lookup(Tab, Key) of
@@ -295,7 +278,6 @@ ets_find(SelectorRecord) ->
             end;
         false ->
             Pat = ets_utils:makepat(SelectorRecord),
-            io:format("Pat: ~p~n", [Pat]),
             ets:match_object(Tab, Pat),
             case ets:match_object(Tab, Pat, 1) of
                 {[Rec], _Continuation} ->
@@ -410,4 +392,14 @@ get_loaded(PlayerID, ModelName) ->
             Value;
         _ ->
             undefined
+    end.
+
+ensure_data_loaded(PlayerID, SelectorRecord) ->
+    [ModelName|_] = tuple_to_list(SelectorRecord),
+    case get_loaded(PlayerID, ModelName) of
+        undefined ->
+            io:format("PlayerID: ~p, ModelName: ~p~n", [PlayerID, ModelName]),
+            player:load_data(PlayerID, ModelName);
+        _ ->
+            ok
     end.

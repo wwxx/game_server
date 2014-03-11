@@ -31,7 +31,7 @@
 
 start() ->
     io:format("Game Server Starting~n"),
-    ensure_started(sync), %% Hot reload code
+    %ensure_started(sync), %% Hot reload code
     ok = application:start(game_server). %% Game Server
 
 stop() ->

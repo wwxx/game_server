@@ -38,11 +38,10 @@ start_stop_test_() ->
 %%% SETUP FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%
 start() ->
-    {ok, Pid} = game_env_sup:start_link(),
-    Pid.
+    game_server:start().
 
-stop(Pid) ->
-    supervisor:terminate_child(Pid, whereis(game_env)).
+stop(_Pid) ->
+    game_server:stop().
 
 %%%%%%%%%%%%%%%%%%%%
 %%% ACTUAL TESTS %%%

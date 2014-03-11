@@ -1,8 +1,8 @@
 -module(formations_controller_tests).
 -include_lib("eunit/include/eunit.hrl").
 -include("include/db_schema.hrl").
+-include("include/error_code.hrl").
 
--define(setup(F), {setup, fun start/0, fun stop/1, F}).
 -define(UDID, <<"eunit_self_udid">>).
 
 formations_controller_test_() ->
@@ -20,11 +20,16 @@ stop(_Pid) ->
     game_server:stop().
 
 info_tests(_Pid) ->
+    db:delete_all(users),
     PlayerID = player_data:get_player_id(?UDID),
     Res = fake_client:request(?UDID, formation_info_params, {PlayerID}),
-    [?_assertEqual(Res, [])].
+    FormationList = proplists:get_value(matrix, Res),
+    [?_assertEqual(proplists:get_value(user_id, Res), PlayerID),
+     ?_assertEqual(length(FormationList), 9)
+    ].
 
 update_tests(_Pid) ->
+    db:delete_all(users),
     PlayerID = player_data:get_player_id(?UDID),
     Matrix = [<<"empty">>, <<"empty">>, <<"empty">>,
               <<"empty">>, <<"empty">>, <<"empty">>,
@@ -32,4 +37,8 @@ update_tests(_Pid) ->
     Res = fake_client:request(?UDID,
                               formation_update_params,
                               {PlayerID, Matrix}),
-    [?_assertEqual(Res, Matrix)].
+    Formation = player_data:find(PlayerID, #formations{user_id = PlayerID}),
+    NewMatrix = binary_string:split(Formation#formations.matrix, <<",">>),
+    [?_assertEqual(NewMatrix, Matrix),
+     ?_assertEqual(Res, [{code, ?OK}])
+    ].

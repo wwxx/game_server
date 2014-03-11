@@ -30,7 +30,7 @@
 
 start(_Type, _Args) ->
     ensure_started(crypto),
-    ok = lager:start(), %% Logger
+    %ok = lager:start(), %% Logger
     ensure_started(gproc), %% Process dictionary
     ensure_started(emysql), %% Mysql
     life_cycle:before_start(),
