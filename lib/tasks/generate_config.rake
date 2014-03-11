@@ -33,9 +33,9 @@ task :generate_config => :environment do
   Dir.foreach(config_dir) do |config_file_path|
     extname = File.extname(config_file_path)
     if extname == '.xlsx'
-      s = Roo::Excelx.new(File.expand_path("./config/game_data/" + config_file_path))
+      s = Roo::Excelx.new(File.expand_path(config_dir + '/' + config_file_path))
     elsif extname == '.xls'
-      s = Roo::Excel.new(File.expand_path("./config/game_data/" + config_file_path))
+      s = Roo::Excel.new(File.expand_path(config_dir + '/'+ config_file_path))
     else
       next
     end
