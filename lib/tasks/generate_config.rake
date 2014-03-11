@@ -27,7 +27,7 @@ task :generate_config => :environment do
   # s = Roo::Excel.new(File.expand_path("./config/game_data/item_config.xls"))
   # s = Roo::Excelx.new(File.expand_path("./config/game_data/config_data_example.xlsx"))
 
-  config_dir = File.expand_path("./config/game_data")
+  config_dir = File.expand_path("#{Rails.root.to_s}/src/app/game_data")
   sheets = []
 
   Dir.foreach(config_dir) do |config_file_path|
