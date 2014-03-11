@@ -102,8 +102,13 @@ create(PlayerID, Record) ->
         true ->
             NewId = uuid_factory:gen(),
             RecordWithId = record_mapper:set_field(Record, 'uuid', NewId),
-            io:format("RecordWithId: ~p~n", [RecordWithId]),
-            ets_create(PlayerID, RecordWithId);
+            [Name|_] = tuple_to_list(Record),
+            if
+                Name =:= users ->
+                    ets_create(NewId, RecordWithId);
+                true ->
+                    ets_create(PlayerID, RecordWithId)
+            end;
         false ->
             io:format("Permission deny: you are not the owner of this player~n")
     end.
@@ -178,8 +183,6 @@ get_player_records_status(PlayerID) ->
 flush_to_mysql() ->
     lists:foreach(
         fun([PlayerID, ModelName, Id, Status, Value]) ->
-            io:format("PlayerID: ~p, ModelName: ~p, Id: ~p, Status: ~p, Value: ~p~n",
-                      [PlayerID, ModelName, Id, Status, Value]),
             data_persister:persist(ModelName, Id, Status, Value),
             del_record_status(PlayerID, ModelName, Id)
         end, all_record_status()).
@@ -219,21 +222,18 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 ets_create(PlayerID, Record) ->
-    {Tab, ValueList, Name, Key} = model_info(Record),
+    {Tab, _ValueList, Name, Key} = model_info(Record),
     put_record_status(PlayerID, Name, Key, create, undefined),
     true = ets:insert_new(Tab, Record).
 
 ets_delete(PlayerID, SelectorRecord) ->
-    io:format("PlayerID: ~p, SelectorRecord: ~p~n", [PlayerID, SelectorRecord]),
     {Tab, _ValueList, Name, Key} = model_info(SelectorRecord),
     if
         is_binary(Key) andalso Key =/= <<"">> ->
             put_record_status(PlayerID, Name, Key, delete, undefined),
             true = ets:delete(Tab, Key);
         true ->
-            %true = ets:match_delete(Tab, ets_utils:makepat(SelectorRecord))
             Recs = ets_where(SelectorRecord),
-            io:format("ets_delete: Recs: ~p~n", [Recs]),
             lists:foreach(
                 fun(Rec) ->
                     RecValues = tuple_to_list(Rec),
@@ -255,7 +255,6 @@ ets_update(PlayerID, SelectorRecord, ModifierRecord) ->
             true = ets:update_element(Tab, Key, ElementSpec);
         false ->
             Recs = ets_where(SelectorRecord),
-            io:format("ets_update Recs: ~p~n", [Recs]),
             lists:foreach(
                 fun(Rec) ->
                     RecValues = tuple_to_list(Rec),
@@ -354,12 +353,10 @@ get_record_status(PlayerID, ModelName, Id) ->
     end.
 
 put_record_status_update(PlayerID, ModelName, Id, update, Fields) ->
-    io:format("put_record_status_update: PlayerID: ~p, ModelName: ~p, Id: ~p, Fields: ~p~n", [PlayerID, ModelName, Id, Fields]),
     case get_record_status(PlayerID, ModelName, Id) of
         undefined ->
             put_record_status(PlayerID, ModelName, Id, update, Fields);
         {update, ChangedFields} ->
-            io:format("ChangedFields: ~p~n", [ChangedFields]),
             Set = gb_sets:from_list(ChangedFields),
             NewFields = [Field || Field <- Fields, not gb_sets:is_element(Field, Set)],
             case NewFields =:= [] of
@@ -398,7 +395,6 @@ ensure_data_loaded(PlayerID, SelectorRecord) ->
     [ModelName|_] = tuple_to_list(SelectorRecord),
     case get_loaded(PlayerID, ModelName) of
         undefined ->
-            io:format("PlayerID: ~p, ModelName: ~p~n", [PlayerID, ModelName]),
             player:load_data(PlayerID, ModelName);
         _ ->
             ok

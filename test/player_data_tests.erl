@@ -41,9 +41,9 @@ player_data_api_test_() ->
       fun delete_test/1,
       fun update_test/1,
       fun search_test/1,
-      fun count_test/1
-      %fun clean_test/1
-      %fun record_status_test/1,
+      fun count_test/1,
+      fun clean_test/1,
+      fun record_status_test/1
       %fun data_persist_test/1
      ]}.
 
@@ -114,8 +114,46 @@ count_test(_Pid) ->
      ?_assertEqual(C2, 2),
      ?_assertEqual(C3, 1)].
 
-%clean_test(_Pid) ->
+clean_test(_Pid) ->
+    db:delete_all(users),
+    PlayerID = player_data:get_player_id(?UDID),
+    _User = player_data:find(PlayerID, #users{udid = ?UDID}),
+    player:proxy(PlayerID, player_data, clean, [PlayerID, users]),
+    Loaded = player_data:get_loaded(PlayerID, users),
+    User = player_data:ets_find(#users{udid = ?UDID}),
+    [?_assertNotEqual(Loaded, true),
+     ?_assertEqual(User, undefined)
+    ].
 
+
+record_status_test(_Pid) ->
+    %get_single_record_status/3,
+    %get_player_record_status/2,
+    %get_player_records_status/1,
+    %Status: delete, update, create
+    db:delete_all(users),
+    PlayerID = player_data:get_player_id(?UDID),
+    Selector = #users{uuid = PlayerID},
+    Modifier = #users{name = <<"new name">>},
+    player:proxy(PlayerID, player_data, update, [PlayerID, Selector, Modifier]),
+    {UpdateStatus, UpdateValue} = player_data:get_single_record_status(
+                                    PlayerID, users, PlayerID),
+    player:proxy(PlayerID, player_data, delete, [PlayerID, Selector]),
+    {DeleteStatus, DeleteValue} = player_data:get_single_record_status(
+                                    PlayerID, users, PlayerID),
+    player:proxy(PlayerID, player_data, create, [PlayerID, Modifier]),
+    NewPlayer = player_data:ets_find(Modifier),
+    NewPlayerID = NewPlayer#users.uuid,
+    {CreateStatus, CreateValue} = player_data:get_single_record_status(
+                                    NewPlayerID, users, NewPlayerID),
+    [?_assertEqual(UpdateStatus, update),
+     ?_assertEqual(DeleteStatus, delete),
+     ?_assertEqual(CreateStatus, create),
+
+     ?_assertEqual(UpdateValue, [name]),
+     ?_assertEqual(DeleteValue, undefined),
+     ?_assertEqual(CreateValue, undefined)
+    ].
 
 
 

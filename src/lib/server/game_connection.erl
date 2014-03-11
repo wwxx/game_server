@@ -152,8 +152,7 @@ handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) -
     Path = routes:route(RequestType),
     {Params, _LeftData} = api_decoder:decode(RawData),
     error_logger:info_msg("Request Path: ~p Parmas: ~p~n", [Path, Params]),
-    NewState = handle_request({Path, Params}, State),
-    {noreply, NewState};
+    handle_request({Path, Params}, State);
 handle_info({tcp_closed, _Socket}, State) ->
     error_logger:info_msg("DISCONNECT: tcp_closed, playerID: ~p~n", [State#protocol.playerID]),
     {stop, normal, State};
@@ -175,11 +174,16 @@ handle_request({{sessions_controller, login}, Params},
     player_factory:start_player(PlayerID),
     LoginInfo = sessions_controller:login(PlayerID),
     send_socket_data(Transport, Socket, LoginInfo),
-    State#protocol{playerID = PlayerID};
+    {noreply, State#protocol{playerID = PlayerID}};
 handle_request({Path, Params}, State=#protocol{playerID = PlayerID, transport=Transport, socket=Socket}) ->
-    Response = player:request(PlayerID, Path, Params),
-    send_socket_data(Transport, Socket, Response),
-    State.
+    case PlayerID of
+        undefined ->
+            {stop, {playerID, undefined}, State};
+        _ ->
+            Response = player:request(PlayerID, Path, Params),
+            send_socket_data(Transport, Socket, Response),
+            {noreply, State}
+    end.
 
 %%--------------------------------------------------------------------
 %% @private
