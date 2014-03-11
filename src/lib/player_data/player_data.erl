@@ -184,7 +184,8 @@ flush_to_mysql() ->
     lists:foreach(
         fun([PlayerID, ModelName, Id, Status, Value]) ->
             io:format("PlayerID: ~p, ModelName: ~p, Id: ~p, Status: ~p, Value: ~p~n",[PlayerID, ModelName, Id, Status, Value]),
-            data_persister:persist(ModelName, Id, Status, Value),
+            Res = data_persister:persist(ModelName, Id, Status, Value),
+            io:format("Persist Result: ~p~n", [Res]),
             del_record_status(PlayerID, ModelName, Id)
         end, all_record_status()).
 

@@ -102,7 +102,13 @@ sqerl_execute(SqlTuple) ->
 %%--------------------------------------------------------------------
 -spec(execute(binary()) -> list() ).
 execute(SQL) ->
-    emysql:execute(?DB_POOL, SQL).
+    Result = emysql:execute(?DB_POOL, SQL),
+    case tuple_to_list(Result) of
+        [error_packet|_] ->
+            erlang:error(Result);
+        _ ->
+            Result
+    end.
 
 %%%===================================================================
 %%% gen_server API

@@ -14,7 +14,10 @@ formations_controller_test_() ->
      ]}.
 
 start() ->
-    game_server:start().
+    game_server:start(),
+    db:delete_all(users),
+    db:delete_all(formations),
+    db:delete_all(heros).
 
 stop(_Pid) ->
     game_server:stop().

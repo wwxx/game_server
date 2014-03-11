@@ -50,7 +50,10 @@ player_data_api_test_() ->
 %%% SETUP FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%
 start() ->
-    game_server:start().
+    game_server:start(),
+    db:delete_all(users),
+    db:delete_all(formations),
+    db:delete_all(heros).
 
 stop(_Pid) ->
     game_server:stop().
@@ -60,25 +63,34 @@ stop(_Pid) ->
 %%%%%%%%%%%%%%%%%%%%
 create_test(_Pid) ->
     db:delete_all(users),
+    {ok, []} = db:all(users),
     NewUdid = <<"new_user_udid">>,
     NewName = <<"new_user_name">>,
     PlayerID = player_data:get_player_id(?UDID),
     NewPlayerID = player_data:get_player_id(NewUdid),
 
-    player_data:find(PlayerID, #users{udid = NewUdid}),
-    player:proxy(PlayerID, player_data, delete, [NewPlayerID, #users{udid = NewUdid}]),
-    player:proxy(PlayerID, player_data, create, [PlayerID, #users{udid = NewUdid, name = NewName}]),
+    player:proxy(NewPlayerID, player_data, delete, [NewPlayerID, #users{udid = NewUdid}]),
+    player:proxy(PlayerID, player_data, flush_to_mysql, []),
+    EmptyUser = player_data:find(PlayerID, #users{udid = NewUdid}),
+    player:proxy(PlayerID, player_data, create, [PlayerID, #users{udid = NewUdid,
+                                                                  name = NewName,
+                                                                  created_at = time_utils:datetime(),
+                                                                  updated_at = time_utils:datetime()}]),
 
     R = player_data:find(PlayerID, #users{udid = NewUdid}),
 
-    player_data:flush_to_mysql(),
+    player:proxy(PlayerID, player_data, flush_to_mysql, []),
     [] = player_data:all_record_status(),
     {ok, [DBUser]} = db:find_by(users, udid, NewUdid),
+    Count = player_data:count(PlayerID, #users{udid = NewUdid}),
 
     [?_assert(erlang:is_binary(PlayerID)),
      ?_assertEqual(R#users.udid, NewUdid),
      ?_assertNotEqual(PlayerID, <<"">>),
-     ?_assertEqual(DBUser#users.name, R#users.name)
+     ?_assertEqual(EmptyUser, undefined),
+     ?_assertEqual(Count, 1),
+     ?_assertEqual(DBUser#users.name, NewName),
+     ?_assertEqual(R#users.name, NewName)
     ].
 
 delete_test(_Pid) ->
@@ -159,7 +171,10 @@ record_status_test(_Pid) ->
     [[PlayerID, delete, undefined]] = player_data:get_player_record_status(PlayerID, users),
     [[users, PlayerID, delete, undefined]] = player_data:get_player_records_status(PlayerID),
 
-    player:proxy(PlayerID, player_data, create, [PlayerID, Modifier]),
+    CModifier = #users{name = <<"new name">>,
+                      created_at = time_utils:datetime(),
+                      updated_at = time_utils:datetime()},
+    player:proxy(PlayerID, player_data, create, [PlayerID, CModifier]),
     NewPlayer = player_data:ets_find(Modifier),
     NewPlayerID = NewPlayer#users.uuid,
     {CreateStatus, CreateValue} = player_data:get_single_record_status(
