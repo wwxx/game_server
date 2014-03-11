@@ -8,3 +8,4 @@ log
 .DS_Store
 .eunit
 rel/game_server
+db/config_data.sql
