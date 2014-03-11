@@ -3,7 +3,6 @@
 -include ("include/db_schema.hrl").
 
 -define(setup(F), {setup, fun start/0, fun stop/1, F}).
--define (UDID, <<"eunit_self_udid">>).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% TESTS DESCRIPTIONS %%%
@@ -12,8 +11,8 @@ heros_controller_test_() ->
     {foreach,
      fun start/0,
      fun stop/1,
-     [fun info_tests/1
-      %fun infos_tests/1
+     [fun info_tests/1,
+      fun infos_tests/1
      ]}.
 
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -29,6 +28,7 @@ stop(_Pid) ->
 %%% ACTUAL TESTS %%%
 %%%%%%%%%%%%%%%%%%%%
 info_tests(_Pid) ->
+    db:delete_all(users),
     Udid = <<"eunit_test_udid">>,
     PlayerID = player_data:get_player_id(Udid),
 
