@@ -55,7 +55,7 @@ end
 task :generate_api => :environment do
   routes = "#{Rails.root.to_s}/src/app/api/routes.yml"
   extension_types = "#{Rails.root.to_s}/src/app/api/protocol/extension_types.yml"
-  `mkdir -p generates`
+  `mkdir -p #{Rails.root.to_s}/src/app/generates`
   routes_path = "#{Rails.root.to_s}/src/app/generates/routes.erl"
   encoder_path = "#{Rails.root.to_s}/src/app/generates/api_encoder.erl"
   decoder_path = "#{Rails.root.to_s}/src/app/generates/api_decoder.erl"

@@ -73,7 +73,7 @@ task :generate_record => :environment do
     io.write r_string
   end
 
-  `mkdir -p generates`
+  `mkdir -p #{Rails.root.to_s}/src/app/generates`
   File.open("#{Rails.root.to_s}/src/app/generates/model_mapping.erl", "w") do |io|
     io.write m_string
   end
