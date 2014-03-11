@@ -24,4 +24,4 @@
 ## SOFTWARE.
 
 
-rebar compile eunit skip_deps=true
+./rebar compile eunit skip_deps=true
