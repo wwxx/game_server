@@ -62,8 +62,18 @@ gen() ->
 
 init([]) ->
   ets:new (?MODULE, [named_table, public]),
+  OidCounter = case application:get_env(game_server, server_environment) of
+                   {ok, test} ->
+                       % In eunit test after each restart game_server,
+                       % the game_server didn't change process id,
+                       % so the uuid will conflect with each other, when
+                       % executing many eunit test in short time.
+                       random:seed(os:timestamp()),
+                       random:uniform(10000000);
+                   _ -> 0
+               end,
   ets:insert (?MODULE, [
-    {oid_counter, 0},
+    {oid_counter, OidCounter},
     {oid_machineprocid, oid_machineprocid()}]),
     {ok, #state{}}.
 

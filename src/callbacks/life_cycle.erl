@@ -48,7 +48,6 @@ before_start() ->
 after_start() ->
     io:format("Game Server Life Cycle Callback: after_start!~n"),
     %% add your custom initialize at here
-    db:init_db(),
     model_mapping:load(),
     game_numerical:load_data(),
     ok.

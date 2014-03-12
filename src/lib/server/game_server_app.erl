@@ -29,13 +29,13 @@
 -export([prep_stop/1, stop/1]).
 
 start(_Type, _Args) ->
-    %ensure_started(crypto),
-    %ok = lager:start(), %% Logger
-    %ensure_started(gproc), %% Process dictionary
-    %ensure_started(emysql), %% Mysql
-    %life_cycle:before_start(),
+    ensure_started(crypto),
+    %ok = lager:start(),
+    ensure_started(gproc),
+    ensure_started(emysql),
+    life_cycle:before_start(),
     R = game_server_sup:start_link(),
-    %life_cycle:after_start(),
+    life_cycle:after_start(),
     R.
 
 prep_stop(State) ->

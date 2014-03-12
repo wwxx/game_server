@@ -42,8 +42,7 @@
           all/1,
           update_all/1,
           sqerl_execute/1,
-          execute/1,
-          init_db/0
+          execute/1
          ]).
 
 
@@ -97,9 +96,6 @@ all(TableName) ->
 sqerl_execute(SqlTuple) ->
     execute(sqerl:sql(SqlTuple)).
 
-init_db() ->
-    gen_server:call(?SERVER, init_pool).
-
 %%--------------------------------------------------------------------
 %% @doc:    Execute SQL and return Result
 %% @spec:    execute(SQL::binary()) -> list().
@@ -125,6 +121,7 @@ start_link() ->
 %%% gen_server callbacks
 %%%===================================================================
 init([]) ->
+    init_pool(),
     {ok, #state{}}.
 
 handle_call(init_pool, _From, State) ->
@@ -152,10 +149,10 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 init_pool() ->
-    L = case game_env:get(server_environment) of
-            production -> ?DB_PRODUCTION;
-            development -> ?DB_DEVELOPMENT;
-            test -> ?DB_TEST
+    L = case application:get_env(game_server, server_environment) of
+            {ok, production} -> ?DB_PRODUCTION;
+            {ok, development} -> ?DB_DEVELOPMENT;
+            {ok, test} -> ?DB_TEST
         end,
     Database = atom_to_list(proplists:get_value(database, L)),
     Username = atom_to_list(proplists:get_value(username, L)),

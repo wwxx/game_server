@@ -39,14 +39,8 @@ start([Mode]) ->
         Mode =:= development -> ensure_started(sync)
     end,
     io:format("Game Server Starting~n"),
-    ensure_started(crypto),
-    %ok = lager:start(),
-    ensure_started(gproc),
-    ensure_started(emysql),
-    life_cycle:before_start(),
-    ok = application:start(game_server),
-    game_env:set(server_environment, Mode),
-    life_cycle:after_start().
+    application:set_env(game_server, server_environment, Mode),
+    ok = application:start(game_server).
 
 stop() ->
     io:format("Game Server Stopping~n"),
