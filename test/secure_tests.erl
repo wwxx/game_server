@@ -24,7 +24,7 @@
 
 -module(secure_tests).
 -include_lib("eunit/include/eunit.hrl").
--include("secure.hrl").
+-include("src/app/include/secure.hrl").
 
 
 secure_test_() ->

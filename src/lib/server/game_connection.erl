@@ -45,8 +45,7 @@
 
 -include ("include/game_static.hrl").
 -include("include/gproc_macros.hrl").
--include("include/secure.hrl").
-
+-include("src/app/include/secure.hrl").
 
 %%%===================================================================
 %%% API
