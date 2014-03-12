@@ -25,6 +25,6 @@
 
 
 echo ">>>>>>>>>>>>Setup Game Server>>>>>>>>>>>>>>>>"
-./tools/install
+./tools/install -e production
 echo ">>>>>>>>>>>>Start Daemon Server>>>>>>>>>>>>>>"
-./tools/start_daemon
+./tools/start_daemon -e production

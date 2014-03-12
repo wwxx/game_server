@@ -24,9 +24,6 @@
 ## SOFTWARE.
 
 
-# NOTE: uncomment following sentences when deploy production server!
-#       and remember to don't start sync application.
-#
 ./tools/stop_daemon
-./tools/install
-./tools/start_daemon
+./tools/install -e production
+./tools/start_daemon -e production

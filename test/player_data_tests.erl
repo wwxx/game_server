@@ -50,7 +50,7 @@ player_data_api_test_() ->
 %%% SETUP FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%
 start() ->
-    game_server:start(),
+    game_server:start([test]),
     db:delete_all(users),
     db:delete_all(formations),
     db:delete_all(heros).

@@ -23,8 +23,17 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
+server_env=development
 
-RAILS_ENV=production bundle install
-RAILS_ENV=production rake setup
+while getopts e: opt; do
+  case $opt in
+  e)
+      server_env=$OPTARG
+      ;;
+  esac
+done
+
+RAILS_ENV=$server_env bundle install
+RAILS_ENV=$server_env rake setup
 ./rebar get-deps
 ./rebar compile

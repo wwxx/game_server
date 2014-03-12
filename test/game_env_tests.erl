@@ -38,7 +38,7 @@ start_stop_test_() ->
 %%% SETUP FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%
 start() ->
-    game_server:start().
+    game_server:start([test]).
 
 stop(_Pid) ->
     game_server:stop().

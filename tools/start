@@ -23,6 +23,22 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
+server_env=development
 
-erl -pa ebin deps/*/ebin -config game_server.config -s game_server \
-  -eval "io:format(\"Game Server successfully started!~n\")."
+while getopts e: opt; do
+  case $opt in
+  e)
+      server_env=$OPTARG
+      ;;
+  esac
+done
+
+echo ""
+echo "====================================="
+echo "Start daemon server! ENV: $server_env"
+echo "====================================="
+echo ""
+
+erl -pa ebin deps/*/ebin \
+    -config game_server.config \
+    -s game_server start $server_env

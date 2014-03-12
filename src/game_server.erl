@@ -25,14 +25,28 @@
 -module(game_server).
 
 %% API.
--export([start/0, stop/0]).
+-export([start/0, start/1, stop/0]).
 
 %% API.
 
 start() ->
+    start([development]).
+
+start([Mode]) ->
+    if
+        Mode =:= production -> ok;
+        Mode =:= test -> ok;
+        Mode =:= development -> ensure_started(sync)
+    end,
     io:format("Game Server Starting~n"),
-    %ensure_started(sync), %% Hot reload code
-    ok = application:start(game_server). %% Game Server
+    ensure_started(crypto),
+    %ok = lager:start(),
+    ensure_started(gproc),
+    ensure_started(emysql),
+    life_cycle:before_start(),
+    ok = application:start(game_server),
+    game_env:set(server_environment, Mode),
+    life_cycle:after_start().
 
 stop() ->
     io:format("Game Server Stopping~n"),
