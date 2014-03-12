@@ -52,7 +52,7 @@ infos_tests(_Pid) ->
 
     R = player_data:find(PlayerID, #users{uuid = PlayerID}),
 
-    Res = fake_client:request(Udid, heros_info_params, {PlayerID}),
+    Res = fake_client:request(Udid, heros_info_params, {}),
     io:format("Res: ~p~n", [Res]),
 
     [?_assert(erlang:is_binary(PlayerID)),

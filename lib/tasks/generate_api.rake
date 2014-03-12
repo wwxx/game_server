@@ -144,7 +144,7 @@ decode(<<ProtocolId:?SHORT, Data/binary>>) ->
     symbol = (size - 1 == idx ? '.' : ';')
     list = []
     decode_list = []
-    fields_definition.each_with_index do |field_definition, field_idx|
+    fields_definition and fields_definition.each_with_index do |field_definition, field_idx|
       field, field_type = field_definition
       if COMMON_TYPE.include?(field_type)
         list << common_protocol(field_type, field.camelcase, 'encode')
@@ -166,18 +166,26 @@ decode(<<ProtocolId:?SHORT, Data/binary>>) ->
       end
     end
 
-    variables = fields_definition.keys.map(&:camelcase)
-    encoder_content << "encode_protocol(#{extension_type}, Value) ->\n"
-    encoder_content << "    {#{variables.join(', ')}} = Value,\n"
-    encoder_content << "    DataList = [\n"
-    encoder_content << %Q{    #{list.join(",\n        ")}\n}
-    encoder_content << "    ],\n"
-    encoder_content << "    list_to_binary(DataList)#{symbol}\n"
+    fields_definition and variables = fields_definition.keys.map(&:camelcase)
+    if variables
+      encoder_content << "encode_protocol(#{extension_type}, Value) ->\n"
+      encoder_content << "    {#{variables.join(', ')}} = Value,\n"
+      encoder_content << "    DataList = [\n"
+      encoder_content << %Q{    #{list.join(",\n        ")}\n}
+      encoder_content << "    ],\n"
+      encoder_content << "    list_to_binary(DataList)#{symbol}\n"
 
-    decoder_content << "decode_protocol(#{extension_type}, Bin0) ->\n"
-    decoder_content << "    #{decode_list.join(",\n    ")},\n"
-    fields_amount = fields_definition.keys.size
-    decoder_content << %Q{    {[#{fields_definition.keys.map{|field| "{#{field}, #{field.camelcase}}"}.join(", ")}], Bin#{fields_amount}}#{symbol}\n}
+      decoder_content << "decode_protocol(#{extension_type}, Bin0) ->\n"
+      decoder_content << "    #{decode_list.join(",\n    ")},\n"
+      fields_amount = fields_definition.keys.size
+      decoder_content << %Q{    {[#{fields_definition.keys.map{|field| "{#{field}, #{field.camelcase}}"}.join(", ")}], Bin#{fields_amount}}#{symbol}\n}
+    else
+      encoder_content << "encode_protocol(#{extension_type}, _Value) ->\n"
+      encoder_content << "    <<>>#{symbol}\n"
+
+      decoder_content << "decode_protocol(#{extension_type}, _Bin0) ->\n"
+      decoder_content << "    {<<>>, <<>>}#{symbol}\n"
+    end
   end
 
   File.open(routes_path, 'w'){|io| io.write routes_content}

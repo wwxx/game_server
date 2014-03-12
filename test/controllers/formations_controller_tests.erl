@@ -39,7 +39,7 @@ update_tests(_Pid) ->
               <<"empty">>, <<"empty">>, <<"empty">>],
     Res = fake_client:request(?UDID,
                               formation_update_params,
-                              {PlayerID, Matrix}),
+                              {Matrix}),
     Formation = player_data:find(PlayerID, #formations{user_id = PlayerID}),
     NewMatrix = binary_string:split(Formation#formations.matrix, <<",">>),
     [?_assertEqual(NewMatrix, Matrix),

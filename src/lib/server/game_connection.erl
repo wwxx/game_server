@@ -123,7 +123,7 @@ handle_call(_Request, _From, State) ->
 handle_cast(stop, State) ->
     {stop, normal, State};
 handle_cast({send_data, Data}, State=#protocol{transport = Transport, socket = Socket}) ->
-    io:format("send_data: ~p~n", [Data]),
+    error_logger:info_msg("send_data: ~p~n", [Data]),
     send_socket_data(Transport, Socket, Data),
     {noreply, State}.
 
@@ -142,7 +142,7 @@ handle_info(timeout, State=#protocol{transport = Transport, socket = Socket}) ->
     ok = Transport:setopts(Socket, [{active, once}, {packet, 2}]),
     {noreply, State};
 handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) ->
-    io:format("CipherData: ~p~n", [CipherData]),
+    error_logger:info_msg("CipherData: ~p~n", [CipherData]),
     ok = Transport:setopts(Socket, [{active, once}]),
     RawData = secure:decrypt(?AES_KEY, ?AES_IVEC, CipherData),
     {RequestType, RequestBody} = utils_protocol:decode_short(RawData),
@@ -158,14 +158,14 @@ handle_info({tcp_error, _Socket, _Msg}, State) ->
     error_logger:info_msg("DISCONNECT: tcp_error, playerID: ~p~n", [State#protocol.playerID]),
     {stop, normal, State};
 handle_info(Msg, State) ->
-    io:format("unhandled Msg: ~p~n", Msg),
+    error_logger:info_msg("unhandled Msg: ~p~n", Msg),
     {noreply, State}.
 
 handle_request({{sessions_controller, login}, Params},
                State=#protocol{transport=Transport, socket=Socket}) ->
     %{Udid} = utils_protocol:decode(RequestBody, {string}),
     Udid = proplists:get_value(udid, Params),
-    io:format("Udid: ~p~n", [Udid]),
+    error_logger:info_msg("Udid: ~p~n", [Udid]),
     PlayerID = player_data:get_player_id(Udid),
     register_connection(PlayerID),
     %% Start player process
@@ -197,7 +197,7 @@ handle_request({Path, Params}, State=#protocol{playerID = PlayerID, transport=Tr
 terminate(_Reason, _State=#protocol{playerID=PlayerID}) ->
     case PlayerID =:= undefined of
         false ->
-            io:format("unreg player id: ~p~n", [PlayerID]),
+            error_logger:info_msg("unreg player id: ~p~n", [PlayerID]),
             ?UNREG({connection, PlayerID});
         true -> ok
     end,
