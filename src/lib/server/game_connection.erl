@@ -43,7 +43,6 @@
 -define(ACTIVITY_CHECK_DURATION, 180000).
 
 
--include ("include/game_static.hrl").
 -include("include/gproc_macros.hrl").
 -include("src/app/include/secure.hrl").
 
