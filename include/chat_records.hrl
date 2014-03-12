@@ -1,0 +1,2 @@
+-record(channel_msg, {channel, sender, sended_at, content, args}).
+-record(chat_channel, {id, name, desc, maxCacheAmount, maxCacheTime}).
