@@ -41,7 +41,8 @@
          terminate/2,
          code_change/3]).
 
--export([create_channel/5,
+-export([create_channel/1,
+         create_channel/5,
          delete_channel/1,
          channel_info/1]).
 
@@ -58,6 +59,12 @@
 %%%===================================================================
 start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+
+create_channel(Channel) ->
+    %% Default Msg cache time is 24 hrs and Msg cache amount is 300.
+    Channel = #chat_channel{id=Channel, name=Channel, desc=Channel,
+                            maxCacheTime=86400, maxCacheAmount=300},
+    gen_server:call(?SERVER, {create_channel, Channel}).
 
 create_channel(ChannelId, Name, Desc, MaxCacheAmount, MaxCacheTime) ->
     Channel = #chat_channel{id=ChannelId, name=Name, desc=Desc,

@@ -68,7 +68,13 @@ history(_Channel) ->
     ok.
 
 broadcast(Channel, Msg) ->
-    gen_server:cast(?GET_PID({chat_channel, Channel}), {broadcast, Msg}).
+    Pid = case ?GET_PID({chat_channel, Channel}) of
+              undefined ->
+                  chat_server:create_channel(Channel);
+              ChannelPid ->
+                  ChannelPid
+          end,
+    gen_server:cast(Pid, {broadcast, Msg}).
 
 %%%===================================================================
 %%% gen_server callbacks
