@@ -60,13 +60,15 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 create_channel(ChannelId, Name, Desc, MaxCacheAmount, MaxCacheTime) ->
-    gen_server:call(?SERVER, {create_channel, ChannelId, Name, Desc, MaxCacheAmount, MaxCacheTime}).
+    Channel = #chat_channel{id=ChannelId, name=Name, desc=Desc,
+                            maxCacheTime=MaxCacheTime, maxCacheAmount=MaxCacheAmount},
+    gen_server:call(?SERVER, {create_channel, Channel}).
 
 delete_channel(ChannelId) ->
     gen_server:cast(?SERVER, {delete_channel, ChannelId}).
 
 channel_info(ChannelId) ->
-    case ets:match_object(?TAB, ets_utils:makepat(#chat_channel{id=ChannelId})) of
+    case ets:lookup(?TAB, ChannelId) of
         [] -> undefined;
         [Channel] -> Channel
     end.
@@ -81,9 +83,9 @@ handle_call({create_channel, Channel}, _From, State) ->
     Result = case ?GET_PID({chat_channel, Channel#chat_channel.id}) of
         undefined ->
             ets:insert(?TAB, Channel),
-            chat_sup:start_child([Channel#chat_channel.id,
-                                  Channel#chat_channel.maxCacheAmount,
-                                  Channel#chat_channel.maxCacheTime]);
+            chat_channel_sup:start_child([Channel#chat_channel.id,
+                                          Channel#chat_channel.maxCacheAmount,
+                                          Channel#chat_channel.maxCacheTime]);
         Pid ->
             {ok, Pid}
     end,

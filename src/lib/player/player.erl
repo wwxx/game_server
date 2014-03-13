@@ -34,7 +34,10 @@
          clean_data/2,
          save_data/1,
          player_pid/1,
-         proxy/4
+         proxy/4,
+         subscribe/2,
+         unsubscribe/2,
+         publish/3
         ]).
 
 %% gen_server callbacks
@@ -81,6 +84,13 @@ save_data(PlayerID) ->
 proxy(PlayerID, Module, Fun, Args) ->
     gen_server:call(player_pid(PlayerID), {proxy, Module, Fun, Args}).
 
+subscribe(PlayerID, Channel) ->
+    gen_server:cast(player_pid(PlayerID), {subscribe, Channel}).
+unsubscribe(PlayerID, Channel) ->
+    gen_server:cast(player_pid(PlayerID), {unsubscribe, Channel}).
+publish(PlayerID, Channel, Msg) ->
+    gen_server:cast(player_pid(PlayerID), {publish, Channel, Msg}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -112,6 +122,15 @@ handle_cast({save_data}, State=#player_state{playerID=PlayerID}) ->
     persist_player_all_models_data(PlayerID),
     io:format("Manually saved player's data (PlayerID: ~p)~n", [PlayerID]),
     {noreply, State};
+handle_cast({subscribe, Channel}, State) ->
+    ?SUBSCRIBE(Channel),
+    {noreply, State};
+handle_cast({unsubscribe, Channel}, State) ->
+    ?UNSUBSCRIBE(Channel),
+    {noreply, State};
+handle_cast({publish, Channel, Msg}, State) ->
+    ?PUBLISH(Channel, {gproc_msg, Channel, Msg}),
+    {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -120,12 +139,15 @@ handle_info(circulation_persist_data, State=#player_state{playerID=PlayerID}) ->
     persist_player_all_models_data(PlayerID),
     erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
     {noreply, State};
+handle_info({gproc_msg, Channel, Msg}, State=#player_state{playerID=PlayerID}) ->
+    player_subscribe:handle(Channel, PlayerID, Msg),
+    {noreply, State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(_Reason, _State=#player_state{circulation_persist_timer=Timer, playerID=PlayerID}) ->
+terminate(_Reason, _State=#player_state{circulation_persist_timer=Timer}) ->
     erlang:cancel_timer(Timer),
-    ?UNREG({player, PlayerID}),
+    gproc:goodbye(),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->

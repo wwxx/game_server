@@ -42,38 +42,19 @@
 %%%===================================================================
 %%% API functions
 %%%===================================================================
-
-%%--------------------------------------------------------------------
-%% @doc
-%% Starts the supervisor
-%%
-%% @spec start_link() -> {ok, Pid} | ignore | {error, Error}
-%% @end
-%%--------------------------------------------------------------------
 start_link() ->
     supervisor:start_link({local, ?MODULE}, ?MODULE, []).
 
 %%%===================================================================
 %%% Supervisor callbacks
 %%%===================================================================
-
-%%--------------------------------------------------------------------
-%% @private
-%% @doc
-%% Whenever a supervisor is started using supervisor:start_link/[2,3],
-%% this function is called by the new process to find out about
-%% restart strategy, maximum restart frequency and child
-%% specifications.
-%%
-%% @spec init(Args) -> {ok, {SupFlags, [ChildSpec]}} |
-%%                     ignore |
-%%                     {error, Reason}
-%% @end
-%%--------------------------------------------------------------------
 init([]) ->
-    chat_server = ets:new(chat_server, [set, protected, named_table, {keypos, 2},
+    chat_server = ets:new(chat_server, [set, public, named_table, {keypos, 2},
                                         {read_concurrency, true}]),
-    {ok, {{one_for_one, 5, 10}, [?CHILD(chat_server, chat_server, worker, [])]}}.
+    ChatChannelSupSpec = ?CHILD(chat_channel_sup, chat_channel_sup, supervisor, []),
+    ChatServerSpec = ?CHILD(chat_server, chat_server, worker, []),
+    Specs = [ChatServerSpec, ChatChannelSupSpec],
+    {ok, {{one_for_one, 5, 10}, Specs}}.
 
 %%%===================================================================
 %%% Internal functions

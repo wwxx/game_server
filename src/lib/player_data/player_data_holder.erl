@@ -50,12 +50,12 @@ start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 table(ModelName) ->
-    Name = list_to_atom("game_server_model_" ++ atom_to_list(ModelName)),
-    case get_table_created(Name) of
-        true ->
-            Name;
+    Name = list_to_atom("model_" ++ atom_to_list(ModelName)),
+    case ets:info(Name) of
+        undefined ->
+            Name = gen_server:call(?MODULE, {create_table, Name});
         _ ->
-            Name = gen_server:call(?MODULE, {create_table, Name})
+            Name
     end.
 
 %%%===================================================================
@@ -71,7 +71,6 @@ handle_call({create_table, Name}, _From, State) ->
     case ets:info(Name) of
         undefined ->
             Name = ets:new(Name, ets_opts()),
-            set_table_created(Name, true),
             Name;
         _ ->
             Name
@@ -100,9 +99,3 @@ code_change(_OldVsn, State, _Extra) ->
 ets_opts() ->
     [set, public, named_table, {keypos, 2},
      {read_concurrency, true}, {write_concurrency, true}].
-
-set_table_created(TableName, Value) ->
-    erlang:put({TableName, table_created}, Value).
-
-get_table_created(TableName) ->
-    erlang:get({TableName, table_created}).

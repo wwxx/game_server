@@ -31,7 +31,11 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0]).
+-export([start_link/3,
+         history/1,
+         broadcast/2,
+         join/2,
+         leave/2]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -42,46 +46,52 @@
          code_change/3]).
 
 -include("include/gproc_macros.hrl").
--include("include/chat_records.hrl").
 
+-record(state, {channel, maxCacheTime, maxCacheAmount}).
 
--record(state, {channelId, maxCacheTime, maxCacheAmount}).
-
+-define(TAB, ?MODULE).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
-start_link() ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
+start_link(Id, MaxCacheTime, MaxCacheAmount) ->
+    gen_server:start_link(?MODULE, [Id, MaxCacheTime, MaxCacheAmount], []).
 
-broadcast(ChannelId, MsgPacket) ->
+join(PlayerID, Channel) ->
+    player:subscribe(PlayerID, Channel).
+
+leave(PlayerID, Channel) ->
+    player:unsubscribe(PlayerID, Channel).
+
+% cached history messages.
+history(_Channel) ->
     ok.
 
-join(ChannelId, Pid) ->
-    ok.
-
-leave(ChannelId, Pid) ->
-    ok.
+broadcast(Channel, Msg) ->
+    gen_server:cast(?GET_PID({chat_channel, Channel}), {broadcast, Msg}).
 
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
-init([Id, MaxCacheAmount, MaxCacheTime]) ->
-    ?REG_PID({chat_channel, Id}),
-    {ok, #state{channelId=Id, maxCacheTime=MaxCacheTime, maxCacheAmount = MaxCacheAmount}}.
+init([Channel, MaxCacheTime, MaxCacheAmount]) ->
+    ?REG_PID({chat_channel, Channel}),
+    {ok, #state{channel=Channel, maxCacheTime=MaxCacheTime, maxCacheAmount = MaxCacheAmount}}.
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
+handle_cast({broadcast, Msg}, State=#state{channel=Channel}) ->
+    ?PUBLISH(Channel, {gproc_msg, Channel, Msg}),
+    {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(_Reason, #state{channelId=ChannelId}) ->
-    ?UNREG({chat_channel, ChannelId}),
+terminate(_Reason, #state{channel=Channel}) ->
+    ?UNREG({chat_channel, Channel}),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->

@@ -171,7 +171,6 @@ get_single_record_status(PlayerID, ModelName, Id) ->
       [{Id::any(), Status::atom, Value::[atom()]|undefined}]).
 get_player_record_status(PlayerID, ModelName) ->
     ets:match(?STATE_TAB, {{record_status, PlayerID, ModelName, '$1'}, {'$2', '$3'}}).
-    % ets:match(?STATE_TAB, {{record_status, PlayerID, ModelName, '$1'}, $2}).
 
 -spec(get_player_records_status(PlayerID::binary()) ->
       [{ModelName::atom(), Id::any(), Status::atom, Value::[atom()]|undefined}]).

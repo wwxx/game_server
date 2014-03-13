@@ -53,7 +53,9 @@ start_child(Args) ->
 %%%===================================================================
 
 init([]) ->
-    {ok, {{simple_one_for_one, 5, 10}, [?CHILD(undefined, player, worker, [])]}}.
+    chat_channel = ets:new(chat_channel, [bag, public, named_table, {keypos, 1},
+                                          {read_concurrency, true}]),
+    {ok, {{simple_one_for_one, 5, 10}, [?CHILD(undefined, chat_channel, worker, [])]}}.
 
 %%%===================================================================
 %%% Internal functions
