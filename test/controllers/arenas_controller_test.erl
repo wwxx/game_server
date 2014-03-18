@@ -1,7 +1,7 @@
 -module(arenas_controller_test).
 -include_lib("eunit/include/eunit.hrl").
 -include("include/db_schema.hrl").
--include("include/error_code.hrl").
+-include("src/app/include/error_code.hrl").
 -include("include/common_const.hrl").
 
 -define(UDID, <<"eunit_self_udid">>).
@@ -23,7 +23,7 @@ stop(_Pid) ->
     game_server:stop().
 
 fight_tests(_Pid) ->
-    PlayerID = player_data:get_player_id(?UDID),
+    _PlayerID = player_data:get_player_id(?UDID),
     Res = fake_client:request(?UDID, arenas_fight_params, {}),
     error_logger:info_msg("arenas_controller_response: ~p~n", [Res]),
     [?_assertEqual(length(proplists:get_value(users, Res)), 1)

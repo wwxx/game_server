@@ -1,7 +1,7 @@
 -module (gms_controller_test).
 -include_lib("eunit/include/eunit.hrl").
 -include("include/db_schema.hrl").
--include("include/error_code.hrl").
+-include("src/app/include/error_code.hrl").
 -include("include/common_const.hrl").
 
 -define(UDID, <<"eunit_self_udid">>).
@@ -24,7 +24,7 @@ stop(_Pid) ->
 
 add_hero(_Pid) ->
     PlayerID = player_data:get_player_id(?UDID),
-    AddHeroRes = fake_client:request(?UDID, gms_params, {[<<"add_hero">>, <<"2">>]}),
+    fake_client:request(?UDID, gms_params, {[<<"add_hero">>, <<"2">>]}),
     Count = player_data:count(PlayerID, #heros{user_id = PlayerID}),
     [?_assertEqual(Count, 2)].
 

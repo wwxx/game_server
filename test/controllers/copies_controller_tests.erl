@@ -1,7 +1,7 @@
 -module(copies_controller_tests).
 -include_lib("eunit/include/eunit.hrl").
 -include("include/db_schema.hrl").
--include("include/error_code.hrl").
+-include("src/app/include/error_code.hrl").
 -include("include/common_const.hrl").
 
 -define(UDID, <<"eunit_self_udid">>).
