@@ -24,14 +24,14 @@ stop(_Pid) ->
 
 add_hero(_Pid) ->
     PlayerID = player_data:get_player_id(?UDID),
-    AddHeroRes = fake_client:request(?UDID, gms_params, {[<<"add_hero">>, <<"1">>]}),
+    AddHeroRes = fake_client:request(?UDID, gms_params, {[<<"add_hero">>, <<"2">>]}),
     Count = player_data:count(PlayerID, #heros{user_id = PlayerID}),
     [?_assertEqual(Count, 2)].
 
 set_hero_level(_Pid) ->
     PlayerID = player_data:get_player_id(?UDID),
-    Hero = player_data:find(PlayerID, #heros{user_id = PlayerID}),
-    LevelHeroRes = fake_client:request(?UDID, gms_params, {[<<"set_hero_level">>, Hero#heros.uuid, <<"10">>]}),
+    Hero = player_data:find(PlayerID, #heros{config_id = 1}),
+    LevelHeroRes = fake_client:request(?UDID, gms_params, {[<<"set_hero_level">>, <<"1">>, <<"10">>]}),
     error_logger:info_msg("set hero level res: ~p~n", [LevelHeroRes]),
     NewHero = player_data:find(PlayerID, #heros{uuid = Hero#heros.uuid}),
     [?_assertEqual(NewHero#heros.level, 10)].
