@@ -1,0 +1,63 @@
+###########################Request Parameters###########################
+ok:
+  code: integer
+
+fail:
+  code: integer
+  desc: string
+
+user:
+  uuid: string
+  udid: string
+  name: string
+  gem: integer
+  paid: float
+  heros: array-hero
+  formation: formation
+
+hero:
+  uuid: string
+  user_id: string
+  level: integer
+  config_id: integer
+
+heros_info:
+  heros: array-hero
+
+formation:
+  uuid: string
+  user_id: string
+  matrix: array-string
+
+copy:
+  uuid: string
+  area_id: integer
+  copy_id: integer
+  star: char
+  battle: char
+  is_rewarded: char
+
+copies_info:
+  copies: array-copy
+
+###########################Request Parameters###########################
+login_params:
+  udid: string
+
+public_info_params:
+  # empty params
+
+hero_info_params:
+  id: string
+
+heros_info_params:
+  # empty params
+
+formation_info_params:
+  # empty params
+
+formation_update_params:
+  matrix: array-string
+
+copies_info_params:
+  area_id: integer

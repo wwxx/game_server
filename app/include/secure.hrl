@@ -21,43 +21,13 @@
 %% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %% SOFTWARE.
 
+%% Framework callback file.
+%% Define your Aes key and Iv at here in following rules.
+% eg:
+%   -define(AES_KEY, <<"01234567890123456789012345678901">>). % 32 byte
+%   -define(AES_IVEC, <<"0123456789012345">>). % 16 byte
 
--module(game_server_tests).
--include_lib("eunit/include/eunit.hrl").
--include("app/include/secure.hrl").
--include ("include/db_schema.hrl").
+-define(AES_KEY, <<"hk2pqma2ykd1h5q1n527uvysuzmtr3t8">>).
+-define(AES_IVEC, <<"wmc2fkkhev8juffi">>).
 
--define(setup(F), {setup, fun start/0, fun stop/1, F}).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% TESTS DESCRIPTIONS %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-start_stop_test_() ->
-    {"The server can be started and new user can auto register and login.",
-     ?setup(fun tests/1)}.
-
-%%%%%%%%%%%%%%%%%%%%%%%
-%%% SETUP FUNCTIONS %%%
-%%%%%%%%%%%%%%%%%%%%%%%
-start() ->
-    game_server:start([test]),
-    db:delete_all(users),
-    db:delete_all(formations),
-    db:delete_all(heros).
-
-stop(_Pid) ->
-    game_server:stop().
-
-%%%%%%%%%%%%%%%%%%%%
-%%% ACTUAL TESTS %%%
-%%%%%%%%%%%%%%%%%%%%
-tests(_Pid) ->
-    PlayerID = player_data:get_player_id(<<"eunit_test_udid">>),
-    fake_client:login(),
-    [?_assert(erlang:is_binary(PlayerID)),
-     ?_assertNotEqual(PlayerID, <<"">>)
-    ].
-
-%%%%%%%%%%%%%%%%%%%%%%%%
-%%% HELPER FUNCTIONS %%%
-%%%%%%%%%%%%%%%%%%%%%%%%

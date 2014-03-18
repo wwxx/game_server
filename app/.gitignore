@@ -1,0 +1,12 @@
+*.swp
+*.beam
+*.dump
+deps/*
+ebin/*
+rel/pusher*
+log
+*@nohost
+.DS_Store
+.eunit
+generates/*
+server_engine/app/models/config_*

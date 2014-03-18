@@ -44,7 +44,7 @@
 
 
 -include("include/gproc_macros.hrl").
--include("src/app/include/secure.hrl").
+-include("app/include/secure.hrl").
 -include ("include/common_const.hrl").
 
 %%%===================================================================
@@ -200,7 +200,7 @@ encode_response(Response) ->
             ResponseData = api_encoder:encode(Protocol, {Msg});
         true ->
             ResponseData = api_encoder:encode(ok, {?OK}),
-            erlang:error(io_lib:format("Response Msg type error: ~p", [Msg])) 
+            erlang:error(io_lib:format("Response Msg type error: ~p", [Msg]))
     end.
 
 %%--------------------------------------------------------------------

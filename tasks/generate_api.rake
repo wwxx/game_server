@@ -57,13 +57,13 @@ def common_decode_with_index(field_type, variable, field_idx)
 end
 
 task :generate_api => :environment do
-  routes = "#{Rails.root.to_s}/src/app/api/routes.yml"
-  extension_types = "#{Rails.root.to_s}/src/app/api/protocol/extension_types.yml"
-  `mkdir -p #{Rails.root.to_s}/src/app/generates`
-  routes_path = "#{Rails.root.to_s}/src/app/generates/routes.erl"
-  encoder_path = "#{Rails.root.to_s}/src/app/generates/api_encoder.erl"
-  decoder_path = "#{Rails.root.to_s}/src/app/generates/api_decoder.erl"
-  protocol_path = "#{Rails.root.to_s}/src/app/generates/api_protocol.erl"
+  routes = "#{FRAMEWORK_ROOT_DIR}/app/api/routes.yml"
+  extension_types = "#{FRAMEWORK_ROOT_DIR}/app/api/protocol/extension_types.yml"
+  `mkdir -p #{FRAMEWORK_ROOT_DIR}/app/generates`
+  routes_path   = "#{FRAMEWORK_ROOT_DIR}/app/generates/routes.erl"
+  encoder_path  = "#{FRAMEWORK_ROOT_DIR}/app/generates/api_encoder.erl"
+  decoder_path  = "#{FRAMEWORK_ROOT_DIR}/app/generates/api_decoder.erl"
+  protocol_path = "#{FRAMEWORK_ROOT_DIR}/app/generates/api_protocol.erl"
 
   routes = YAML.load_file(routes)
   extension_types = YAML.load_file(extension_types)
@@ -76,7 +76,7 @@ task :generate_api => :environment do
   routes_content = %Q{#{header}
 -module(routes).
 -export([route/1]).
--include("src/app/include/error_code.hrl").
+-include("app/include/error_code.hrl").
 
 }
 

@@ -24,7 +24,7 @@
 -module(fake_client).
 -compile(export_all).
 
--include("src/app/include/secure.hrl").
+-include("app/include/secure.hrl").
 
 
 login() ->

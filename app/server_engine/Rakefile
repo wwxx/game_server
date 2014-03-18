@@ -4,4 +4,6 @@
 
 require File.expand_path('../config/application', __FILE__)
 
+Dir.glob('../../tasks/*.rake').each { |r| load r}
+
 GameServer::Application.load_tasks
