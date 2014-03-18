@@ -45,6 +45,7 @@
 
 -include("include/gproc_macros.hrl").
 -include("src/app/include/secure.hrl").
+-include ("include/common_const.hrl").
 
 %%%===================================================================
 %%% API
@@ -177,7 +178,7 @@ handle_request({{sessions_controller, login}, Params},
     %% Start player process
     player_factory:start_player(PlayerID),
     LoginInfo = sessions_controller:login(PlayerID),
-    send_socket_data(Transport, Socket, LoginInfo),
+    send_socket_data(Transport, Socket, encode_response(LoginInfo)),
     {noreply, State#protocol{playerID = PlayerID}};
 handle_request({Path, Params}, State=#protocol{playerID = PlayerID, transport=Transport, socket=Socket}) ->
     case PlayerID of
@@ -185,8 +186,21 @@ handle_request({Path, Params}, State=#protocol{playerID = PlayerID, transport=Tr
             {stop, {playerID, undefined}, State};
         _ ->
             Response = player:request(PlayerID, Path, Params),
-            send_socket_data(Transport, Socket, Response),
+            error_logger:info_msg("Path: ~p, Params: ~p, Response: ~p~n", [Path, Params, Response]),
+            send_socket_data(Transport, Socket, encode_response(Response)),
             {noreply, State}
+    end.
+
+encode_response(Response) ->
+    {Protocol, Msg} = Response,
+    if
+        is_tuple(Msg) ->
+            ResponseData = api_encoder:encode(Protocol, Msg);
+        is_list(Msg)  ->
+            ResponseData = api_encoder:encode(Protocol, {Msg});
+        true ->
+            ResponseData = api_encoder:encode(ok, {?OK}),
+            erlang:error(io_lib:format("Response Msg type error: ~p", [Msg])) 
     end.
 
 %%--------------------------------------------------------------------
