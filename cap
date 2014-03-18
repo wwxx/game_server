@@ -24,16 +24,12 @@
 ## SOFTWARE.
 
 
-SERVERS = {
-  game_server_debug: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server", locale: 'en'}
-  #game_server_1: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_1", locale: 'en'},
-  #game_server_2: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_2", locale: 'en'},
-  #game_server_3: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_3", locale: 'en'},
-  #game_server_4: { url: "ubuntu@115.29.14.9:/home/ubuntu/apps/game_server_4", locale: 'en'}
-}
+require 'yaml'
+deploy_config = YAML.load_file(File.expand_path("./app/deploy.yml"))
+SERVERS = deploy_config["servers"]
 
-remotes = `git remote`.split("\n").map(&:to_sym)
-locales = SERVERS.values.map{|v| v[:locale].to_sym}.uniq
+remotes = `git remote`.split("\n")
+locales = SERVERS.values.map{|v| v["locale"]}.uniq
 server_names = SERVERS.keys
 
 # Add the missing servers to git remote
@@ -43,12 +39,12 @@ end
 
 # Remove the unused git remotes
 remotes.each do |name|
-  next if name == :origin
+  next if name == "origin"
   `git remote remove #{name}` unless SERVERS.include?(name)
 end
 
 cmd 	= ARGV[0]
-scope   = (ARGV[1] || 'game_server_debug').to_sym
+scope   = (ARGV[1] || 'game_server_debug')
 branch 	= ARGV[2] || 'master'
 
 unless ['setup', 'deploy', 'rollback'].include?(cmd)
@@ -64,11 +60,11 @@ if server_names.include?(scope)
 elsif locales.include?(scope)
   targets = []
   SERVERS.each do |k, v|
-    if v[:locale].to_sym == scope
+    if v["locale"] == scope
       targets << k
     end
   end
-elsif scope == :all
+elsif scope == "all"
   targets = server_names
 end
 
@@ -92,4 +88,3 @@ cmd and targets and targets.map do |target|
     end
   end
 end.each(&:join)
-
