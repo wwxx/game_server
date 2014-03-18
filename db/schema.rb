@@ -13,218 +13,6 @@
 
 ActiveRecord::Schema.define(:version => 20140318013944) do
 
-  create_table "config_alliance_attacks", :force => true do |t|
-    t.integer "level"
-    t.integer "max_amount"
-  end
-
-  create_table "config_alliance_defenses", :force => true do |t|
-    t.integer "level"
-    t.integer "max_amount"
-  end
-
-  create_table "config_armies", :force => true do |t|
-    t.string  "army_name"
-    t.integer "barrack_level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-    t.integer "gold_cure"
-    t.float   "gem_cure"
-    t.integer "attack"
-    t.integer "defence"
-    t.integer "health"
-    t.integer "accurate"
-    t.integer "dodge"
-    t.integer "crit"
-    t.integer "tenacity"
-    t.integer "load"
-  end
-
-  create_table "config_army_controls", :force => true do |t|
-    t.integer "hero_level"
-    t.integer "aptitude_1"
-    t.integer "aptitude_2"
-    t.integer "aptitude_3"
-    t.integer "aptitude_4"
-    t.integer "aptitude_5"
-    t.integer "aptitude_6"
-  end
-
-  create_table "config_building_academies", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_barracks", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_bed_positions", :force => true do |t|
-    t.integer "position"
-    t.integer "x"
-    t.integer "y"
-    t.integer "width"
-    t.integer "height"
-  end
-
-  create_table "config_building_castles", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_embassies", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_farms", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_hidden_warehous", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_hospitals", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_houses", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_markets", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_ores", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_quarries", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_sawmills", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_war_centers", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_warehouses", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_building_watch_towers", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-    t.integer "duration"
-  end
-
-  create_table "config_commander_leads", :force => true do |t|
-    t.integer "level"
-    t.integer "army_control"
-    t.integer "book_amount"
-    t.integer "rate"
-  end
-
-  create_table "config_commander_prestiges", :force => true do |t|
-    t.integer "level"
-    t.integer "exp"
-  end
-
-  create_table "config_commanders", :force => true do |t|
-    t.integer "level"
-    t.integer "exp"
-    t.integer "army_control"
-  end
-
-  create_table "config_hidden_warehouses", :force => true do |t|
-    t.integer "level"
-    t.integer "storage"
-  end
-
-  create_table "config_hospitals", :force => true do |t|
-    t.integer "level"
-    t.integer "max_patients"
-    t.integer "cure_time"
-  end
-
   create_table "config_items", :force => true do |t|
     t.text    "title"
     t.string  "ver"
@@ -234,12 +22,6 @@ ActiveRecord::Schema.define(:version => 20140318013944) do
     t.string  "url"
     t.string  "pc"
     t.string  "ken"
-  end
-
-  create_table "config_markets", :force => true do |t|
-    t.integer "level"
-    t.integer "amount"
-    t.integer "tax"
   end
 
   create_table "config_player_grows", :force => true do |t|
@@ -280,34 +62,9 @@ ActiveRecord::Schema.define(:version => 20140318013944) do
     t.integer "block"
   end
 
-  create_table "config_populations", :force => true do |t|
-    t.integer "house_level"
-    t.integer "max_population"
-    t.integer "recover_per_hour"
-    t.integer "gold_generate"
-  end
-
-  create_table "config_resource_generates", :force => true do |t|
-    t.integer "level"
-    t.integer "food"
-    t.integer "wood"
-    t.integer "stone"
-    t.integer "ore"
-  end
-
   create_table "config_stores", :force => true do |t|
     t.string  "name"
     t.integer "amount"
-  end
-
-  create_table "config_training_limits", :force => true do |t|
-    t.integer "barrack_level"
-    t.integer "max_training"
-  end
-
-  create_table "config_unlock_buildings", :force => true do |t|
-    t.string "building_name"
-    t.string "unlock_condition"
   end
 
   create_table "config_users", :force => true do |t|
@@ -317,20 +74,17 @@ ActiveRecord::Schema.define(:version => 20140318013944) do
     t.text    "title_desc"
   end
 
-  create_table "config_warehouses", :force => true do |t|
-    t.integer "level"
-    t.integer "storage"
-  end
-
   create_table "copies", :id => false, :force => true do |t|
     t.string  "uuid"
     t.string  "user_id"
+    t.integer "area_id"
     t.integer "copy_id"
     t.integer "star"
     t.integer "battle_process"
     t.boolean "is_rewarded"
   end
 
+  add_index "copies", ["area_id"], :name => "index_copies_on_area_id"
   add_index "copies", ["copy_id"], :name => "index_copies_on_copy_id"
   add_index "copies", ["user_id"], :name => "index_copies_on_user_id"
   add_index "copies", ["uuid"], :name => "index_copies_on_uuid", :unique => true

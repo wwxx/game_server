@@ -22,6 +22,7 @@
 %% SOFTWARE.
 
 
+-define (CHAR,     8).
 -define (SHORT,   16).
 -define (INTEGER, 32).
 -define (FLOAT,   32).

@@ -24,7 +24,7 @@
 
 desc "Generate API"
 
-COMMON_TYPE = ['string', 'integer', 'float', 'short']
+COMMON_TYPE = ['string', 'integer', 'float', 'short', 'char']
 
 def common_protocol(field_type, variable, code)
   case field_type
@@ -36,6 +36,8 @@ def common_protocol(field_type, variable, code)
     "utils_protocol:#{code}_float(#{variable})"
   when 'short'
     "utils_protocol:#{code}_short(#{variable})"
+  when 'char'
+    "utils_protocol:#{code}_char(#{variable})"
   end
 end
 
@@ -49,6 +51,8 @@ def common_decode_with_index(field_type, variable, field_idx)
     "{#{variable}, Bin#{field_idx+1}} = utils_protocol:decode_float(Bin#{field_idx})"
   when 'short'
     "{#{variable}, Bin#{field_idx+1}} = utils_protocol:decode_short(Bin#{field_idx})"
+  when 'char'
+    "{#{variable}, Bin#{field_idx+1}} = utils_protocol:decode_char(Bin#{field_idx})"
   end
 end
 
