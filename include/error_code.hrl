@@ -1,3 +1,4 @@
--define(OK, 0).
--define(ERROR_HERO_NOT_FOUND, 1).
--define(FORMATION_NOT_FOUND, 2).
+-define(ERROR_NO_SUCH_PROTOCOL, 0).
+-define(OK, 1).
+-define(ERROR_HERO_NOT_FOUND, 2).
+-define(FORMATION_NOT_FOUND, 3).

@@ -41,10 +41,10 @@ request(Udid, Protocol, Params) ->
                                  [{active, false}, {packet, 2}]),
     send_request(login_params, Sock, {Udid}),
     LoginResponse = recv_response(Sock),
-    io:format("LoginResponse: ~p~n", [LoginResponse]),
+    error_logger:info_msg("LoginResponse: ~p~n", [LoginResponse]),
     send_request(Protocol, Sock, Params),
     Response = recv_response(Sock),
-    io:format("Response: ~p~n", [Response]),
+    error_logger:info_msg("Response: ~p~n", [Response]),
     ok = gen_tcp:close(Sock),
     Response.
 
@@ -56,5 +56,5 @@ recv_response(Sock) ->
     {ok, Packet} = gen_tcp:recv(Sock, 0),
     Data = secure:decrypt(Packet),
     {Response, _LeftData} = api_decoder:decode(Data),
-    io:format("Response: ~p~n", [Response]),
+    error_logger:info_msg("Response: ~p~n", [Response]),
     Response.
