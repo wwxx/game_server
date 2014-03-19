@@ -25,7 +25,7 @@
 
 
 require 'yaml'
-deploy_config = YAML.load_file(File.expand_path("./app/deploy.yml"))
+deploy_config = YAML.load_file(File.expand_path("../app/deploy.yml"))
 SERVERS = deploy_config["servers"]
 
 remotes = `git remote`.split("\n")
