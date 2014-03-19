@@ -9,13 +9,13 @@ Erlang Game Server
 At this project's root dir type the following command to setup:
 
 ```
-$ ./cmd_install
+$ tools/install
 ```
 
 And then you can start the Game Server with the following command:
 
 ```
-./cmd_start
+$ tools/start
 ```
 
 ## License
