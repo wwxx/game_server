@@ -96,7 +96,7 @@ get_data_status(Key) ->
             undefined
     end.
 
-create(PlayerID, Record) ->
+create(PlayerID, Record) when is_tuple(Record) ->
     track_active(PlayerID, Record),
     case validate_ownership(PlayerID, self()) of
         true ->
@@ -110,7 +110,19 @@ create(PlayerID, Record) ->
                     ets_create(PlayerID, RecordWithId)
             end;
         false ->
-            io:format("Permission deny: you are not the owner of this player~n")
+            error_logger:info_msg("Permission deny: you are not the owner of this player~n")
+    end;
+create(PlayerID, Records) when is_list(Records) ->
+    [Record|_] = Records,
+    track_active(PlayerID, Record),
+    case validate_ownership(PlayerID, self()) of
+        true ->
+            RecordsWithId = lists:map(fun(TmpRecord) ->
+                                          ensure_has_uuid(TmpRecord)
+                                      end, Records),
+            ets_create(PlayerID, RecordsWithId);
+        false ->
+            error_logger:info_msg("Permission deny: you are not the owner of this player~n")
     end.
 
 delete(PlayerID, SelectorRecord) ->
@@ -118,7 +130,7 @@ delete(PlayerID, SelectorRecord) ->
     ensure_data_loaded(PlayerID, SelectorRecord),
     case validate_ownership(PlayerID, self()) of
         true -> ets_delete(PlayerID, SelectorRecord);
-        false -> io:format("Permission deny: you are not the owner of this player~n")
+        false -> error_logger:info_msg("Permission deny: you are not the owner of this player~n")
     end.
 
 update(PlayerID, SelectorRecord, ModifierRecord) ->
@@ -126,7 +138,7 @@ update(PlayerID, SelectorRecord, ModifierRecord) ->
     ensure_data_loaded(PlayerID, SelectorRecord),
     case validate_ownership(PlayerID, self()) of
         true -> ets_update(PlayerID, SelectorRecord, ModifierRecord);
-        false -> io:format("Permission deny: you are not the owner of this player~n")
+        false -> error_logger:info_msg("Permission deny: you are not the owner of this player~n")
     end.
 
 find(PlayerID, SelectorRecord) ->
@@ -159,7 +171,7 @@ clean(PlayerID, ModelName) ->
             end,
             true = ets:match_delete(Tab, ets_utils:makepat(SelectorRecord));
         false ->
-            io:format("Permission deny: you are not the owner of this player~n")
+            error_logger:info_msg("Permission deny: you are not the owner of this player~n")
     end.
 
 -spec(get_single_record_status(PlayerID::binary(), ModelName::atom(), Id::any()) ->
@@ -182,9 +194,9 @@ get_player_records_status(PlayerID) ->
 flush_to_mysql() ->
     lists:foreach(
         fun([PlayerID, ModelName, Id, Status, Value]) ->
-            io:format("PlayerID: ~p, ModelName: ~p, Id: ~p, Status: ~p, Value: ~p~n",[PlayerID, ModelName, Id, Status, Value]),
+            error_logger:info_msg("PlayerID: ~p, ModelName: ~p, Id: ~p, Status: ~p, Value: ~p~n",[PlayerID, ModelName, Id, Status, Value]),
             Res = data_persister:persist(ModelName, Id, Status, Value),
-            io:format("Persist Result: ~p~n", [Res]),
+            error_logger:info_msg("Persist Result: ~p~n", [Res]),
             del_record_status(PlayerID, ModelName, Id)
         end, all_record_status()).
 
@@ -222,10 +234,15 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-ets_create(PlayerID, Record) ->
+ets_create(PlayerID, Record) when is_tuple(Record) ->
     {Tab, _ValueList, Name, Key} = model_info(Record),
     put_record_status(PlayerID, Name, Key, create, undefined),
-    true = ets:insert_new(Tab, Record).
+    true = ets:insert_new(Tab, Record);
+ets_create(PlayerID, Records) when is_list(Records) ->
+    [Record|_] = Records,
+    {Tab, _, _, _} = model_info(Record),
+    batch_put_record_status(PlayerID, Records),
+    true = ets:insert_new(Tab, Records).
 
 ets_delete(PlayerID, SelectorRecord) ->
     {Tab, _ValueList, Name, Key} = model_info(SelectorRecord),
@@ -344,6 +361,18 @@ put_record_status(PlayerID, ModelName, Id, Status, Value) ->
     Val = {Status, Value},
     true = ets:insert(?STATE_TAB, {Key, Val}).
 
+batch_put_record_status(PlayerID, Records) ->
+    States = lists:map(fun(Record) ->
+                           {_, _, Name, Key} = model_info(Record),
+                           record_status_object(PlayerID, Name, Key, create, undefined)
+                       end, Records),
+    true = ets:insert(?STATE_TAB, States).
+
+record_status_object(PlayerID, ModelName, Id, Status, Value) ->
+    Key = {record_status, PlayerID, ModelName, Id},
+    Val = {Status, Value},
+    {Key, Val}.
+
 get_record_status(PlayerID, ModelName, Id) ->
     Key = {record_status, PlayerID, ModelName, Id},
     case ets:lookup(?STATE_TAB, Key) of
@@ -400,3 +429,8 @@ ensure_data_loaded(PlayerID, SelectorRecord) ->
         _ ->
             ok
     end.
+
+ensure_has_uuid(Record) ->
+    NewId = uuid_factory:gen(),
+    record_mapper:set_field(Record, 'uuid', NewId).
+

@@ -32,6 +32,7 @@ start(_Type, _Args) ->
     ensure_started(crypto),
     case application:get_env(game_server, server_environment) of
         {ok, test} -> ok;
+        {ok, development} -> ok;
         _ -> ok = lager:start()
     end,
     ensure_started(gproc),
