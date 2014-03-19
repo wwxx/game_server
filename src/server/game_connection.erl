@@ -44,7 +44,7 @@
 
 
 -include("include/gproc_macros.hrl").
--include("app/include/secure.hrl").
+-include("../app/include/secure.hrl").
 -include ("include/common_const.hrl").
 
 %%%===================================================================

@@ -69,7 +69,7 @@ task :generate_record => :environment do
     r_string << "}).\n\n"
   end
 
-  File.open("#{FRAMEWORK_ROOT_DIR}/include/db_schema.hrl", "w") do |io|
+  File.open("#{FRAMEWORK_ROOT_DIR}/game_server/include/db_schema.hrl", "w") do |io|
     io.write r_string
   end
 

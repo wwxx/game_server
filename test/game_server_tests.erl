@@ -24,7 +24,7 @@
 
 -module(game_server_tests).
 -include_lib("eunit/include/eunit.hrl").
--include("app/include/secure.hrl").
+-include("../app/include/secure.hrl").
 -include ("include/db_schema.hrl").
 
 -define(setup(F), {setup, fun start/0, fun stop/1, F}).

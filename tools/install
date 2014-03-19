@@ -33,9 +33,9 @@ while getopts e: opt; do
   esac
 done
 
-cd app/server_engine
+cd ../app/server_engine
 RAILS_ENV=$server_env bundle install
 RAILS_ENV=$server_env bundle exec rake setup
-cd ../../
+cd ../../game_server
 ./rebar get-deps
 ./rebar compile

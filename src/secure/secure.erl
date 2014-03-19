@@ -29,7 +29,7 @@
 		 encrypt/3,
 		 decrypt/3]).
 
--include("app/include/secure.hrl").
+-include("../app/include/secure.hrl").
 
 -spec(encrypt(BinaryString::binary()) -> Cipher::binary()).
 encrypt(BinaryString) ->

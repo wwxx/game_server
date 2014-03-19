@@ -76,7 +76,7 @@ task :generate_api => :environment do
   routes_content = %Q{#{header}
 -module(routes).
 -export([route/1]).
--include("app/include/error_code.hrl").
+-include("../app/include/error_code.hrl").
 
 }
 

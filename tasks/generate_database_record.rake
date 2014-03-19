@@ -39,7 +39,7 @@ task :generate_database_record => :environment do
     content << "\n"
   end
 
-  File.open("#{FRAMEWORK_ROOT_DIR}/include/db_config.hrl", "w") do |io|
+  File.open("#{FRAMEWORK_ROOT_DIR}/game_server/include/db_config.hrl", "w") do |io|
     io.write content
   end
 end
