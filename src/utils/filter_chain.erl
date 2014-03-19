@@ -42,6 +42,6 @@ indie([{Fun, Args}]) ->
     Fun(Args);
 indie([{Fun, Args}|T]) ->
     case Fun(Args) of
-        {ok, _} -> indie(T);
+        ok -> indie(T);
         {fail, Reason} -> {fail, Reason}
     end.
