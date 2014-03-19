@@ -1,0 +1,17 @@
+all:
+	cd game_server && tools/install
+
+console:
+	cd game_server && tools/start
+
+start:
+	cd game_server && tools/start_daemon
+
+stop:
+	cd game_server && tools/stop_daemon
+
+attach:
+	cd game_server && tools/attach_daemon
+
+test:
+	cd game_server && tools/run_test
