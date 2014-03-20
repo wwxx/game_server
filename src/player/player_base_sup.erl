@@ -33,7 +33,7 @@
 -export([init/1]).
 
 -define(CHILD(Id, Mod, Type, Args), {Id, {Mod, start_link, Args},
-                                     permanent, 5000, Type, [Mod]}).
+                                     permanent, infinity, Type, [Mod]}).
 
 %%%===================================================================
 %%% API functions
@@ -68,7 +68,7 @@ start_link() ->
 %%--------------------------------------------------------------------
 init([]) ->
     PlayerFactorySupSpec = ?CHILD(player_factory_sup, player_factory_sup, supervisor, []),
-    PlayerSupSpec = ?CHILD(player_super, player_sup, supervisor, []),
+    PlayerSupSpec = ?CHILD(player_sup, player_sup, supervisor, []),
     Specs = [PlayerFactorySupSpec, PlayerSupSpec],
     {ok, {{one_for_one, 5, 10}, Specs}}.
 

@@ -38,12 +38,12 @@ start([Mode]) ->
         Mode =:= test -> ok;
         Mode =:= development -> ensure_started(sync)
     end,
-    io:format("Game Server Starting~n"),
+    error_logger:info_msg("Game Server Starting~n"),
     application:set_env(game_server, server_environment, Mode),
     ok = application:start(game_server).
 
 stop() ->
-    io:format("Game Server Stopping~n"),
+    error_logger:info_msg("Game Server Stopping~n"),
     application:stop(game_server),
     application:stop(crypto),
     application:stop(sync),

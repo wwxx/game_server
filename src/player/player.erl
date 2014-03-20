@@ -89,6 +89,7 @@ init([PlayerID]) ->
     ?REG_PID({player, PlayerID}),
     put(player_id, PlayerID),
     Timer = erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
+    process_flag(trap_exit, true),
     {ok, #player_state{playerID=PlayerID, circulation_persist_timer = Timer}}.
 
 handle_call({request, {Controller, Action}, Params}, _From,
@@ -128,10 +129,15 @@ handle_info(circulation_persist_data, State) ->
 handle_info({gproc_msg, Channel, Msg}, State=#player_state{playerID=PlayerID}) ->
     player_subscribe:handle(Channel, PlayerID, Msg),
     {noreply, State};
-handle_info(_Info, State) ->
+handle_info({'EXIT', _, Reason}, State) ->
+    io:format("exit:~p~n", [Reason]),
+    {stop, normal, State};
+handle_info(Info, State) ->
+    io:format("handle_info, Info: ~p~n", [Info]),
     {noreply, State}.
 
 terminate(_Reason, _State=#player_state{circulation_persist_timer=Timer}) ->
+    io:format("player process will terminate!~n"),
     erlang:cancel_timer(Timer),
     gproc:goodbye(),
     model:persist_all(),

@@ -49,9 +49,7 @@ start_stop_test_() ->
 %%%%%%%%%%%%%%%%%%%%%%%
 start() ->
     game_server:start([test]),
-    db:delete_all(towns),
-    db:delete_all(users),
-    db:delete_all(buildings).
+    db:delete_all(users).
 
 stop(_Pid) ->
     game_server:stop().
@@ -61,7 +59,6 @@ stop(_Pid) ->
 %%%%%%%%%%%%%%%%%%%%
 update_test(_Pid) ->
     PlayerID = player_data:get_player_id(<<"eunit_test_udid">>),
-    error_logger:info_msg("----------All: ~p~n", [player:proxy(PlayerID, model, all, [buildings])]),
     player_data:update(PlayerID, #buildings{user_id = PlayerID}, #buildings{name = <<"NewCastle">>}),
     Building = player_data:find(PlayerID, #buildings{name = <<"NewCastle">>}),
     [?_assertEqual(Building#buildings.name, <<"NewCastle">>)].

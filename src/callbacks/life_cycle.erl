@@ -40,31 +40,32 @@
 
 %% before start game_server
 before_start() ->
-    io:format("Game Server Life Cycle Callback: before_start!~n"),
+    error_logger:info_msg("Game Server Life Cycle Callback: before_start!~n"),
     %% add your custom initialize at here
     ok.
 
 %% after start game_server
 after_start() ->
-    io:format("Game Server Life Cycle Callback: after_start!~n"),
+    error_logger:info_msg("Game Server Life Cycle Callback: after_start!~n"),
     %% add your custom initialize at here
     model_mapping:load(),
     game_numerical:load_data(),
     ok.
 
 before_stop() ->
-    io:format("Game Server Life Cycle Callback: before_stop!~n"),
+    error_logger:info_msg("Game Server Life Cycle Callback: before_stop!~n"),
     %% shutdown tcp server
     supervisor:terminate_child(game_server_sup, {ranch_listener_sup, ranch_tcp_listener}),
     supervisor:terminate_child(game_server_sup, ranch_sup),
     %% shutdown auto executing events server
     %% ......
-    %% flush ets cached data to mysql
-    player_data:flush_to_mysql(),
-	ok.
+    %% Stop all player process and use terminate callback to persist data
+    supervisor:terminate_child(player_base_sup, player_sup),
+    %player_data:flush_to_mysql(),
+    ok.
 
 after_stop() ->
-    io:format("Game Server Life Cycle Callback: after_stop!~n"),
+    error_logger:info_msg("Game Server Life Cycle Callback: after_stop!~n"),
     %% add your custom stopping at here
 	ok.
 

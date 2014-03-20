@@ -33,7 +33,7 @@
 -export([init/1]).
 
 -define(CHILD(Id, Mod, Type, Args), {Id, {Mod, start_link, Args},
-                                     temporary, 5000, Type, [Mod]}).
+                                     temporary, infinity, Type, [Mod]}).
 
 %%%===================================================================
 %%% API functions

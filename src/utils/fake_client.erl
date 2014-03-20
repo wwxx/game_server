@@ -35,6 +35,20 @@ login() ->
     _Response = recv_response(Sock),
     ok = gen_tcp:close(Sock).
 
+bench(FakeClientAmount) ->
+    login(FakeClientAmount).
+
+login(0) -> ok;
+login(N) ->
+    SomeHostInNet = "localhost", % to make it runnable on one machine
+    {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
+                                 [{active, false}, {packet, 2}]),
+    Udid = io_lib:format("fake_client_udid_~p", [N]),
+    send_request(login_params, Sock, {list_to_binary(Udid)}),
+    _Response = recv_response(Sock),
+    ok = gen_tcp:close(Sock),
+    login(N-1).
+
 request(Udid, Protocol, Params) ->
     SomeHostInNet = "localhost", % to make it runnable on one machine
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,

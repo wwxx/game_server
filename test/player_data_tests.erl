@@ -52,10 +52,7 @@ player_data_api_test() ->
 %%%%%%%%%%%%%%%%%%%%%%%
 start() ->
     game_server:start([test]),
-    db:delete_all(users),
-    db:delete_all(formations),
-    db:delete_all(heros),
-    db:delete_all(towns).
+    db:delete_all(users).
 
 stop(_Pid) ->
     game_server:stop().

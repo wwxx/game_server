@@ -104,10 +104,15 @@ sqerl_execute(SqlTuple) ->
 -spec(execute(binary()) -> list() ).
 execute(SQL) ->
     Result = emysql:execute(?DB_POOL, SQL),
-    case tuple_to_list(Result) of
-        [error_packet|_] ->
-            erlang:error(Result);
-        _ ->
+    case is_tuple(Result) of
+        true ->
+            case tuple_to_list(Result) of
+                [error_packet|_] ->
+                    erlang:error(Result);
+                _ ->
+                    Result
+            end;
+        false ->
             Result
     end.
 

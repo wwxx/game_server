@@ -147,6 +147,7 @@ create(Record) ->
         _ -> Record
     end,
     [Table, Id|_Values] = tuple_to_list(RecWithId),
+    ensure_load_data(Table),
     update_status(Table, Id, ?MODEL_CREATE),
     put({Table, Id}, RecWithId).
 
@@ -157,20 +158,22 @@ create(Record, load) ->
     put({Table, Id}, Record).
 
 persist_table(Table) ->
+    error_logger:info_msg("Table: ~p, will be persist!~n", [Table]),
     case id_status_list(Table) of
         [] -> ok;
         IdList ->
-            case delete_status_list(Table) of
-                [] -> [];
-                DeleteIdList ->
-                    case sqls(Table, DeleteIdList ++ IdList) of
-                        [] -> ok;
-                        Sqls -> db:execute(binary_string:join(Sqls, <<";">>))
-                    end
+            DeleteIdList = delete_status_list(Table),
+            case sqls(Table, DeleteIdList ++ IdList) of
+                [] -> ok;
+                Sqls ->
+                    Sql = binary_string:join(Sqls, <<";">>),
+                    error_logger:info_msg("SQL: ~p~n", [Sql]),
+                    db:execute(Sql)
             end
     end.
 
 persist_all() ->
+    error_logger:info_msg("PERSIST ALL DATA!~n"),
     lists:foreach(fun persist_table/1, all_loaded_tables()).
 
 %% Private Methods
@@ -271,7 +274,12 @@ record_loaded_table(Table) ->
         undefined ->
             put({loaded, tables}, [Table]);
         Tables ->
-            put({loaded, tables}, [Table|Tables])
+            case lists:keyfind(Table, 1, Tables) of
+                true ->
+                    error_logger:info_msg("Table: [~p] already in loaded tables.~n", [Table]),
+                    ok;
+                false -> put({loaded, tables}, [Table|Tables])
+            end
     end.
 
 all_loaded_tables() ->
