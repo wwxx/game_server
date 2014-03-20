@@ -32,7 +32,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% TESTS DESCRIPTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
-player_data_api_test_() ->
+player_data_api_test() ->
+% player_data_api_test_() ->
     % [{"Player Data API test.", ?setup(fun tests/1)}].
     {foreach,
      fun start/0,
@@ -50,10 +51,11 @@ player_data_api_test_() ->
 %%% SETUP FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%
 start() ->
-    game_server:start([test]).
-    %db:delete_all(users),
-    %db:delete_all(formations),
-    %db:delete_all(heros).
+    game_server:start([test]),
+    db:delete_all(users),
+    db:delete_all(formations),
+    db:delete_all(heros),
+    db:delete_all(towns).
 
 stop(_Pid) ->
     game_server:stop().

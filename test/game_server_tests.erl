@@ -41,6 +41,7 @@ start_stop_test_() ->
 %%%%%%%%%%%%%%%%%%%%%%%
 start() ->
     game_server:start([test]),
+    db:delete_all(towns),
     db:delete_all(users),
     db:delete_all(formations),
     db:delete_all(heros).

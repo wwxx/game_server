@@ -37,6 +37,7 @@ start(_Type, _Args) ->
     end,
     ensure_started(gproc),
     ensure_started(emysql),
+    game_counter:start(),
     life_cycle:before_start(),
     R = game_server_sup:start_link(),
     life_cycle:after_start(),
