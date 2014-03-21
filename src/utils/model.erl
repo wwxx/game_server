@@ -7,7 +7,7 @@
          create/1,
          create/2,
          count/1,
-         persist_table/1,
+         %persist_table/1,
          persist_all/0]).
 
 -include("include/common_const.hrl").
@@ -28,7 +28,7 @@ all(Table) ->
             lists:foldl(fun
                 ({Id, _}, Result) ->
                     case get({Table, Id}) of
-                        undefined -> undefined;
+                        undefined -> Result;
                         Rec -> [Rec|Result]
                     end
             end, [], IdList)
@@ -157,12 +157,14 @@ create(Record, load) ->
     update_status(Table, Id, ?MODEL_ORIGIN),
     put({Table, Id}, Record).
 
-persist_table(Table) ->
-    error_logger:info_msg("Table: ~p, will be persist!~n", [Table]),
-    case generate_persist_sql(Table) of
-        <<>> -> do_nothing;
-        Sql -> execute_with_procedure(Sql)
-    end.
+%persist_table(Table) ->
+    %error_logger:info_msg("Table: ~p, will be persist!~n", [Table]),
+    %case generate_persist_sql(Table) of
+        %<<>> -> do_nothing;
+        %Sql ->
+            %execute_with_procedure(Sql),
+            %reset_status(Table)
+    %end.
 
 generate_persist_sql(Table) ->
     case id_status_list(Table) of
@@ -173,23 +175,39 @@ generate_persist_sql(Table) ->
                 [] -> <<>>;
                 Sqls ->
                     Sql = binary_string:join(Sqls, <<";">>),
-                    %error_logger:info_msg("SQL: ~p~n", [Sql]),
                     Sql
             end
     end.
 
 persist_all() ->
-    error_logger:info_msg("PERSIST ALL DATA!~n"),
+    Tables = all_loaded_tables(),
     Sqls = lists:foldl(fun(Table, Result) ->
                            case generate_persist_sql(Table) of
                                <<>> -> Result;
                                Sql -> [Sql|Result]
                            end
-                       end, [], all_loaded_tables()),
+                       end, [], Tables),
+    error_logger:info_msg("SQLS: ~p~n", [Sqls]),
     case binary_string:join(Sqls, <<";">>) of
         <<>> -> do_nothing;
-        %JoinedSql -> db:execute(with_transaction(JoinedSql))
-        JoinedSql -> execute_with_procedure(JoinedSql)
+        JoinedSql ->
+            execute_with_procedure(JoinedSql),
+            reset_tables_status(Tables)
+    end.
+
+reset_tables_status(Tables) ->
+    lists:foreach(fun reset_status/1, Tables).
+
+reset_status(Table) ->
+    put({Table, deleteIdList}, []),
+    case id_status_list(Table) of
+        [] -> [];
+        IdList ->
+            NewIdList = lists:foldl(fun
+                            ({Id, _}, Result) ->
+                                [{Id, ?MODEL_ORIGIN}|Result]
+                        end, [], IdList),
+            put({Table, idList}, NewIdList)
     end.
 
 execute_with_procedure(Sql) ->
@@ -262,19 +280,13 @@ match([_Field|Fields], [_Value|Values], FieldsAndValues) ->
 
 ensure_load_data(Table) ->
     case is_table_loaded(Table) of
-        true  ->
-            error_logger:info_msg("Load data from Cache!~n"),
-            true;
+        true  -> true;
         false ->
-            error_logger:info_msg("Load data from DB!~n"),
             PlayerID = get(player_id),
             Module = list_to_atom(atom_to_list(Table) ++ "_model"),
             case Module:load_data(PlayerID) of
-                {ok, []} ->
-                    error_logger:info_msg("Module: ~p, PlayerID: ~p, no data found!~n", [Module, PlayerID]),
-                    undefined;
+                {ok, []} -> undefined;
                 {ok, Recs} ->
-                    error_logger:info_msg("ensure_load_data: ~p~n", [Recs]),
                     lists:foreach(fun
                         (Rec) -> create(Rec, load)
                     end, Recs)
@@ -295,9 +307,7 @@ record_loaded_table(Table) ->
             put({loaded, tables}, [Table]);
         Tables ->
             case lists:keyfind(Table, 1, Tables) of
-                true ->
-                    error_logger:info_msg("Table: [~p] already in loaded tables.~n", [Table]),
-                    ok;
+                true -> ok;
                 false -> put({loaded, tables}, [Table|Tables])
             end
     end.
@@ -326,7 +336,8 @@ sqls(Table, IdList) ->
     lists:foldl(fun
         ({Id, Status}, Result) ->
             if
-                Status =:= ?MODEL_ORIGIN -> Result;
+                Status =:= ?MODEL_ORIGIN ->
+                    Result;
                 true ->
                     case get({Table, Id}) of
                         undefined -> Result;

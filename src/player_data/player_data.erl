@@ -71,13 +71,11 @@ get_player_id(Udid) ->
     users_model:get_player_id(Udid).
 
 create(PlayerID, Record) when is_tuple(Record) ->
-    track_active(PlayerID, Record),
     case validate_ownership(PlayerID) of
         true -> model:create(Record);
         false -> player:proxy(PlayerID, model, create, [Record])
     end;
 create(PlayerID, Records) when is_list(Records) ->
-    track_active(PlayerID, hd(Records)),
     case validate_ownership(PlayerID) of
         true ->
             lists:foreach(fun(Record) ->
@@ -90,28 +88,24 @@ create(PlayerID, Records) when is_list(Records) ->
     end.
 
 delete(PlayerID, Selector) ->
-    track_active(PlayerID, Selector),
     case validate_ownership(PlayerID) of
         true -> model:delete(Selector);
         false -> player:proxy(PlayerID, model, delete, [Selector])
     end.
 
 update(PlayerID, Selector, Modifier) ->
-    track_active(PlayerID, Selector),
     case validate_ownership(PlayerID) of
         true -> model:update(Selector, Modifier);
         false -> player:proxy(PlayerID, model, update, [Selector, Modifier])
     end.
 
 find(PlayerID, Selector) ->
-    track_active(PlayerID, Selector),
     case validate_ownership(PlayerID) of
         true -> model:find(Selector);
         false -> player:proxy(PlayerID, model, find, [Selector])
     end.
 
 where(PlayerID, Selector) ->
-    track_active(PlayerID, Selector),
     case validate_ownership(PlayerID) of
         true -> model:where(Selector);
         false -> player:proxy(PlayerID, model, where, [Selector])
@@ -124,7 +118,6 @@ all(PlayerID, Table) ->
     end.
 
 count(PlayerID, Selector) ->
-    track_active(PlayerID, Selector),
     case validate_ownership(PlayerID) of
         true -> model:count(Selector);
         false -> player:proxy(PlayerID, model, count, [Selector])
@@ -135,8 +128,9 @@ count(PlayerID, Selector) ->
 %%%===================================================================
 
 init([]) ->
-    Timer = erlang:send_after(?ACTIVE_CHECK_DURATION, self(), circulation_active_check),
-    {ok, #state{circulation_active_check_timer = Timer}}.
+    %Timer = erlang:send_after(?ACTIVE_CHECK_DURATION, self(), circulation_active_check),
+    %{ok, #state{circulation_active_check_timer = Timer}}.
+    {ok, #state{}}.
 
 handle_call({set_data_status, Key, Value}, _From, State) ->
     Result = ets:insert(?STATE_TAB, {Key, Value}),
@@ -145,10 +139,11 @@ handle_call({set_data_status, Key, Value}, _From, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-handle_info(circulation_active_check, State) ->
+handle_info(circulation_active_check, State=#state{circulation_active_check_timer=Timer}) ->
     check_active(),
-    erlang:send_after(?ACTIVE_CHECK_DURATION, self(), circulation_active_check),
-    {noreply, State};
+    erlang:cancel_timer(Timer),
+    NewTimer = erlang:send_after(?ACTIVE_CHECK_DURATION, self(), circulation_active_check),
+    {noreply, State#state{circulation_active_check_timer=NewTimer}};
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -165,11 +160,11 @@ code_change(_OldVsn, State, _Extra) ->
 validate_ownership(PlayerID) ->
     PlayerID =:= get(player_id).
 
-track_active(PlayerID, Record) ->
-    [ModelName|_] = tuple_to_list(Record),
-    Key = {track_active, ModelName, PlayerID},
-    Value = time_utils:current_time(),
-    ets:insert(?STATE_TAB, {Key, Value}).
+%track_active(PlayerID, Record) ->
+    %[ModelName|_] = tuple_to_list(Record),
+    %Key = {track_active, ModelName, PlayerID},
+    %Value = time_utils:current_time(),
+    %ets:insert(?STATE_TAB, {Key, Value}).
 
 check_active() ->
     CurrentTime = time_utils:current_time(),

@@ -31,7 +31,6 @@
          stop/1,
          request/3,
          send_data/2,
-         clean_data/2,
          save_data/1,
          player_pid/1,
          proxy/4,
@@ -48,10 +47,11 @@
          terminate/2,
          code_change/3]).
 
--record(player_state, {playerID, circulation_persist_timer}).
+-record(player_state, {playerID,
+                       circulation_persist_timer}).
 
-% -define(PERSIST_DURATION, 1800000). %% 30 minutes
--define(PERSIST_DURATION, 200000). %% 30 minutes
+-define(PERSIST_DURATION, 180000). %% 3 minutes
+-define(EXPIRE_DURATION, 1800). %% 30 minutes
 
 -include("include/gproc_macros.hrl").
 
@@ -71,9 +71,6 @@ stop(PlayerID) ->
 request(PlayerID, Path, Params) ->
     gen_server:call(player_pid(PlayerID), {request, Path, Params}).
 
-clean_data(PlayerID, ModelName) ->
-    gen_server:cast(player_pid(PlayerID), {clean_data, ModelName}).
-
 save_data(PlayerID) ->
     gen_server:cast(player_pid(PlayerID), {save_data}).
 
@@ -92,18 +89,19 @@ publish(PlayerID, Channel, Msg) ->
 %%%===================================================================
 
 init([PlayerID]) ->
-    io:format("Player: ~p started with Pid: ~p~n", [PlayerID, self()]),
     ?REG_PID({player, PlayerID}),
     put(player_id, PlayerID),
     Timer = erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
     process_flag(trap_exit, true),
-    {ok, #player_state{playerID=PlayerID, circulation_persist_timer = Timer}}.
+    {ok, #player_state{playerID=PlayerID, circulation_persist_timer=Timer}}.
 
 handle_call({request, {Controller, Action}, Params}, _From,
             State=#player_state{playerID=PlayerID}) ->
+    track_active(),
     Response = Controller:Action(PlayerID, Params),
     {reply, Response, State};
 handle_call({proxy, Module, Fun, Args}, _From, State) ->
+    track_active(),
     Result = erlang:apply(Module, Fun, Args),
     {reply, Result, State};
 handle_call(_Request, _From, State) ->
@@ -112,9 +110,6 @@ handle_call(_Request, _From, State) ->
 
 handle_cast({stop, shutdown}, State) ->
     {stop, shutdown, State};
-handle_cast({clean_data, ModelName}, State=#player_state{playerID=PlayerID}) ->
-    clean_data_from_memory(PlayerID, ModelName),
-    {noreply, State};
 handle_cast({save_data}, State) ->
     model:persist_all(),
     {noreply, State};
@@ -131,10 +126,16 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info(circulation_persist_data, State=#player_state{circulation_persist_timer=Timer}) ->
-    model:persist_all(),
-    erlang:cancel_timer(Timer),
-    NewTimer = erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
-    {noreply, State#player_state{circulation_persist_timer=NewTimer}};
+    case time_utils:current_time() - get_last_active() >= ?EXPIRE_DURATION of
+        true ->
+            model:persist_all(),
+            {stop, {shutdown, data_persisted}, State};
+        false ->
+            model:persist_all(),
+            erlang:cancel_timer(Timer),
+            NewTimer = erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
+            {noreply, State#player_state{circulation_persist_timer=NewTimer}}
+    end;
 handle_info({gproc_msg, Channel, Msg}, State=#player_state{playerID=PlayerID}) ->
     player_subscribe:handle(Channel, PlayerID, Msg),
     {noreply, State};
@@ -153,7 +154,6 @@ terminate(Reason, _State=#player_state{circulation_persist_timer=Timer}) ->
         {shutdown, data_persisted} -> ok;
         _ -> model:persist_all()
     end,
-    error_logger:info_msg("Player terminate! Reason: ~p~n", [Reason]),
     erlang:cancel_timer(Timer),
     gproc:goodbye(),
     ok.
@@ -180,7 +180,11 @@ con_pid(PlayerID) ->
 send_data(PlayerID, Data) ->
     game_connection:send_data(con_pid(PlayerID), Data).
 
-clean_data_from_memory(PlayerID, ModelName) ->
-    model:persist_table(ModelName),
-    player_data:clean(PlayerID, ModelName),
-    ok.
+track_active() ->
+    put({player, last_active}, time_utils:current_time()).
+
+get_last_active() ->
+    case get({player, last_active}) of
+        undefined -> 0;
+        LastActive -> LastActive
+    end.

@@ -24,19 +24,22 @@
 
 -module(time_utils).
 
--compile(export_all).
+-export([current_time/0,
+         current_time_to_now/1,
+         time_to_seconds/3,
+         datetime/0]).
 
 current_time() ->
     {MegaSecs, Secs, _MicroSecs} = os:timestamp(),
     MegaSecs * 1000000 + Secs.
 
 current_time_to_now(CurrentTime) ->
-	MegaSecs = CurrentTime div 1000000,
-	Secs = CurrentTime rem 1000000,
-	{MegaSecs, Secs, 0}.
+    MegaSecs = CurrentTime div 1000000,
+    Secs = CurrentTime rem 1000000,
+    {MegaSecs, Secs, 0}.
 
-time_to_seconds(MegaSecs, Secs, MicroSecs) ->
+time_to_seconds(MegaSecs, Secs, _MicroSecs) ->
     MegaSecs * 1000000 + Secs.
 
 datetime() ->
-	{datetime, {erlang:date(), erlang:time()}}.
+    {datetime, {erlang:date(), erlang:time()}}.
