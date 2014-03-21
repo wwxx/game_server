@@ -72,17 +72,17 @@ handle_call(_Request, _From, State) ->
     {reply, Reply, State}.
 
 handle_cast(stop, State) ->
-    error_logger:info_msg("==============PREPARING SHUTDOWN APPLICATION===============~n"),
+    error_logger:info_msg("==========PREPARING SHUTDOWN APPLICATION===========~n"),
     player_factory:shutdown_players(),
-    error_logger:info_msg("====================SHUTDOWNING PLAYERS====================~n"),
+    error_logger:info_msg("================SHUTDOWNING PLAYERS================~n"),
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info({finished_shutdown_players, _From}, State) ->
-    error_logger:info_msg("==============FINISHED TO SHUTDOWN ALL THE PLAYERS===============~n"),
+    error_logger:info_msg("==========FINISHED TO SHUTDOWN ALL THE PLAYERS===========~n"),
     init:stop(),
-    error_logger:info_msg("==========INVOKE init:stop() TO STOP WHOLE APPLICATION===========~n"),
+    error_logger:info_msg("======INVOKE init:stop() TO STOP WHOLE APPLICATION=======~n"),
     {noreply, State};
 handle_info(_Info, State) ->
     {noreply, State}.

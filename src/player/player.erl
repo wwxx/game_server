@@ -141,18 +141,20 @@ handle_info({'EXIT', _, Reason}, State) ->
     io:format("RECEIVED EXIT SINGAL! Reason:~p~n", [Reason]),
     {stop, shutdown, State};
 handle_info({shutdown, From}, State) ->
-    error_logger:info_msg("Recevied shutdown msg from player_factory~n"),
     model:persist_all(),
     From ! {finished_shutdown, self()},
-    {stop, shutdown, State};
+    {stop, {shutdown, data_persisted}, State};
 handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(Reason, _State=#player_state{circulation_persist_timer=Timer}) ->
-    error_logger:info_msg("Player process terminate! Reason: ~p~n", [Reason]),
+    case Reason of
+        {shutdown, data_persisted} -> ok;
+        _ -> model:persist_all()
+    end,
+    error_logger:info_msg("Player terminate! Reason: ~p~n", [Reason]),
     erlang:cancel_timer(Timer),
     gproc:goodbye(),
-    %model:persist_all(),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->

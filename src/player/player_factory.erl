@@ -86,14 +86,8 @@ handle_call({start_player, PlayerID}, _From, State=#state{status=Status}) ->
 
 handle_cast(shutdown_players, State) ->
     Children = supervisor:which_children(player_sup),
-    put({player, children}, Children),
-    Status = case start_shutdown_children(Children) of
-                 shutdown_finished ->
-                     notify_shutdown_finished(),
-                     ?TERMINATE;
-                 _ -> ?SHUTDOWN
-             end,
-    {noreply, State#state{status=Status}};
+    start_shutdown_children(Children),
+    {noreply, State#state{status=?SHUTDOWN}};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -127,15 +121,17 @@ shutdown_next() ->
             shutdown(Child)
     end.
 
-start_shutdown_children([]) ->
-    shutdown_finished;
+start_shutdown_children([]) -> notify_shutdown_finished();
 start_shutdown_children(Children) ->
     CpuAmount = erlang:system_info(schedulers_online),
     shutdown(Children, CpuAmount * 2).
 
+shutdown([], _Amount) ->
+    put({player, children}, []);
 shutdown(Children, 0) ->
     put({player, children}, Children);
 shutdown([Child|Children], Amount) ->
+    error_logger:info_msg("Amount: ~p~n", [Amount]),
     shutdown(Child),
     shutdown(Children, Amount - 1).
 
