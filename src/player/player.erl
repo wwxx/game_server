@@ -28,6 +28,7 @@
 
 %% API
 -export([start_link/1,
+         stop/1,
          request/3,
          send_data/2,
          clean_data/2,
@@ -60,6 +61,12 @@
 
 start_link(PlayerID) ->
     gen_server:start_link(?MODULE, [PlayerID], []).
+
+stop(PlayerID) ->
+    case ?GET_PID({player, PlayerID}) of
+        undefined -> ok;
+        PlayerPID -> gen_server:cast(PlayerPID, {stop, shutdown})
+    end.
 
 request(PlayerID, Path, Params) ->
     gen_server:call(player_pid(PlayerID), {request, Path, Params}).
@@ -103,12 +110,13 @@ handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
+handle_cast({stop, shutdown}, State) ->
+    {stop, shutdown, State};
 handle_cast({clean_data, ModelName}, State=#player_state{playerID=PlayerID}) ->
     clean_data_from_memory(PlayerID, ModelName),
     {noreply, State};
-handle_cast({save_data}, State=#player_state{playerID=PlayerID}) ->
+handle_cast({save_data}, State) ->
     model:persist_all(),
-    io:format("Manually saved player's data (PlayerID: ~p)~n", [PlayerID]),
     {noreply, State};
 handle_cast({subscribe, Channel}, State) ->
     ?SUBSCRIBE(Channel),
@@ -130,17 +138,21 @@ handle_info({gproc_msg, Channel, Msg}, State=#player_state{playerID=PlayerID}) -
     player_subscribe:handle(Channel, PlayerID, Msg),
     {noreply, State};
 handle_info({'EXIT', _, Reason}, State) ->
-    io:format("exit:~p~n", [Reason]),
-    {stop, normal, State};
-handle_info(Info, State) ->
-    io:format("handle_info, Info: ~p~n", [Info]),
+    io:format("RECEIVED EXIT SINGAL! Reason:~p~n", [Reason]),
+    {stop, shutdown, State};
+handle_info({shutdown, From}, State) ->
+    error_logger:info_msg("Recevied shutdown msg from player_factory~n"),
+    model:persist_all(),
+    From ! {finished_shutdown, self()},
+    {stop, shutdown, State};
+handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(_Reason, _State=#player_state{circulation_persist_timer=Timer}) ->
-    io:format("player process will terminate!~n"),
+terminate(Reason, _State=#player_state{circulation_persist_timer=Timer}) ->
+    error_logger:info_msg("Player process terminate! Reason: ~p~n", [Reason]),
     erlang:cancel_timer(Timer),
     gproc:goodbye(),
-    model:persist_all(),
+    %model:persist_all(),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->

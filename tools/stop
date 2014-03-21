@@ -3,5 +3,6 @@
 %%! -sname console -setcookie server_local_cookie
 
 main([Node]) ->
-     Res = rpc:call(list_to_atom(Node), init, stop, []),
+     %%Res = rpc:call(list_to_atom(Node), init, stop, []),
+     Res = rpc:call(list_to_atom(Node), game_server, stop, []),
      io:fwrite("==> ~p~n", [Res]).

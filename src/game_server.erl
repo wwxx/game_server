@@ -24,10 +24,25 @@
 
 -module(game_server).
 
-%% API.
+-behaviour(gen_server).
+
+%% API
+-export([start_link/0]).
 -export([start/0, start/1, stop/0]).
 
-%% API.
+%% gen_server callbacks
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+    terminate/2, code_change/3]).
+
+-define(SERVER, ?MODULE).
+
+-record(state, {}).
+
+%%%===================================================================
+%%% API
+%%%===================================================================
+start_link() ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 start() ->
     start([development]).
@@ -43,13 +58,44 @@ start([Mode]) ->
     ok = application:start(game_server).
 
 stop() ->
-    error_logger:info_msg("Game Server Stopping~n"),
-    application:stop(game_server),
-    application:stop(crypto),
-    application:stop(sync),
-    application:stop(gproc),
-    application:stop(emysql).
+    gen_server:cast(?SERVER, stop).
 
+%%%===================================================================
+%%% gen_server callbacks
+%%%===================================================================
+
+init([]) ->
+    {ok, #state{}}.
+
+handle_call(_Request, _From, State) ->
+    Reply = ok,
+    {reply, Reply, State}.
+
+handle_cast(stop, State) ->
+    error_logger:info_msg("==============PREPARING SHUTDOWN APPLICATION===============~n"),
+    player_factory:shutdown_players(),
+    error_logger:info_msg("====================SHUTDOWNING PLAYERS====================~n"),
+    {noreply, State};
+handle_cast(_Msg, State) ->
+    {noreply, State}.
+
+handle_info({finished_shutdown_players, _From}, State) ->
+    error_logger:info_msg("==============FINISHED TO SHUTDOWN ALL THE PLAYERS===============~n"),
+    init:stop(),
+    error_logger:info_msg("==========INVOKE init:stop() TO STOP WHOLE APPLICATION===========~n"),
+    {noreply, State};
+handle_info(_Info, State) ->
+    {noreply, State}.
+
+terminate(_Reason, _State) ->
+    ok.
+
+code_change(_OldVsn, State, _Extra) ->
+    {ok, State}.
+
+%%%===================================================================
+%%% Internal functions
+%%%===================================================================
 -spec ensure_started(module()) -> ok.
 ensure_started(App) ->
     case application:start(App) of

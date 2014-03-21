@@ -28,6 +28,7 @@
 
 %% API
 -export([start_link/0,
+         shutdown_players/0,
          start_player/1]).
 
 %% gen_server callbacks
@@ -38,11 +39,15 @@
          terminate/2,
          code_change/3]).
 
--define (TAB, ?MODULE).
+-define(TAB, ?MODULE).
+-define(WORKING, 0).
+-define(SHUTDOWN, 1).
+-define(TERMINATE, 2).
+
 
 -include("include/gproc_macros.hrl").
 
--record(state, {}).
+-record(state, {status}).
 
 %%%===================================================================
 %%% API
@@ -55,25 +60,53 @@ start_link() ->
 start_player(PlayerID) ->
     gen_server:call(?MODULE, {start_player, PlayerID}).
 
+shutdown_players() ->
+    gen_server:cast(?MODULE, shutdown_players).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
 
 init([]) ->
-    {ok, #state{}}.
+    {ok, #state{status=?WORKING}}.
 
-handle_call({start_player, PlayerID}, _From, State) ->
-    Result = case ?GET_PID({player, PlayerID}) of
-        undefined ->
-            player_sup:start_child([PlayerID]);
-        Pid ->
-            {ok, Pid}
-    end,
-    {reply, Result, State}.
+handle_call({start_player, PlayerID}, _From, State=#state{status=Status}) ->
+    case Status =:= ?WORKING of
+        true ->
+            Result = case ?GET_PID({player, PlayerID}) of
+                undefined ->
+                    player_sup:start_child([PlayerID]);
+                Pid ->
+                    {ok, Pid}
+            end,
+            {reply, Result, State};
+        false ->
+            {reply, undefined, State}
+    end.
 
+handle_cast(shutdown_players, State) ->
+    Children = supervisor:which_children(player_sup),
+    put({player, children}, Children),
+    Status = case start_shutdown_children(Children) of
+                 shutdown_finished ->
+                     notify_shutdown_finished(),
+                     ?TERMINATE;
+                 _ -> ?SHUTDOWN
+             end,
+    {noreply, State#state{status=Status}};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
+handle_info({finished_shutdown, _From}, State=#state{status=?TERMINATE}) ->
+    {noreply, State};
+handle_info({finished_shutdown, _From}, State=#state{status=?SHUTDOWN}) ->
+    NewState = case shutdown_next() of
+                   shutdown_finished ->
+                       notify_shutdown_finished(),
+                       State#state{status=?TERMINATE};
+                   _ -> State
+               end,
+    {noreply, NewState};
 handle_info(_Info, State) ->
     {noreply, State}.
 
@@ -86,3 +119,28 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+shutdown_next() ->
+    case get({player, children}) of
+        [] -> shutdown_finished;
+        [Child|T] ->
+            put({player, children}, T),
+            shutdown(Child)
+    end.
+
+start_shutdown_children([]) ->
+    shutdown_finished;
+start_shutdown_children(Children) ->
+    CpuAmount = erlang:system_info(schedulers_online),
+    shutdown(Children, CpuAmount * 2).
+
+shutdown(Children, 0) ->
+    put({player, children}, Children);
+shutdown([Child|Children], Amount) ->
+    shutdown(Child),
+    shutdown(Children, Amount - 1).
+
+shutdown(_Child={_Name, Pid, _Type, _Modules}) ->
+    Pid ! {shutdown, self()}.
+
+notify_shutdown_finished() ->
+    game_server ! {finished_shutdown_players, self()}.

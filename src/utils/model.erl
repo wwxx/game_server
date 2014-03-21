@@ -159,22 +159,42 @@ create(Record, load) ->
 
 persist_table(Table) ->
     error_logger:info_msg("Table: ~p, will be persist!~n", [Table]),
+    case generate_persist_sql(Table) of
+        <<>> -> do_nothing;
+        Sql -> execute_with_procedure(Sql)
+    end.
+
+generate_persist_sql(Table) ->
     case id_status_list(Table) of
-        [] -> ok;
+        [] -> <<>>;
         IdList ->
             DeleteIdList = delete_status_list(Table),
             case sqls(Table, DeleteIdList ++ IdList) of
-                [] -> ok;
+                [] -> <<>>;
                 Sqls ->
                     Sql = binary_string:join(Sqls, <<";">>),
-                    error_logger:info_msg("SQL: ~p~n", [Sql]),
-                    db:execute(Sql)
+                    %error_logger:info_msg("SQL: ~p~n", [Sql]),
+                    Sql
             end
     end.
 
 persist_all() ->
     error_logger:info_msg("PERSIST ALL DATA!~n"),
-    lists:foreach(fun persist_table/1, all_loaded_tables()).
+    Sqls = lists:foldl(fun(Table, Result) ->
+                           case generate_persist_sql(Table) of
+                               <<>> -> Result;
+                               Sql -> [Sql|Result]
+                           end
+                       end, [], all_loaded_tables()),
+    case binary_string:join(Sqls, <<";">>) of
+        <<>> -> do_nothing;
+        %JoinedSql -> db:execute(with_transaction(JoinedSql))
+        JoinedSql -> execute_with_procedure(JoinedSql)
+    end.
+
+execute_with_procedure(Sql) ->
+    ProcedureName = db:procedure_name(<<"player">>, get(player_id)),
+    db:execute_with_procedure(ProcedureName, Sql).
 
 %% Private Methods
 selectOne(Table, Values) ->

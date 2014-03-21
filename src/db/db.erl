@@ -42,7 +42,10 @@
           all/1,
           update_all/1,
           sqerl_execute/1,
-          execute/1
+          execute/1,
+          procedure_name/2,
+          execute_with_procedure/2,
+          clean_all_procedures/0
          ]).
 
 
@@ -96,6 +99,41 @@ all(TableName) ->
 sqerl_execute(SqlTuple) ->
     execute(sqerl:sql(SqlTuple)).
 
+clean_all_procedures() ->
+    execute(<<"DELETE FROM mysql.proc;">>).
+
+procedure_name(Name, Suffix) ->
+    list_to_binary([Name, <<"_">>, Suffix]).
+
+execute_with_procedure(ProcedureName, Sql) ->
+    DropProcedure = list_to_binary([<<"DROP PROCEDURE IF EXISTS ">>, ProcedureName]),
+    CreateProcedure = list_to_binary([<<"CREATE PROCEDURE ">>, ProcedureName, <<"()">>,
+                                      <<" BEGIN ">>,
+                                      <<" DECLARE exit handler for sqlexception ">>,
+                                      <<" BEGIN ">>,
+                                      <<" ROLLBACK; ">>,
+                                      <<" RESIGNAL; ">>,
+                                      <<" END; ">>,
+                                      <<" DECLARE exit handler for sqlwarning ">>,
+                                      <<" BEGIN ">>,
+                                      <<" ROLLBACK; ">>,
+                                      <<" RESIGNAL; ">>,
+                                      <<" END; ">>,
+                                      <<" START TRANSACTION; ">>,
+                                      Sql, <<";">>,
+                                      <<" COMMIT; ">>,
+                                      <<" END ">>]),
+    ExecuteProcedure = list_to_binary([<<"CALL ">>, ProcedureName, <<"();">>]),
+    %error_logger:info_msg("Create: ~p~n", [CreateProcedure]),
+    %% clean old procedure
+    db:execute(DropProcedure),
+    %% create procedure for palyer's current state
+    db:execute(CreateProcedure),
+    %% call procedure
+    db:execute(ExecuteProcedure),
+    %% clean procedure
+    db:execute(DropProcedure).
+
 %%--------------------------------------------------------------------
 %% @doc:    Execute SQL and return Result
 %% @spec:    execute(SQL::binary()) -> list().
@@ -104,6 +142,7 @@ sqerl_execute(SqlTuple) ->
 -spec(execute(binary()) -> list() ).
 execute(SQL) ->
     Result = emysql:execute(?DB_POOL, SQL),
+    %error_logger:info_msg("SQL EXECUTE RESULT: ~p~n", [Result]),
     case is_tuple(Result) of
         true ->
             case tuple_to_list(Result) of
@@ -127,6 +166,7 @@ start_link() ->
 %%%===================================================================
 init([]) ->
     init_pool(),
+    clean_all_procedures(),
     {ok, #state{}}.
 
 handle_call(init_pool, _From, State) ->

@@ -32,7 +32,7 @@
 -export([init/1]).
 
 -define(CHILD(Id, Mod, Type, Args), {Id, {Mod, start_link, Args},
-                                     permanent, infinity, Type, [Mod]}).
+                                     permanent, 5000, Type, [Mod]}).
 
 %% API.
 
@@ -53,12 +53,10 @@ init([]) ->
     DBSupSpec = ?CHILD(db_sup, db_sup, supervisor, []),
     PlayerDataSupSpec = ?CHILD(player_data_sup, player_data_sup, supervisor, []),
     PlayerBaseSupSpec = ?CHILD(player_base_sup, player_base_sup, supervisor, []),
-    %PlayerBaseSupSpec = {player_base_sup,
-                         %{player_base_sup, start_link, []},
-                         %permanent, infinity, supervisor, [player_base_sup]},
     GameNumericalSupSpec = ?CHILD(game_numerical_sup, game_numerical_sup, worker, []),
     ChatServerSupSpec = ?CHILD(chat_server_sup, chat_server_sup, supervisor, []),
-    Specs = [EnvSupSpec, RanchSupSpec, ListenerSpec,
+    GameServerSpec = ?CHILD(game_server, game_server, worker, []),
+    Specs = [GameServerSpec, EnvSupSpec, RanchSupSpec, ListenerSpec,
              RecordMapperSupSpec, DBSupSpec, PlayerDataSupSpec,
              PlayerBaseSupSpec, GameNumericalSupSpec, ChatServerSupSpec],
     {ok, {{one_for_one, 10, 10}, Specs}}.
