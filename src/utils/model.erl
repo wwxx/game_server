@@ -187,7 +187,6 @@ persist_all() ->
                                Sql -> [Sql|Result]
                            end
                        end, [], Tables),
-    error_logger:info_msg("SQLS: ~p~n", [Sqls]),
     case binary_string:join(Sqls, <<";">>) of
         <<>> -> do_nothing;
         JoinedSql ->
