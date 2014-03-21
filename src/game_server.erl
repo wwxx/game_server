@@ -58,7 +58,16 @@ start([Mode]) ->
     ok = application:start(game_server).
 
 stop() ->
-    gen_server:cast(?SERVER, stop).
+    case application:get_env(game_server, server_environment) of
+        {ok, test} -> force_stop();
+        _ -> gen_server:cast(?SERVER, stop)
+    end.
+
+force_stop() ->
+    application:stop(game_server),
+    application:stop(emysql),
+    application:stop(gproc),
+    application:stop(crypto).
 
 %%%===================================================================
 %%% gen_server callbacks
