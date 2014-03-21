@@ -32,7 +32,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% TESTS DESCRIPTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%
-start_stop_test_() ->
+%start_stop_test_() ->
+start_stop_test() ->
     {foreach,
      fun start/0,
      fun stop/1,
@@ -59,40 +60,40 @@ stop(_Pid) ->
 %%%%%%%%%%%%%%%%%%%%
 update_test(_Pid) ->
     PlayerID = player_data:get_player_id(<<"eunit_test_udid">>),
-    player_data:update(PlayerID, #buildings{user_id = PlayerID}, #buildings{name = <<"NewCastle">>}),
-    Building = player_data:find(PlayerID, #buildings{name = <<"NewCastle">>}),
-    [?_assertEqual(Building#buildings.name, <<"NewCastle">>)].
+    player_data:update(PlayerID, #towns{user_id = PlayerID}, #towns{name = <<"NewCastle">>}),
+    Building = player_data:find(PlayerID, #towns{name = <<"NewCastle">>}),
+    [?_assertEqual(Building#towns.name, <<"NewCastle">>)].
 
 find_test(_Pid) ->
     PlayerID = player_data:get_player_id(<<"eunit_test_udid">>),
-    Castle = player_data:find(PlayerID, #buildings{user_id = PlayerID}),
+    Castle = player_data:find(PlayerID, #towns{user_id = PlayerID}),
     error_logger:info_msg("Castle: ~p~n", [Castle]),
-    error_logger:info_msg("Uuid: ~p~n", [Castle#buildings.uuid]),
-    Building = player_data:find(PlayerID, #buildings{uuid = Castle#buildings.uuid}),
-    Building2 = player_data:find(PlayerID, #buildings{user_id = PlayerID}),
+    error_logger:info_msg("Uuid: ~p~n", [Castle#towns.uuid]),
+    Building = player_data:find(PlayerID, #towns{uuid = Castle#towns.uuid}),
+    Building2 = player_data:find(PlayerID, #towns{user_id = PlayerID}),
     error_logger:info_msg("Building: ~p, Building2: ~p~n", [Building, Building2]),
     [?_assertEqual(Castle, Building)].
 
 delete_test(_Pid) ->
     PlayerID = player_data:get_player_id(<<"eunit_test_udid">>),
-    Castle = player_data:find(PlayerID, #buildings{user_id = PlayerID}),
-    player_data:delete(PlayerID, #buildings{uuid = Castle#buildings.uuid}),
-    Building = player_data:find(PlayerID, #buildings{uuid = Castle#buildings.uuid}),
+    Castle = player_data:find(PlayerID, #towns{user_id = PlayerID}),
+    player_data:delete(PlayerID, #towns{uuid = Castle#towns.uuid}),
+    Building = player_data:find(PlayerID, #towns{uuid = Castle#towns.uuid}),
     [?_assertEqual(undefined, Building)].
 
 create_test(_Pid) ->
     PlayerID = player_data:get_player_id(<<"eunit_test_udid">>),
-    player_data:create(PlayerID, #buildings{name = <<"house">>, user_id = PlayerID}),
-    player_data:create(PlayerID, #buildings{name = <<"barrack">>, user_id = PlayerID}),
-    Houses = player_data:where(PlayerID, #buildings{name = <<"house">>}),
-    Barracks = player_data:where(PlayerID, #buildings{name = <<"barrack">>}),
+    player_data:create(PlayerID, #towns{name = <<"house">>, user_id = PlayerID}),
+    player_data:create(PlayerID, #towns{name = <<"barrack">>, user_id = PlayerID}),
+    Houses = player_data:where(PlayerID, #towns{name = <<"house">>}),
+    Barracks = player_data:where(PlayerID, #towns{name = <<"barrack">>}),
     [?_assertEqual(length(Houses), 1),
      ?_assertEqual(length(Barracks), 1)].
 
 select_test(_Pid) ->
     PlayerID = player_data:get_player_id(<<"eunit_test_udid">>),
-    Buildings = player_data:where(PlayerID, #buildings{user_id = PlayerID}),
-    [?_assertEqual(length(Buildings), 1)].
+    towns = player_data:where(PlayerID, #towns{user_id = PlayerID}),
+    [?_assertEqual(length(towns), 1)].
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%
