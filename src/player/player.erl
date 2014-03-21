@@ -130,10 +130,11 @@ handle_cast({publish, Channel, Msg}, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-handle_info(circulation_persist_data, State) ->
+handle_info(circulation_persist_data, State=#player_state{circulation_persist_timer=Timer}) ->
     model:persist_all(),
-    erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
-    {noreply, State};
+    erlang:cancel_timer(Timer),
+    NewTimer = erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
+    {noreply, State#player_state{circulation_persist_timer=NewTimer}};
 handle_info({gproc_msg, Channel, Msg}, State=#player_state{playerID=PlayerID}) ->
     player_subscribe:handle(Channel, PlayerID, Msg),
     {noreply, State};

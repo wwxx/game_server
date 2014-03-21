@@ -47,7 +47,7 @@
 
 -include("include/gproc_macros.hrl").
 
--record(state, {status}).
+-record(state, {status, timer}).
 
 %%%===================================================================
 %%% API
@@ -91,13 +91,28 @@ handle_cast(shutdown_players, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
+handle_info(check_finish_shutdown, State=#state{timer=Timer}) ->
+    Children = supervisor:which_children(player_sup),
+    if
+        length(Children) =:= 0 ->
+            erlang:cancel_timer(Timer),
+            notify_shutdown_finished(),
+            {noreply, State};
+        true ->
+            erlang:cancel_timer(Timer),
+            NewTimer = erlang:send_after(1000, self(), check_finish_shutdown),
+            {noreply, State#state{timer=NewTimer}}
+    end;
 handle_info({finished_shutdown, _From}, State=#state{status=?TERMINATE}) ->
     {noreply, State};
 handle_info({finished_shutdown, _From}, State=#state{status=?SHUTDOWN}) ->
     NewState = case shutdown_next() of
                    shutdown_finished ->
-                       notify_shutdown_finished(),
-                       State#state{status=?TERMINATE};
+                       Timer = case supervisor:which_children(player_sup) of
+                                   [] -> notify_shutdown_finished();
+                                   _ -> erlang:send_after(1000, self(), check_finish_shutdown)
+                               end,
+                       State#state{status=?TERMINATE, timer=Timer};
                    _ -> State
                end,
     {noreply, NewState};
@@ -131,7 +146,6 @@ shutdown([], _Amount) ->
 shutdown(Children, 0) ->
     put({player, children}, Children);
 shutdown([Child|Children], Amount) ->
-    error_logger:info_msg("Amount: ~p~n", [Amount]),
     shutdown(Child),
     shutdown(Children, Amount - 1).
 
