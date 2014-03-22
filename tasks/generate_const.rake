@@ -24,7 +24,7 @@
 
 desc "Generate const variables to game server from excel!"
 task :generate_const => :environment do
-  config_dir = File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/config_data/const_data")
+  config_dir = File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/config_data/game_data")
 
   Dir.foreach(config_dir) do |config_file_path|
     extname = File.extname(config_file_path)

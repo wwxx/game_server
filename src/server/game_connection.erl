@@ -193,14 +193,18 @@ handle_request({Path, Params}, State=#protocol{playerID = PlayerID, transport=Tr
 
 encode_response(Response) ->
     {Protocol, Msg} = Response,
-    if
-        is_tuple(Msg) ->
-            ResponseData = api_encoder:encode(Protocol, Msg);
-        is_list(Msg)  ->
-            ResponseData = api_encoder:encode(Protocol, {Msg});
-        true ->
-            ResponseData = api_encoder:encode(ok, {?OK}),
-            erlang:error(io_lib:format("Response Msg type error: ~p", [Msg]))
+    case Response of
+        {fail, ErrorCode} ->
+            api_encoder:encode({fail, {ErrorCode, <<"">>}});
+        {fail, ErrorCode, Msg} ->
+            api_encoder:encode({fail, {ErrorCode, Msg}});
+        {Protocol, Msg} when is_tuple(Msg) ->
+            api_encoder:encode(Protocol, Msg);
+        {Protocol, Msg} when is_list(Msg) ->
+            api_encoder:encode(Protocol, {Msg});
+        {Protocol, Msg} ->
+            erlang:error(io_lib:format("Response Msg type error: ~p", [Msg])),
+            api_encoder:encode(ok, {?OK})
     end.
 
 %%--------------------------------------------------------------------
