@@ -28,7 +28,7 @@
 %%% Created :  三  3 19 15:09:27 2014 by Savin Max
 
 -module(filter_chain).
--export([transmit/2, indie/1]).
+-export([transmit/2, indie/1, flow/1]).
 
 transmit([Fun], Args) ->
     Fun(Args);
@@ -37,6 +37,9 @@ transmit([Fun|T], Args) ->
         {ok, NewArgs} -> transmit(T, NewArgs);
         {fail, Reason} -> {fail, Reason}
     end.
+
+flow([{Fun, Args}]) ->
+    indie([{Fun, Args}]).
 
 indie([{Fun, Args}]) ->
     Fun(Args);
