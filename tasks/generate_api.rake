@@ -76,7 +76,6 @@ task :generate_api => :environment do
   routes_content = %Q{#{header}
 -module(routes).
 -export([route/1]).
--include("../app/include/error_code.hrl").
 
 }
 
@@ -195,7 +194,7 @@ decode(<<ProtocolId:?SHORT, Data/binary>>) ->
 
   routes_content << "route(UnmatchedProtocol) ->\n"
   routes_content << %Q{    Msg = list_to_binary(io_lib:format("Request Protocol[~p] Not Found!", [UnmatchedProtocol])),\n}
-  routes_content << "    {error, {?ERROR_NO_SUCH_PROTOCOL, Msg}}.\n"
+  routes_content << "    {error, Msg}.\n"
 
   File.open(routes_path, 'w'){|io| io.write routes_content}
   File.open(encoder_path, 'w'){|io| io.write encoder_content}
