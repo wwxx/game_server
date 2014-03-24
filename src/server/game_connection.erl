@@ -194,10 +194,21 @@ handle_request({Path, Params}, State=#protocol{playerID = PlayerID, transport=Tr
 encode_response(Response) ->
     {Protocol, Msg} = Response,
     case Response of
-        {fail, ErrorCode} ->
-            api_encoder:encode({fail, {ErrorCode, <<"">>}});
-        {fail, ErrorCode, Msg} ->
-            api_encoder:encode({fail, {ErrorCode, Msg}});
+        {fail, ErrorAtom} ->
+            case error_msg:const(ErrorAtom) of
+                {fail, ErrorAtom} ->
+                    api_encoder:encode({fail, {0, atom_to_list(ErrorAtom)}});
+                ErrorCode ->
+                    api_encoder:encode({fail, {ErrorCode, <<"">>}})
+            end;
+        {fail, ErrorAtom, Msg} ->
+            ErrorCode = error_msg:const(ErrorAtom),
+            case error_msg:const(ErrorAtom) of
+                {fail, ErrorAtom} ->
+                    api_encoder:encode({fail, {0, atom_to_list(ErrorAtom)}});
+                ErrorCode ->
+                    api_encoder:encode({fail, {ErrorCode, Msg}})
+            end;
         {Protocol, Msg} when is_tuple(Msg) ->
             api_encoder:encode(Protocol, Msg);
         {Protocol, Msg} when is_list(Msg) ->

@@ -276,6 +276,8 @@ except_fields([FieldId|TailFieldIds], [FieldValue|TailFieldValues], Fields, Resu
 get_fields(_TailFieldIds, _TailFieldValues, [], Result) ->
     lists:reverse(Result);
 get_fields([FieldId|TailFieldIds], [FieldValue|TailFieldValues], Fields, Result) ->
+    error_logger:info_msg("FieldId: ~p, TailFieldIds:~p, Fields:~p~n", 
+                          [FieldId, TailFieldIds, Fields]),
     case lists:delete(FieldId, Fields) of
         Fields ->
             get_fields(TailFieldIds, TailFieldValues, Fields, Result);

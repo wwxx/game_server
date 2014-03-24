@@ -102,7 +102,25 @@ load_config_data() ->
     lists:foreach(fun(ModelName) -> load_config_model(ModelName) end, ModelNames).
 
 load_config_model(ModelName) ->
-    ets:new(ModelName,
-            [set, protected, named_table, {keypos, 2}, {read_concurrency, true}]),
     {ok, Records} = db:all(ModelName),
-    ets:insert(ModelName, Records).
+    case conf_data_index:get_index(ModelName) of
+        undefined -> 
+            ets:new(ModelName,
+                    [set, protected, named_table, {keypos, 2}, {read_concurrency, true}]),
+            ets:insert(ModelName, Records);
+        Indexes ->
+            ets:new(ModelName,
+                    [set, protected, named_table, {keypos, 1}, {read_concurrency, true}]),
+            lists:foreach(fun
+                    (Record) ->
+                        Key = key(Record, Indexes),
+                        ValueList = [Key|tuple_to_list(Record)],
+                        Object = list_to_tuple(ValueList),
+                        ets:insert(ModelName, Object)
+                end, Records)
+    end.
+
+key(Record, Indexes) ->
+    error_logger:info_msg("Record: ~p, Indexes: ~p~n", [Record, Indexes]),
+    Values = record_mapper:get_fields(Record, Indexes),
+    list_to_tuple(Values).
