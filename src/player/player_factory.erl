@@ -108,7 +108,7 @@ handle_info({finished_shutdown, _From}, State=#state{status=?TERMINATE}) ->
 handle_info({finished_shutdown, _From}, State=#state{status=?SHUTDOWN}) ->
     NewState = case shutdown_next() of
                    shutdown_finished ->
-                       Timer = case supervisor:which_children(player_sup) of
+                       {ok, Timer} = case supervisor:which_children(player_sup) of
                                    [] -> notify_shutdown_finished();
                                    _ -> erlang:send_after(1000, self(), check_finish_shutdown)
                                end,

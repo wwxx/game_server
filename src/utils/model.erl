@@ -1,5 +1,6 @@
 -module(model).
 -export([update/2,
+         update/1,
          find/1,
          all/1,
          where/1,
@@ -71,6 +72,15 @@ count(Selector) ->
                             end
                     end, 0, IdList)
             end
+    end.
+
+update(Record) ->
+    [Table, Id|_] = tuple_to_list(Record),
+    case get({Table, Id}) of
+        undefined -> ok;
+        _ ->
+            update_status(Table, Id, ?MODEL_UPDATE),
+            put({Table, Id}, Record)
     end.
 
 update(Selector, Modifier) ->
@@ -149,7 +159,8 @@ create(Record) ->
     [Table, Id|_Values] = tuple_to_list(RecWithId),
     ensure_load_data(Table),
     update_status(Table, Id, ?MODEL_CREATE),
-    put({Table, Id}, RecWithId).
+    put({Table, Id}, RecWithId),
+    RecWithId.
 
 %% Load data from databse.
 create(Record, load) ->

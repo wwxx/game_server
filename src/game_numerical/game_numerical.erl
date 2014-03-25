@@ -121,6 +121,5 @@ load_config_model(ModelName) ->
     end.
 
 key(Record, Indexes) ->
-    error_logger:info_msg("Record: ~p, Indexes: ~p~n", [Record, Indexes]),
     Values = record_mapper:get_fields(Record, Indexes),
     list_to_tuple(Values).
