@@ -27,7 +27,8 @@
 -export([current_time/0,
          current_time_to_now/1,
          time_to_seconds/3,
-         datetime/0]).
+         datetime/0,
+         to_i/1]).
 
 current_time() ->
     {MegaSecs, Secs, _MicroSecs} = os:timestamp(),
@@ -43,3 +44,6 @@ time_to_seconds(MegaSecs, Secs, _MicroSecs) ->
 
 datetime() ->
     {datetime, {erlang:date(), erlang:time()}}.
+
+to_i({datetime, {Date, Time}}) ->
+    calendar:datetime_to_gregorian_seconds({Date, Time})  - 62167219200.

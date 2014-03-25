@@ -125,7 +125,7 @@ handle_cast(stop, State) ->
     {stop, normal, State};
 handle_cast({send_data, Data}, State=#protocol{transport = Transport, socket = Socket}) ->
     error_logger:info_msg("send_data: ~p~n", [Data]),
-    send_socket_data(Transport, Socket, Data),
+    send_socket_data(Transport, Socket, encode_response(Data)),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
