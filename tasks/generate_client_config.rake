@@ -50,7 +50,8 @@ task :generate_client_config => :environment do
         field_names << "'#{name}'"
         field_types << type
       end
-      content << "local #{lua_class_name} = {}\n"
+      content << "if #{lua_class_name} then return #{lua_class_name} end\n"
+      content << "#{lua_class_name} = {}\n"
       content << "#{lua_class_name}.keys = {#{field_names.join(", ")}}\n"
       content << "#{lua_class_name}.cache = {}\n"
 
