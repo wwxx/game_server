@@ -114,8 +114,6 @@ load_config_model(ModelName) ->
             lists:foreach(fun
                     (Record) ->
                         Key = key(Record, Indexes),
-                        % ValueList = [Key|tuple_to_list(Record)],
-                        % Object = list_to_tuple(ValueList),
                         ets:insert(ModelName, {Key, Record})
                 end, Records)
     end.
