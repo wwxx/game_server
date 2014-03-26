@@ -188,7 +188,7 @@ decode(<<ProtocolId:?SHORT, Data/binary>>) ->
       encoder_content << "    <<>>#{symbol}\n"
 
       decoder_content << "decode_protocol(#{extension_type}, _Bin0) ->\n"
-      decoder_content << "    {<<>>, <<>>}#{symbol}\n"
+      decoder_content << "    {[], <<>>}#{symbol}\n"
     end
   end
 
