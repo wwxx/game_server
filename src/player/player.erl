@@ -170,15 +170,17 @@ player_pid(PlayerID) ->
         undefined ->
             {ok, Pid} = player_factory:start_player(PlayerID),
             Pid;
-        PlayerPid ->
-            PlayerPid
+        PlayerPid -> PlayerPid
     end.
 
 con_pid(PlayerID) ->
     ?GET_PID({connection, PlayerID}).
 
 send_data(PlayerID, Data) ->
-    game_connection:send_data(con_pid(PlayerID), Data).
+    case con_pid(PlayerID) of
+        undefined -> do_nothing;
+        ConPid -> game_connection:send_data(ConPid, Data)
+    end.
 
 track_active() ->
     put({player, last_active}, time_utils:current_time()).
