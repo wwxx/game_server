@@ -62,8 +62,8 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 create_channel(Channel) ->
-    Channel = #chat_channel{id=Channel, name=Channel, desc=Channel, maxCacheAmount=300},
-    gen_server:call(?SERVER, {create_channel, Channel}).
+    ChatChannel = #chat_channel{id=Channel, name=Channel, desc=Channel, maxCacheAmount=300},
+    gen_server:call(?SERVER, {create_channel, ChatChannel}).
 
 create_channel(ChannelId, Name, Desc, MaxCacheAmount) ->
     Channel = #chat_channel{id=ChannelId, name=Name, 

@@ -121,6 +121,8 @@ history_msg() ->
 
 channel_pid(Channel) ->
     case ?GET_PID({chat_channel, Channel}) of
-        undefined -> chat_server:create_channel(Channel);
+        undefined -> 
+            {ok, Pid} = chat_server:create_channel(Channel),
+            Pid;
         ChannelPid -> ChannelPid
     end.
