@@ -50,7 +50,6 @@
 -record(state, {channel, maxCacheAmount}).
 
 -define(TAB, ?MODULE).
--define(DEFAULT_MAX_MSG_AMOUNT, 100).
 
 %%%===================================================================
 %%% API
