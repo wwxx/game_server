@@ -42,9 +42,10 @@
          code_change/3]).
 
 -export([create_channel/1,
-         create_channel/5,
+         create_channel/4,
          delete_channel/1,
-         channel_info/1]).
+         channel_info/1,
+         all_channels/0]).
 
 -include("include/gproc_macros.hrl").
 -include("include/chat_records.hrl").
@@ -61,14 +62,12 @@ start_link() ->
     gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
 
 create_channel(Channel) ->
-    %% Default Msg cache time is 24 hrs and Msg cache amount is 300.
-    Channel = #chat_channel{id=Channel, name=Channel, desc=Channel,
-                            maxCacheTime=86400, maxCacheAmount=300},
+    Channel = #chat_channel{id=Channel, name=Channel, desc=Channel, maxCacheAmount=300},
     gen_server:call(?SERVER, {create_channel, Channel}).
 
-create_channel(ChannelId, Name, Desc, MaxCacheAmount, MaxCacheTime) ->
-    Channel = #chat_channel{id=ChannelId, name=Name, desc=Desc,
-                            maxCacheTime=MaxCacheTime, maxCacheAmount=MaxCacheAmount},
+create_channel(ChannelId, Name, Desc, MaxCacheAmount) ->
+    Channel = #chat_channel{id=ChannelId, name=Name, 
+                            desc=Desc, maxCacheAmount=MaxCacheAmount},
     gen_server:call(?SERVER, {create_channel, Channel}).
 
 delete_channel(ChannelId) ->
@@ -79,6 +78,9 @@ channel_info(ChannelId) ->
         [] -> undefined;
         [Channel] -> Channel
     end.
+
+all_channels() ->
+    ets:match(?TAB, #chat_channel{_ = '_'}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -91,10 +93,8 @@ handle_call({create_channel, Channel}, _From, State) ->
         undefined ->
             ets:insert(?TAB, Channel),
             chat_channel_sup:start_child([Channel#chat_channel.id,
-                                          Channel#chat_channel.maxCacheAmount,
-                                          Channel#chat_channel.maxCacheTime]);
-        Pid ->
-            {ok, Pid}
+                                          Channel#chat_channel.maxCacheAmount]);
+        Pid -> {ok, Pid}
     end,
     {reply, Result, State};
 handle_call(_Request, _From, State) ->

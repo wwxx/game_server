@@ -31,7 +31,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/3,
+-export([start_link/2,
          history/1,
          broadcast/2,
          join/2,
@@ -47,15 +47,16 @@
 
 -include("include/gproc_macros.hrl").
 
--record(state, {channel, maxCacheTime, maxCacheAmount}).
+-record(state, {channel, maxCacheAmount}).
 
 -define(TAB, ?MODULE).
+-define(DEFAULT_MAX_MSG_AMOUNT, 100).
 
 %%%===================================================================
 %%% API
 %%%===================================================================
-start_link(Id, MaxCacheTime, MaxCacheAmount) ->
-    gen_server:start_link(?MODULE, [Id, MaxCacheTime, MaxCacheAmount], []).
+start_link(Id, MaxCacheAmount) ->
+    gen_server:start_link(?MODULE, [Id, MaxCacheAmount], []).
 
 join(PlayerID, Channel) ->
     player:subscribe(PlayerID, Channel).
@@ -64,31 +65,29 @@ leave(PlayerID, Channel) ->
     player:unsubscribe(PlayerID, Channel).
 
 % cached history messages.
-history(_Channel) ->
-    ok.
+history(Channel) ->
+    gen_server:call(channel_pid(Channel), {history}).
 
 broadcast(Channel, Msg) ->
-    Pid = case ?GET_PID({chat_channel, Channel}) of
-              undefined ->
-                  chat_server:create_channel(Channel);
-              ChannelPid ->
-                  ChannelPid
-          end,
-    gen_server:cast(Pid, {broadcast, Msg}).
+    gen_server:cast(channel_pid(Channel), {broadcast, Msg}).
 
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
-init([Channel, MaxCacheTime, MaxCacheAmount]) ->
+init([Channel, MaxCacheAmount]) ->
     ?REG_PID({chat_channel, Channel}),
-    {ok, #state{channel=Channel, maxCacheTime=MaxCacheTime, maxCacheAmount = MaxCacheAmount}}.
+    {ok, #state{channel=Channel, maxCacheAmount = MaxCacheAmount}}.
 
+handle_call({history}, _From, State) ->
+    {reply, history_msg(), State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
-handle_cast({broadcast, Msg}, State=#state{channel=Channel}) ->
+handle_cast({broadcast, Msg}, State=#state{channel=Channel, 
+                                           maxCacheAmount=MaxAmount}) ->
     ?PUBLISH(Channel, {gproc_msg, Channel, Msg}),
+    add_msg(Msg, MaxAmount),
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -106,3 +105,23 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+add_msg(Msg, MaxAmount) ->
+    case get(msg_list) of
+        undefined -> put(msg_list, [Msg]);
+        MsgList -> 
+            SubMsgList = lists:sublist(MsgList, MaxAmount),
+            put(msg_list, [Msg|SubMsgList])
+    end.
+
+history_msg() ->
+    case get(msg_list) of
+        undefined -> [];
+        MsgList -> MsgList
+    end.
+
+channel_pid(Channel) ->
+    case ?GET_PID({chat_channel, Channel}) of
+        undefined -> chat_server:create_channel(Channel);
+        ChannelPid -> ChannelPid
+    end.

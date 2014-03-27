@@ -55,7 +55,8 @@ start_child(Args) ->
 init([]) ->
     chat_channel = ets:new(chat_channel, [bag, public, named_table, {keypos, 1},
                                           {read_concurrency, true}]),
-    {ok, {{simple_one_for_one, 5, 10}, [?CHILD(undefined, chat_channel, worker, [])]}}.
+    ChatChannelSpec = ?CHILD(undefined, chat_channel, worker, []),
+    {ok, {{simple_one_for_one, 5, 10}, [ChatChannelSpec]}}.
 
 %%%===================================================================
 %%% Internal functions
