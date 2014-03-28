@@ -5,10 +5,7 @@
 -record (counter, {name, value}).
 
 start() ->
-    Nodes = [node()],
-    mnesia:create_schema(Nodes),
-    mnesia:start(),
-    mnesia:create_table(counter, [{disc_copies, Nodes},
+    mnesia:create_table(counter, [{disc_copies, [node()]},
                                   {type, set},
                                   {attributes, record_info(fields, counter)}]).
 

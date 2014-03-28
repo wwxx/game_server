@@ -39,6 +39,8 @@
           delete_all/1,
           update_by/3,
           find_by/3,
+          find_by/4,
+          request/2,
           all/1,
           update_all/1,
           sqerl_execute/1,
@@ -68,31 +70,41 @@
 create(Record) ->
     [TableName|Values] = tuple_to_list(Record),
     Fields = record_mapper:get_mapping(TableName),
-    execute(sqerl:sql({insert, TableName, map(Fields, Values)})).
+    sqerl_execute({insert, TableName, map(Fields, Values)}).
 
 delete_by(TableName, Field, Value) ->
-    execute(sqerl:sql({delete, TableName, {Field, '=', Value}})).
+    sqerl_execute({delete, TableName, {Field, '=', Value}}).
 
 delete_all(TableName) ->
-    execute(sqerl:sql({delete, TableName})).
+    sqerl_execute({delete, TableName}).
 
 update_by(Field, Value, Record) ->
     [TableName|Values] = tuple_to_list(Record),
     Fields = record_mapper:get_mapping(TableName),
-    execute(sqerl:sql({update, TableName, map(Fields, Values), {where, {Field, '=', Value}}})).
+    sqerl_execute({update, TableName, map(Fields, Values), {where, {Field, '=', Value}}}).
 
 update_all(Record) ->
     [TableName|Values] = tuple_to_list(Record),
     Fields = record_mapper:get_mapping(TableName),
-    execute(sqerl:sql({update, TableName, map(Fields, Values)})).
+    sqerl_execute({update, TableName, map(Fields, Values)}).
 
 find_by(TableName, Field, Value) ->
-    Res = execute(sqerl:sql({select, '*', {from, TableName}, {where, {Field, '=', Value}}})),
-    Fields = record_mapper:get_mapping(TableName),
-    {ok, emysql_util:as_record(Res, TableName, Fields)}.
+    SqlTuple = {select, '*', {from, TableName}, {where, {Field, '=', Value}}},
+    request(TableName, SqlTuple).
+
+find_by(TableName, Field, Value, {fields, SelectFields}) ->
+    SqlTuple = {select, SelectFields, {from, TableName}, {where, {Field, '=', Value}}},
+    request(TableName, SqlTuple);
+find_by(TableName, Field, Value, {limit, Limit}) ->
+    SqlTuple = {select, '*', {from, TableName}, {where, {Field, '=', Value}}, {limit, Limit}},
+    request(TableName, SqlTuple).
 
 all(TableName) ->
-    Res = execute(sqerl:sql({select, '*', {from, TableName}})),
+    SqlTuple = {select, '*', {from, TableName}},
+    request(TableName, SqlTuple).
+
+request(TableName, SqlTuple) ->
+    Res = sqerl_execute(SqlTuple),
     Fields = record_mapper:get_mapping(TableName),
     {ok, emysql_util:as_record(Res, TableName, Fields)}.
 

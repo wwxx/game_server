@@ -34,6 +34,7 @@
          save_data/1,
          player_pid/1,
          proxy/4,
+         wrap/2,
          subscribe/2,
          unsubscribe/2,
          publish/3
@@ -77,6 +78,9 @@ save_data(PlayerID) ->
 proxy(PlayerID, Module, Fun, Args) ->
     gen_server:call(player_pid(PlayerID), {proxy, Module, Fun, Args}).
 
+wrap(PlayerID, Fun) ->
+    gen_server:call(player_pid(PlayerID), {wrap, Fun}).
+
 subscribe(PlayerID, Channel) ->
     gen_server:cast(player_pid(PlayerID), {subscribe, Channel}).
 unsubscribe(PlayerID, Channel) ->
@@ -104,6 +108,9 @@ handle_call({proxy, Module, Fun, Args}, _From, State) ->
     track_active(),
     Result = erlang:apply(Module, Fun, Args),
     {reply, Result, State};
+handle_call({wrap, Fun}, _From, State) ->
+    track_active(),
+    {reply, Fun(), State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.

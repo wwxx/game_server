@@ -35,9 +35,12 @@ start(_Type, _Args) ->
         {ok, development} -> ok;
         _ -> ok = lager:start()
     end,
+    mnesia:create_schema([node()]),
+    mnesia:start(),
+    game_counter:start(),
+    letter:start(),
     ensure_started(gproc),
     ensure_started(emysql),
-    game_counter:start(),
     life_cycle:before_start(),
     R = game_server_sup:start_link(),
     life_cycle:after_start(),
