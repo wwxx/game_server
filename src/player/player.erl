@@ -72,6 +72,12 @@ stop(PlayerID) ->
 request(PlayerID, Path, Params) ->
     gen_server:call(player_pid(PlayerID), {request, Path, Params}).
 
+send_data(PlayerID, Data) ->
+    case con_pid(PlayerID) of
+        undefined -> do_nothing;
+        ConPid -> game_connection:send_data(ConPid, Data)
+    end.
+
 save_data(PlayerID) ->
     gen_server:cast(player_pid(PlayerID), {save_data}).
 
@@ -182,12 +188,6 @@ player_pid(PlayerID) ->
 
 con_pid(PlayerID) ->
     ?GET_PID({connection, PlayerID}).
-
-send_data(PlayerID, Data) ->
-    case con_pid(PlayerID) of
-        undefined -> do_nothing;
-        ConPid -> game_connection:send_data(ConPid, Data)
-    end.
 
 track_active() ->
     put({player, last_active}, time_utils:current_time()).
