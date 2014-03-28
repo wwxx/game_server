@@ -156,6 +156,8 @@ match_delete(Table, FieldsAndValues) ->
     end.
 
 %% create new record.
+create(Records) when is_list(Records) ->
+    lists:foreach(fun create/1, Records);
 create(Record) ->
     RecWithId = case tuple_to_list(Record) of
         [RTable, undefined|RValues] ->
