@@ -38,7 +38,6 @@ start(_Type, _Args) ->
     mnesia:create_schema([node()]),
     mnesia:start(),
     game_counter:start(),
-    letter:start(),
     ensure_started(gproc),
     ensure_started(emysql),
     life_cycle:before_start(),
