@@ -2,6 +2,7 @@
 -export([update/2,
          update/1,
          find/1,
+         find_or_create/1,
          all/1,
          where/1,
          delete/1,
@@ -19,6 +20,12 @@ find(Selector) ->
     case hd(Values) of
         undefined -> selectOne(Table, Values);
         Id -> get({Table, Id})
+    end.
+
+find_or_create(Selector) ->
+    case find(Selector) of
+        undefined -> create(Selector);
+        Rec -> Rec
     end.
 
 all(Table) ->
