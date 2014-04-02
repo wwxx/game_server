@@ -28,6 +28,7 @@ task :generate_config => :environment do
   sheets = []
 
   Dir.foreach(config_dir) do |config_file_path|
+    next if config_file_path =~ /~\$.+\.xls/
     extname = File.extname(config_file_path)
     if extname == '.xlsx'
       s = Roo::Excelx.new(File.expand_path(config_dir + '/' + config_file_path))
