@@ -38,8 +38,8 @@ transmit([Fun|T], Args) ->
         NewArgs -> transmit(T, NewArgs)
     end.
 
-flow([{Fun, Args}]) ->
-    indie([{Fun, Args}]).
+flow(FunArgsList) ->
+    indie(FunArgsList).
 
 indie([{Fun, Args}]) ->
     Fun(Args);
