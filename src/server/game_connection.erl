@@ -197,17 +197,17 @@ encode_response(Response) ->
         {fail, ErrorAtom} ->
             case error_msg:const(ErrorAtom) of
                 {fail, ErrorAtom} ->
-                    api_encoder:encode({fail, {0, atom_to_list(ErrorAtom)}});
+                    api_encoder:encode(fail, {0, atom_to_binary(ErrorAtom, utf8)});
                 ErrorCode ->
-                    api_encoder:encode({fail, {ErrorCode, <<"">>}})
+                    api_encoder:encode(fail, {ErrorCode, <<"">>})
             end;
         {fail, ErrorAtom, Msg} ->
             ErrorCode = error_msg:const(ErrorAtom),
             case error_msg:const(ErrorAtom) of
                 {fail, ErrorAtom} ->
-                    api_encoder:encode({fail, {0, atom_to_list(ErrorAtom)}});
+                    api_encoder:encode(fail, {0, atom_to_binary(ErrorAtom, utf8)});
                 ErrorCode ->
-                    api_encoder:encode({fail, {ErrorCode, Msg}})
+                    api_encoder:encode(fail, {ErrorCode, Msg})
             end;
         {Protocol, Msg} when is_tuple(Msg) ->
             api_encoder:encode(Protocol, Msg);

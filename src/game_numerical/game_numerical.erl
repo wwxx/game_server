@@ -119,5 +119,7 @@ load_config_model(ModelName) ->
     end.
 
 key(Record, Indexes) ->
-    Values = record_mapper:get_fields(Record, Indexes),
-    list_to_tuple(Values).
+    case record_mapper:get_fields(Record, Indexes) of
+        [Value] -> Value;
+        Values -> list_to_tuple(Values)
+    end.
