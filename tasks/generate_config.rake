@@ -28,6 +28,7 @@ task :generate_config => :environment do
   sheets = []
 
   Dir.foreach(config_dir) do |config_file_path|
+    next if config_file_path =~ /~\$.+\.xls/
     extname = File.extname(config_file_path)
     if extname == '.xlsx'
       s = Roo::Excelx.new(File.expand_path(config_dir + '/' + config_file_path))
@@ -53,20 +54,25 @@ task :generate_config => :environment do
       field_types = []
       field_names = []
       s.row(2).each do |field|
-        name, type = field.split(":")
-        field_names << name
-        field_types << type
-        case type
-        when 'string'
-          fields_define << "`#{name}` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL"
-        when 'text'
-          fields_define << "`#{name}` text COLLATE utf8_unicode_ci"
-        when 'integer'
-          fields_define << "`#{name}` int(11) DEFAULT NULL"
-        when 'float'
-          fields_define << "`#{name}` float DEFAULT NULL"
-        else
-          raise "TYPE ERROR: #{type} didn't defined."
+        begin
+          name, type = field.split(":")
+          field_names << name
+          field_types << type
+          case type
+          when 'string'
+            fields_define << "`#{name}` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL"
+          when 'text'
+            fields_define << "`#{name}` text COLLATE utf8_unicode_ci"
+          when 'integer'
+            fields_define << "`#{name}` int(11) DEFAULT NULL"
+          when 'float'
+            fields_define << "`#{name}` float DEFAULT NULL"
+          else
+            raise "TYPE ERROR: #{type} didn't defined."
+          end
+        rescue => e
+          puts "In sheet: #{sheet}, field: #{field}"
+          raise e
         end
       end
       sql << %Q{
