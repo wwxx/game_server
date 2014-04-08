@@ -83,7 +83,7 @@ task :generate_config => :environment do
           PRIMARY KEY (`id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
       }
-      values = 3.upto(s.last_row).map do |row|
+      values = 4.upto(s.last_row).map do |row|
         row_values = []
         s.row(row).each_with_index do |value, index|
           if ['string', 'text'].include?(field_types[index])
@@ -108,6 +108,7 @@ task :generate_config => :environment do
       database_name = Rails.configuration.database_configuration[Rails.env]["database"]
 
       # Make sure mysql path is: '/usr/bin/mysql'
+      puts "Import sheet: #{sheet}"
       `mysql -u root #{database_name} < #{file_path}`
     end
 
