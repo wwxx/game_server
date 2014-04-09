@@ -77,12 +77,18 @@ task :generate_config => :environment do
           raise e
         end
       end
+      # sql << %Q{
+      #   DROP TABLE IF EXISTS `#{table_name}`;
+      #   CREATE TABLE `#{table_name}` (
+      #     `id` int(11) NOT NULL AUTO_INCREMENT,
+      #     #{fields_define.join(",\n")},
+      #     PRIMARY KEY (`id`)
+      #   ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+      # }
       sql << %Q{
         DROP TABLE IF EXISTS `#{table_name}`;
         CREATE TABLE `#{table_name}` (
-          `id` int(11) NOT NULL AUTO_INCREMENT,
-          #{fields_define.join(",\n")},
-          PRIMARY KEY (`id`)
+          #{fields_define.join(",\n")}
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
       }
       values = 4.upto(s.last_row).map do |row|
