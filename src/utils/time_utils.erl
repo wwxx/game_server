@@ -24,11 +24,15 @@
 
 -module(time_utils).
 
--export([current_time/0,
+-export([now/0,
+         current_time/0,
          current_time_to_now/1,
          time_to_seconds/3,
          datetime/0,
          to_i/1]).
+
+now() ->
+    current_time().
 
 current_time() ->
     {MegaSecs, Secs, _MicroSecs} = os:timestamp(),
