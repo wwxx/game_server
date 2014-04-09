@@ -67,6 +67,8 @@ task :generate_config => :environment do
             fields_define << "`#{name}` int(11) DEFAULT NULL"
           when 'float'
             fields_define << "`#{name}` float DEFAULT NULL"
+          when 'boolean'
+            fields_define << "`#{name}` boolean DEFAULT 0"
           else
             raise "TYPE ERROR: #{type} didn't defined."
           end

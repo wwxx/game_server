@@ -64,6 +64,8 @@ decode_short(<<Short:?SHORT, Data/binary>>) ->
     {Short, Data}.
 
 %%整数
+encode_integer(Integer) when Integer =:= undefined ->
+    <<0:?INTEGER>>;
 encode_integer(Integer) when is_integer(Integer) ->
     <<Integer:?INTEGER>>.
 decode_integer(<<Integer:?INTEGER, Data/binary>>) ->
