@@ -68,7 +68,12 @@ start_link() ->
 
 %% Only can be invoked by game_connection
 get_player_id(Udid) ->
-    users_model:get_player_id(Udid).
+    PlayerID = users_model:get_player_id(Udid),
+    case application:get_env(game_server, server_environment) of
+        {ok, test} -> player:proxy(PlayerID, model, persist_all, []);
+        _ -> do_nothing
+    end,
+    PlayerID.
 
 create(PlayerID, Record) when is_tuple(Record) ->
     case validate_ownership(PlayerID) of

@@ -165,7 +165,7 @@ handle_info(_Info, State) ->
 terminate(Reason, _State=#player_state{circulation_persist_timer=Timer}) ->
     case Reason of
         {shutdown, data_persisted} -> ok;
-        _ -> model:persist_all()
+        _ -> catch model:persist_all()
     end,
     erlang:cancel_timer(Timer),
     gproc:goodbye(),
