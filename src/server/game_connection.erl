@@ -174,7 +174,9 @@ handle_request({{sessions_controller, login}, Params},
     Udid = proplists:get_value(udid, Params),
     error_logger:info_msg("Udid: ~p~n", [Udid]),
     PlayerID = player_data:get_player_id(Udid),
+    io:format("XXXXXXXXXXXXXX~n"),
     register_connection(PlayerID),
+    io:format("XXXXXXXXXXXXXX~n"),
     %% Start player process
     player_factory:start_player(PlayerID),
     LoginInfo = sessions_controller:login(PlayerID),
@@ -186,7 +188,7 @@ handle_request({Path, Params}, State=#protocol{playerID = PlayerID, transport=Tr
             {stop, {playerID, undefined}, State};
         _ ->
             Response = player:request(PlayerID, Path, proplists_utils:values(Params)),
-            error_logger:info_msg("Path: ~p, Params: ~p, Response: ~p~n", [Path, Params, Response]),
+            % error_logger:info_msg("Path: ~p, Params: ~p, Response: ~p~n", [Path, Params, Response]),
             send_socket_data(Transport, Socket, encode_response(Response)),
             {noreply, State}
     end.
@@ -253,10 +255,14 @@ code_change(_OldVsn, State, _Extra) ->
 
 register_connection(PlayerID) ->
     case ?GET_PID({connection, PlayerID}) of
-        undefined -> ok;
-        OldConPid -> game_connection:sync_stop(OldConPid)
-    end,
-    ?REG_PID({connection, PlayerID}).
+        undefined ->
+            ?REG_PID({connection, PlayerID});
+        OldConPid when OldConPid =:= self() -> 
+            ok;
+        OldConPid ->
+            game_connection:sync_stop(OldConPid),
+            ?REG_PID({connection, PlayerID})
+    end.
 
 send_socket_data(Transport, Socket, Data) ->
     CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, Data),
