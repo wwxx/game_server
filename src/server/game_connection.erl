@@ -263,5 +263,6 @@ register_connection(PlayerID) ->
     end.
 
 send_socket_data(Transport, Socket, Data) ->
+    error_logger:info_msg("Response Binary: ~p~n", [Data]),
     CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, Data),
     Transport:send(Socket, CipherData).
