@@ -143,11 +143,11 @@ handle_info(timeout, State=#protocol{transport = Transport, socket = Socket}) ->
     ok = Transport:setopts(Socket, [{active, once}, {packet, 2}]),
     {noreply, State};
 handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) ->
-    error_logger:info_msg("CipherData: ~p~n", [CipherData]),
+    % error_logger:info_msg("CipherData: ~p~n", [CipherData]),
     ok = Transport:setopts(Socket, [{active, once}]),
     RawData = secure:decrypt(?AES_KEY, ?AES_IVEC, CipherData),
     {RequestType, RequestBody} = utils_protocol:decode_short(RawData),
-    error_logger:info_msg("RequestType: ~p, RequestBody: ~p~n", [RequestType, RequestBody]),
+    % error_logger:info_msg("RequestType: ~p, RequestBody: ~p~n", [RequestType, RequestBody]),
     Path = case routes:route(RequestType) of
                {error, Msg} ->
                    Response = api_encoder:encode({fail, {0, Msg}}),
@@ -172,7 +172,7 @@ handle_request({{sessions_controller, login}, Params},
                State=#protocol{transport=Transport, socket=Socket}) ->
     %{Udid} = utils_protocol:decode(RequestBody, {string}),
     Udid = proplists:get_value(udid, Params),
-    error_logger:info_msg("Udid: ~p~n", [Udid]),
+    % error_logger:info_msg("Udid: ~p~n", [Udid]),
     PlayerID = player_data:get_player_id(Udid),
     register_connection(PlayerID),
     %% Start player process
@@ -263,6 +263,6 @@ register_connection(PlayerID) ->
     end.
 
 send_socket_data(Transport, Socket, Data) ->
-    error_logger:info_msg("Response Binary: ~p~n", [Data]),
+    % error_logger:info_msg("Response Binary: ~p~n", [Data]),
     CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, Data),
     Transport:send(Socket, CipherData).

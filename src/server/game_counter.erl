@@ -19,7 +19,10 @@ gen_id(Name) ->
 
 %% Mapper Methods
 get(Name) ->
-    mnesia:dirty_read(mapper, Name).
+    case mnesia:dirty_read(mapper, Name) of
+        [] -> undefined;
+        [Mapper] -> Mapper#mapper.value
+    end.
 
 set(Name, Value) ->
     mnesia:dirty_write(mapper, #mapper{name=Name, value=Value}).
