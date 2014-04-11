@@ -42,6 +42,21 @@ all(Table) ->
             end, [], IdList)
     end.
 
+all(Table, {Offset, Limit}) ->
+    ensure_load_data(Table),
+    case id_status_list(Table) of
+        [] -> [];
+        IdList ->
+            SubIdList = lists:sublist(IdList, Offset, Limit),
+            lists:foldl(fun
+                ({Id, _}, Result) ->
+                    case get({Table, Id}) of
+                        undefined -> Result;
+                        Rec -> [Rec|Result]
+                    end
+            end, [], SubIdList)
+    end.
+
 where(Selector) ->
     [Table|Values] = tuple_to_list(Selector),
     ensure_load_data(Table),
