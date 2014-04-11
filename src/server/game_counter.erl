@@ -22,7 +22,7 @@ get(Name) ->
     mnesia:dirty_read(mapper, Name).
 
 set(Name, Value) ->
-    mnesia:dirty_write(mapper, {Name, Value}).
+    mnesia:dirty_write(mapper, #mapper{name=Name, value=Value}).
 
 del(Name) ->
     mnesia:dirty_delete(mapper, Name).

@@ -62,7 +62,7 @@ bench(N, I) ->
     % timer:sleep(random:uniform(1000)),
     Sock = connect(),
     Counter = ets:update_counter(?TAB, number, 1),
-    UdidStr = io_lib:format("load_test_udid_~p", [Counter]),
+    UdidStr = io_lib:format("~p_~p", [uuid_factory:gen(), Counter]),
     Udid = list_to_binary(UdidStr),
     fake_client:send_request(login_params, Sock, {Udid}),
 
