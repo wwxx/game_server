@@ -24,7 +24,7 @@
 
 desc "Generate configs Sql format file from Excel"
 task :generate_config => :environment do
-  config_dir = File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/config_data/game_data")
+  config_dir = File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/config_data/gameconfig")
   sheets = []
 
   Dir.foreach(config_dir) do |config_file_path|

@@ -40,7 +40,7 @@
     terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
--define(DATA_DIR, "config/game_data/").
+-define(DATA_DIR, "config/gameconfig/").
 -include("include/config_names.hrl").
 
 -record(state, {table}).
