@@ -24,10 +24,11 @@
 
 desc "Generate configs Sql format file from Excel"
 task :generate_config => :environment do
-  config_dir = File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/config_data/game_data")
+  config_dir = File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/config_data/gameconfig")
   sheets = []
 
   Dir.foreach(config_dir) do |config_file_path|
+    next if config_file_path =~ /~\$.+\.xls/
     extname = File.extname(config_file_path)
     if extname == '.xlsx'
       s = Roo::Excelx.new(File.expand_path(config_dir + '/' + config_file_path))
@@ -53,31 +54,44 @@ task :generate_config => :environment do
       field_types = []
       field_names = []
       s.row(2).each do |field|
-        name, type = field.split(":")
-        field_names << name
-        field_types << type
-        case type
-        when 'string'
-          fields_define << "`#{name}` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL"
-        when 'text'
-          fields_define << "`#{name}` text COLLATE utf8_unicode_ci"
-        when 'integer'
-          fields_define << "`#{name}` int(11) DEFAULT NULL"
-        when 'float'
-          fields_define << "`#{name}` float DEFAULT NULL"
-        else
-          raise "TYPE ERROR: #{type} didn't defined."
+        begin
+          name, type = field.split(":")
+          field_names << name
+          field_types << type
+          case type
+          when 'string'
+            fields_define << "`#{name}` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL"
+          when 'text'
+            fields_define << "`#{name}` text COLLATE utf8_unicode_ci"
+          when 'integer'
+            fields_define << "`#{name}` int(11) DEFAULT NULL"
+          when 'float'
+            fields_define << "`#{name}` float DEFAULT NULL"
+          when 'boolean'
+            fields_define << "`#{name}` boolean DEFAULT 0"
+          else
+            raise "TYPE ERROR: #{type} didn't defined."
+          end
+        rescue => e
+          puts "In sheet: #{sheet}, field: #{field}"
+          raise e
         end
       end
+      # sql << %Q{
+      #   DROP TABLE IF EXISTS `#{table_name}`;
+      #   CREATE TABLE `#{table_name}` (
+      #     `id` int(11) NOT NULL AUTO_INCREMENT,
+      #     #{fields_define.join(",\n")},
+      #     PRIMARY KEY (`id`)
+      #   ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+      # }
       sql << %Q{
         DROP TABLE IF EXISTS `#{table_name}`;
         CREATE TABLE `#{table_name}` (
-          `id` int(11) NOT NULL AUTO_INCREMENT,
-          #{fields_define.join(",\n")},
-          PRIMARY KEY (`id`)
+          #{fields_define.join(",\n")}
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
       }
-      values = 3.upto(s.last_row).map do |row|
+      values = 4.upto(s.last_row).map do |row|
         row_values = []
         s.row(row).each_with_index do |value, index|
           if ['string', 'text'].include?(field_types[index])
@@ -102,6 +116,7 @@ task :generate_config => :environment do
       database_name = Rails.configuration.database_configuration[Rails.env]["database"]
 
       # Make sure mysql path is: '/usr/bin/mysql'
+      puts "Import sheet: #{sheet}"
       `mysql -u root #{database_name} < #{file_path}`
     end
 

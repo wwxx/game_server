@@ -51,8 +51,8 @@
 -record(player_state, {playerID,
                        circulation_persist_timer}).
 
--define(PERSIST_DURATION, 180000). %% 3 minutes
--define(EXPIRE_DURATION, 1800). %% 30 minutes
+-define(PERSIST_DURATION, 1800000). %% 30 minutes
+-define(EXPIRE_DURATION,  1800). %% 30 minutes
 
 -include("include/gproc_macros.hrl").
 
@@ -165,7 +165,7 @@ handle_info(_Info, State) ->
 terminate(Reason, _State=#player_state{circulation_persist_timer=Timer}) ->
     case Reason of
         {shutdown, data_persisted} -> ok;
-        _ -> model:persist_all()
+        _ -> catch model:persist_all()
     end,
     erlang:cancel_timer(Timer),
     gproc:goodbye(),

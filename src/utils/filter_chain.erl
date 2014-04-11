@@ -34,17 +34,17 @@ transmit([Fun], Args) ->
     Fun(Args);
 transmit([Fun|T], Args) ->
     case Fun(Args) of
-        {ok, NewArgs} -> transmit(T, NewArgs);
-        {fail, Reason} -> {fail, Reason}
+        {fail, Reason} -> {fail, Reason};
+        NewArgs -> transmit(T, NewArgs)
     end.
 
-flow([{Fun, Args}]) ->
-    indie([{Fun, Args}]).
+flow(FunArgsList) ->
+    indie(FunArgsList).
 
 indie([{Fun, Args}]) ->
     Fun(Args);
 indie([{Fun, Args}|T]) ->
     case Fun(Args) of
-        ok -> indie(T);
-        {fail, Reason} -> {fail, Reason}
+        {fail, Reason} -> {fail, Reason};
+        _ -> indie(T)
     end.

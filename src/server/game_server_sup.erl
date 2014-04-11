@@ -45,8 +45,8 @@ start_link() ->
 init([]) ->
     EnvSupSpec = ?CHILD(game_env_sup, game_env_sup, supervisor, []),
     RanchSupSpec = ?CHILD(ranch_sup, ranch_sup, supervisor, []),
-    ListenerSpec = ranch:child_spec(ranch_tcp_listener, 1,
-        ranch_tcp, [{port, 5555}],
+    ListenerSpec = ranch:child_spec(ranch_tcp_listener, 100,
+        ranch_tcp, [{port, 5555}, {max_connections, infinity}],
         game_connection, []
     ),
     RecordMapperSupSpec = ?CHILD(record_mapper_sup, record_mapper_sup, supervisor, []),

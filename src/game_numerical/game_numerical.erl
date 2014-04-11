@@ -40,7 +40,7 @@
     terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
--define(DATA_DIR, "config/game_data/").
+-define(DATA_DIR, "config/gameconfig/").
 -include("include/config_names.hrl").
 
 -record(state, {table}).
@@ -119,5 +119,7 @@ load_config_model(ModelName) ->
     end.
 
 key(Record, Indexes) ->
-    Values = record_mapper:get_fields(Record, Indexes),
-    list_to_tuple(Values).
+    case record_mapper:get_fields(Record, Indexes) of
+        [Value] -> Value;
+        Values -> list_to_tuple(Values)
+    end.

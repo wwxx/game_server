@@ -143,11 +143,11 @@ handle_info(timeout, State=#protocol{transport = Transport, socket = Socket}) ->
     ok = Transport:setopts(Socket, [{active, once}, {packet, 2}]),
     {noreply, State};
 handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) ->
-    error_logger:info_msg("CipherData: ~p~n", [CipherData]),
+    % error_logger:info_msg("CipherData: ~p~n", [CipherData]),
     ok = Transport:setopts(Socket, [{active, once}]),
     RawData = secure:decrypt(?AES_KEY, ?AES_IVEC, CipherData),
     {RequestType, RequestBody} = utils_protocol:decode_short(RawData),
-    error_logger:info_msg("RequestType: ~p, RequestBody: ~p~n", [RequestType, RequestBody]),
+    % error_logger:info_msg("RequestType: ~p, RequestBody: ~p~n", [RequestType, RequestBody]),
     Path = case routes:route(RequestType) of
                {error, Msg} ->
                    Response = api_encoder:encode({fail, {0, Msg}}),
@@ -172,7 +172,7 @@ handle_request({{sessions_controller, login}, Params},
                State=#protocol{transport=Transport, socket=Socket}) ->
     %{Udid} = utils_protocol:decode(RequestBody, {string}),
     Udid = proplists:get_value(udid, Params),
-    error_logger:info_msg("Udid: ~p~n", [Udid]),
+    % error_logger:info_msg("Udid: ~p~n", [Udid]),
     PlayerID = player_data:get_player_id(Udid),
     register_connection(PlayerID),
     %% Start player process
@@ -186,7 +186,7 @@ handle_request({Path, Params}, State=#protocol{playerID = PlayerID, transport=Tr
             {stop, {playerID, undefined}, State};
         _ ->
             Response = player:request(PlayerID, Path, proplists_utils:values(Params)),
-            error_logger:info_msg("Path: ~p, Params: ~p, Response: ~p~n", [Path, Params, Response]),
+            % error_logger:info_msg("Path: ~p, Params: ~p, Response: ~p~n", [Path, Params, Response]),
             send_socket_data(Transport, Socket, encode_response(Response)),
             {noreply, State}
     end.
@@ -197,17 +197,17 @@ encode_response(Response) ->
         {fail, ErrorAtom} ->
             case error_msg:const(ErrorAtom) of
                 {fail, ErrorAtom} ->
-                    api_encoder:encode({fail, {0, atom_to_list(ErrorAtom)}});
+                    api_encoder:encode(fail, {0, atom_to_binary(ErrorAtom, utf8)});
                 ErrorCode ->
-                    api_encoder:encode({fail, {ErrorCode, <<"">>}})
+                    api_encoder:encode(fail, {ErrorCode, <<"">>})
             end;
         {fail, ErrorAtom, Msg} ->
             ErrorCode = error_msg:const(ErrorAtom),
             case error_msg:const(ErrorAtom) of
                 {fail, ErrorAtom} ->
-                    api_encoder:encode({fail, {0, atom_to_list(ErrorAtom)}});
+                    api_encoder:encode(fail, {0, atom_to_binary(ErrorAtom, utf8)});
                 ErrorCode ->
-                    api_encoder:encode({fail, {ErrorCode, Msg}})
+                    api_encoder:encode(fail, {ErrorCode, Msg})
             end;
         {Protocol, Msg} when is_tuple(Msg) ->
             api_encoder:encode(Protocol, Msg);
@@ -253,11 +253,16 @@ code_change(_OldVsn, State, _Extra) ->
 
 register_connection(PlayerID) ->
     case ?GET_PID({connection, PlayerID}) of
-        undefined -> ok;
-        OldConPid -> game_connection:sync_stop(OldConPid)
-    end,
-    ?REG_PID({connection, PlayerID}).
+        undefined ->
+            ?REG_PID({connection, PlayerID});
+        OldConPid when OldConPid =:= self() -> 
+            ok;
+        OldConPid ->
+            game_connection:sync_stop(OldConPid),
+            ?REG_PID({connection, PlayerID})
+    end.
 
 send_socket_data(Transport, Socket, Data) ->
+    % error_logger:info_msg("Response Binary: ~p~n", [Data]),
     CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, Data),
     Transport:send(Socket, CipherData).
