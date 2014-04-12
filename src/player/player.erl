@@ -70,7 +70,8 @@ stop(PlayerID) ->
     end.
 
 request(PlayerID, Path, Params) ->
-    gen_server:call(player_pid(PlayerID), {request, Path, Params}).
+    % gen_server:call(player_pid(PlayerID), {request, Path, Params}).
+    gen_server:cast(player_pid(PlayerID), {request, Path, Params}).
 
 send_data(PlayerID, Data) ->
     case con_pid(PlayerID) of
@@ -121,6 +122,12 @@ handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
+handle_cast({request, {Controller, Action}, Params},
+            State=#player_state{playerID=PlayerID}) ->
+    track_active(),
+    Response = Controller:Action(PlayerID, Params),
+    send_data(PlayerID, Response),
+    {noreply, State};
 handle_cast({stop, shutdown}, State) ->
     {stop, shutdown, State};
 handle_cast({save_data}, State) ->

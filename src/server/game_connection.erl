@@ -185,9 +185,10 @@ handle_request({Path, Params}, State=#protocol{playerID = PlayerID, transport=Tr
         undefined ->
             {stop, {playerID, undefined}, State};
         _ ->
-            Response = player:request(PlayerID, Path, proplists_utils:values(Params)),
+            % Response = player:request(PlayerID, Path, proplists_utils:values(Params)),
+            player:request(PlayerID, Path, proplists_utils:values(Params)),
             % error_logger:info_msg("Path: ~p, Params: ~p, Response: ~p~n", [Path, Params, Response]),
-            send_socket_data(Transport, Socket, encode_response(Response)),
+            % send_socket_data(Transport, Socket, encode_response(Response)),
             {noreply, State}
     end.
 
