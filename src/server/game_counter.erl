@@ -21,8 +21,7 @@ gen_id(Name) ->
 get(Name) ->
     case mnesia:dirty_read(mapper, Name) of
         [] -> undefined;
-        [Mapper] -> undefined
-        % [Mapper] -> Mapper#mapper.value
+        [Mapper] -> Mapper#mapper.value
     end.
 
 set(Name, Value) ->

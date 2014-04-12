@@ -22,10 +22,11 @@
 %% SOFTWARE.
 
 -module(fake_client).
--export([login/0, 
+-export([login/0,
+         login/1,
          connect/0,
          login_req/0,
-         bench/1,
+         % bench/1,
          request/3,
          send_request/3,
          recv_response/1]).
@@ -43,6 +44,14 @@ login_req() ->
     send_request(login_params, Sock, {<<"test_udid">>}),
     _Response = recv_response(Sock).
 
+login(Udid) ->
+    connect(),
+    Sock = get(sock),
+    send_request(login_params, Sock, {list_to_binary(Udid)}),
+    Response = recv_response(Sock),
+    ok = gen_tcp:close(Sock),
+    Response.
+
 login() ->
     connect(),
     Sock = get(sock),
@@ -51,19 +60,19 @@ login() ->
     ok = gen_tcp:close(Sock),
     Response.
 
-bench(FakeClientAmount) ->
-    login(FakeClientAmount).
+% bench(FakeClientAmount) ->
+%     login(FakeClientAmount).
 
-login(0) -> ok;
-login(N) ->
-    SomeHostInNet = "localhost", % to make it runnable on one machine
-    {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
-                                 [{active, false}, {packet, 2}]),
-    Udid = io_lib:format("fake_client_udid_~p", [N]),
-    send_request(login_params, Sock, {list_to_binary(Udid)}),
-    _Response = recv_response(Sock),
-    ok = gen_tcp:close(Sock),
-    login(N-1).
+% login(0) -> ok;
+% login(N) ->
+%     SomeHostInNet = "localhost", % to make it runnable on one machine
+%     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
+%                                  [{active, false}, {packet, 2}]),
+%     Udid = io_lib:format("fake_client_udid_~p", [N]),
+%     send_request(login_params, Sock, {list_to_binary(Udid)}),
+%     _Response = recv_response(Sock),
+%     ok = gen_tcp:close(Sock),
+%     login(N-1).
 
 request(Udid, Protocol, Params) ->
     SomeHostInNet = "localhost", % to make it runnable on one machine
@@ -84,7 +93,7 @@ send_request(Path, Sock, Value) ->
 
 recv_response(Sock) ->
     case gen_tcp:recv(Sock, 0) of
-        {ok, Packet} -> 
+        {ok, Packet} ->
             Data = secure:decrypt(Packet),
             {Response, _LeftData} = api_decoder:decode(Data),
             %error_logger:info_msg("Response: ~p~n", [Response]),
