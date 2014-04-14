@@ -34,7 +34,9 @@
          save_data/1,
          player_pid/1,
          proxy/4,
+         async_proxy/4,
          wrap/2,
+         async_wrap/2,
          subscribe/2,
          unsubscribe/2,
          publish/3
@@ -85,8 +87,14 @@ save_data(PlayerID) ->
 proxy(PlayerID, Module, Fun, Args) ->
     gen_server:call(player_pid(PlayerID), {proxy, Module, Fun, Args}).
 
+async_proxy(PlayerID, Module, Fun, Args) ->
+    gen_server:cast(player_pid(PlayerID), {proxy, Module, Fun, Args}).
+
 wrap(PlayerID, Fun) ->
     gen_server:call(player_pid(PlayerID), {wrap, Fun}).
+
+async_wrap(PlayerID, Fun) ->
+    gen_server:cast(player_pid(PlayerID), {wrap, Fun}).
 
 subscribe(PlayerID, Channel) ->
     gen_server:cast(player_pid(PlayerID), {subscribe, Channel}).
@@ -122,6 +130,14 @@ handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
+handle_cast({proxy, Module, Fun, Args}, State) ->
+    track_active(),
+    erlang:apply(Module, Fun, Args),
+    {noreply, State};
+handle_cast({wrap, Fun}, State) ->
+    track_active(),
+    Fun(),
+    {noreply, State};
 handle_cast({request, {Controller, Action}, Params},
             State=#player_state{playerID=PlayerID}) ->
     track_active(),
