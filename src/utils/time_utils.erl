@@ -26,6 +26,8 @@
 
 -export([now/0,
          current_time/0,
+         remain_seconds_to_tomorrow/0,
+         end_of_today/0,
          current_time_to_now/1,
          time_to_seconds/3,
          datetime/0,
@@ -37,6 +39,12 @@ now() ->
 current_time() ->
     {MegaSecs, Secs, _MicroSecs} = os:timestamp(),
     MegaSecs * 1000000 + Secs.
+
+remain_seconds_to_tomorrow() ->
+    end_of_today() - current_time().
+
+end_of_today() ->
+    calendar:datetime_to_gregorian_seconds({date(),{24,0,0}}) - 62167219200.
 
 current_time_to_now(CurrentTime) ->
     MegaSecs = CurrentTime div 1000000,
