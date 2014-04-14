@@ -154,7 +154,7 @@ execute_with_procedure(ProcedureName, Sql) ->
 -spec(execute(binary()) -> list() ).
 execute(SQL) ->
     Result = emysql:execute(?DB_POOL, SQL),
-    %error_logger:info_msg("SQL EXECUTE RESULT: ~p~n", [Result]),
+    % error_logger:info_msg("SQL EXECUTE RESULT: ~p~n", [Result]),
     case is_tuple(Result) of
         true ->
             case tuple_to_list(Result) of
