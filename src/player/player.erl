@@ -72,7 +72,6 @@ stop(PlayerID) ->
     end.
 
 request(PlayerID, Path, Params) ->
-    % gen_server:call(player_pid(PlayerID), {request, Path, Params}).
     gen_server:cast(player_pid(PlayerID), {request, Path, Params}).
 
 send_data(PlayerID, Data) ->
@@ -85,13 +84,25 @@ save_data(PlayerID) ->
     gen_server:cast(player_pid(PlayerID), {save_data}).
 
 proxy(PlayerID, Module, Fun, Args) ->
-    gen_server:call(player_pid(PlayerID), {proxy, Module, Fun, Args}).
+    case validate_ownership(PlayerID) of
+        true ->
+            track_active(),
+            apply(Module, Fun, Args);
+        false ->
+            gen_server:call(player_pid(PlayerID), {proxy, Module, Fun, Args})
+    end.
 
 async_proxy(PlayerID, Module, Fun, Args) ->
     gen_server:cast(player_pid(PlayerID), {proxy, Module, Fun, Args}).
 
 wrap(PlayerID, Fun) ->
-    gen_server:call(player_pid(PlayerID), {wrap, Fun}).
+    case validate_ownership(PlayerID) of
+        true -> 
+            track_active(),
+            Fun();
+        false ->
+            gen_server:call(player_pid(PlayerID), {wrap, Fun})
+    end.
 
 async_wrap(PlayerID, Fun) ->
     gen_server:cast(player_pid(PlayerID), {wrap, Fun}).
@@ -220,3 +231,6 @@ get_last_active() ->
         undefined -> 0;
         LastActive -> LastActive
     end.
+
+validate_ownership(PlayerID) ->
+    PlayerID =:= get(player_id).

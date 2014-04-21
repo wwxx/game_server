@@ -53,9 +53,12 @@ task :generate_config => :environment do
       fields_define = []
       field_types = []
       field_names = []
-      s.row(2).each do |field|
+      field_indexes = {}
+      s.row(2).each_with_index do |field, index|
         begin
+          next if field.blank?
           name, type = field.split(":")
+          field_indexes[index] = type
           field_names << name
           field_types << type
           case type
@@ -94,7 +97,8 @@ task :generate_config => :environment do
       values = 4.upto(s.last_row).map do |row|
         row_values = []
         s.row(row).each_with_index do |value, index|
-          if ['string', 'text'].include?(field_types[index])
+          next if field_indexes[index].nil?
+          if ['string', 'text'].include?(field_indexes[index])
             value = ActiveRecord::Base.sanitize(value)
           end
           value = 0 if field_types[index] == 'integer' and value.blank?

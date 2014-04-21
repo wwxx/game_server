@@ -4,6 +4,7 @@
          find/1,
          find_or_create/1,
          all/1,
+         all/2,
          where/1,
          delete/1,
          create/1,
@@ -102,7 +103,8 @@ update(Record) ->
         undefined -> ok;
         _ ->
             update_status(Table, Id, ?MODEL_UPDATE),
-            put({Table, Id}, Record)
+            put({Table, Id}, Record),
+            Record
     end.
 
 update(Selector, Modifier) ->
@@ -118,26 +120,31 @@ update_by_key(Table, Id, Modifier) ->
         undefined -> ok;
         Rec ->
             update_status(Table, Id, ?MODEL_UPDATE),
-            put({Table, Id}, update_record(Rec, Modifier))
+            NewRec = update_record(Rec, Modifier),
+            put({Table, Id}, NewRec),
+            NewRec
     end.
 
 match_update(Table, Selector, Modifier) ->
     case id_status_list(Table) of
-        [] -> ok;
+        [] -> [];
         IdList ->
             Fields = record_mapper:get_mapping(Table),
             [_|Values] = tuple_to_list(Selector),
             FieldsAndValues = makepat(Fields, Values),
-            lists:foreach(fun
-                ({Id, _}) ->
+            lists:foldl(fun
+                ({Id, _}, Result) ->
                     Rec = get({Table, Id}),
                     case match(Rec, FieldsAndValues) of
                         true  ->
                             update_status(Table, Id, ?MODEL_UPDATE),
-                            put({Table, Id}, update_record(Rec, Modifier));
-                        false -> undefined
+                            NewRec = update_record(Rec, Modifier),
+                            put({Table, Id}, NewRec),
+                            [NewRec|Result];
+                        false -> 
+                            Result
                     end
-            end, IdList)
+            end, [], IdList)
     end.
 
 delete(Selector) ->
