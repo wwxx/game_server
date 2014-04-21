@@ -67,7 +67,7 @@ task :generate_config => :environment do
           when 'text'
             fields_define << "`#{name}` text COLLATE utf8_unicode_ci"
           when 'integer'
-            fields_define << "`#{name}` int(11) DEFAULT NULL"
+            fields_define << "`#{name}` bigint(20) DEFAULT NULL"
           when 'float'
             fields_define << "`#{name}` float DEFAULT NULL"
           when 'boolean'
