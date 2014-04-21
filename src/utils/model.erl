@@ -331,10 +331,7 @@ ensure_load_data(Table) ->
             Module = list_to_atom(atom_to_list(Table) ++ "_model"),
             case Module:load_data(PlayerID) of
                 {ok, []} -> undefined;
-                {ok, Recs} ->
-                    lists:foreach(fun
-                        (Rec) -> create(Rec, load)
-                    end, Recs)
+                {ok, Recs} -> insert_recs(Recs, Module)
             end,
             record_loaded_table(Table)
     end.
@@ -407,7 +404,10 @@ sql(Rec, ?MODEL_DELETE) ->
 rec_info(Rec) ->
     [Table|Values] = tuple_to_list(Rec),
     Fields = record_mapper:get_mapping(Table),
-    {Table, Fields, Values}.
+    Module = list_to_atom(atom_to_list(Table) ++ "_model"),
+    Rule = proplists:get_value(serialize, Module:module_info(attributes)),
+    SerializedValues = serialize(Values, Fields, Rule),
+    {Table, Fields, SerializedValues}.
 
 map(Fields, Values) ->
     map(Fields, Values, []).
@@ -441,3 +441,51 @@ update_record([RecordValue|RecordValues], [ModifierValue|ModifierValues], Result
     update_record(RecordValues, ModifierValues, [RecordValue|Result]);
 update_record([_RecordValue|RecordValues], [ModifierValue|ModifierValues], Result)->
     update_record(RecordValues, ModifierValues, [ModifierValue|Result]).
+
+insert_recs(Recs, Module) ->
+    Rule = proplists:get_value(serialize, Module:module_info(attributes)),
+    case Rule of
+        undefined -> 
+            lists:foreach(fun(Rec) -> create(Rec, load) end, Recs);
+        Rule ->
+            Fields = record_mapper:get_mapping(hd(tuple_to_list(hd(Recs)))),
+            lists:foreach(fun(Rec) -> 
+                NewRec = deserialize(Rec, Fields, Rule),
+                create(NewRec, load) 
+            end, Recs)
+    end.
+
+deserialize(Rec, Fields, Rule) ->
+    [RecName|Values] = tuple_to_list(Rec),
+    TermValues = deserialize(Values, Fields, Rule, []),
+    list_to_tuple([RecName|TermValues]).
+
+deserialize([], [], _Rule, Result) -> 
+    lists:reverse(Result);
+deserialize([Value|Values], [Field|Fields], Rule, Result) ->
+    case proplists:get_bool(Field, Rule) of
+        true when Value =/= undefined -> 
+            Data = base64:decode(Value),
+            TermValue = binary_to_term(Data),
+            deserialize(Values, Fields, Rule, [TermValue|Result]);
+        _ ->
+            deserialize(Values, Fields, Rule, [Value|Result])
+    end.
+
+
+serialize(Values, _Fields, undefined) -> Values;
+serialize(Values, Fields, Rule) ->
+    serialize(Values, Fields, Rule, []).
+
+serialize([], [], _Rule, Result) ->
+    lists:reverse(Result);
+serialize([Value|Values], [Field|Fields], Rule, Result) ->
+    case proplists:get_bool(Field, Rule) of
+        true when Value =/= undefined -> 
+            Data = term_to_binary(Value),
+            SerializedValue = base64:encode(Data),
+            serialize(Values, Fields, Rule, [SerializedValue|Result]);
+        _ ->
+            serialize(Values, Fields, Rule, [Value|Result])
+    end.
+
