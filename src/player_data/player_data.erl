@@ -35,6 +35,7 @@
          get_player_id/1,
          create/2,
          delete/2,
+         update/2,
          update/3,
          find/2,
          where/2,
@@ -96,6 +97,12 @@ delete(PlayerID, Selector) ->
     case validate_ownership(PlayerID) of
         true -> model:delete(Selector);
         false -> player:proxy(PlayerID, model, delete, [Selector])
+    end.
+
+update(PlayerID, NewRecord) ->
+    case validate_ownership(PlayerID) of
+        true -> model:update(NewRecord);
+        false -> player:proxy(PlayerID, model, update, [NewRecord])
     end.
 
 update(PlayerID, Selector, Modifier) ->
