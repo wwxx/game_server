@@ -8,7 +8,7 @@ exception_notify(ExceptionMsg) ->
     send("Server Exception", ExceptionMsg, ?DEVELOPER_EMAILS).
 
 send(Subject, Body, Destination) ->
-    Cmd = "echo " ++ "\"" ++ Body ++ "\"" ++ " | mail -a \"Content-Transfer-Encoding: BASE64;\"" ++ " -s " ++ Subject ++ " " ++ Destination,
+    Cmd = "echo " ++ "\"" ++ Body ++ "\"" ++ " | mail -a \"Content-Transfer-Encoding: BASE64;\"" ++ " -s " ++ "\"" ++ Subject ++ "\"" ++ " " ++ Destination,
     os:cmd(Cmd).
 
 send_test() ->
