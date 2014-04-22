@@ -5,7 +5,7 @@
 -define(DEVELOPER_EMAILS, "mafei.198@gmail.com").
 
 exception_notify(ExceptionMsg) ->
-    send("Server Exception", ExceptionMsg, ?DEVELOPER_EMAILS).
+    send("Server_Exception", ExceptionMsg, ?DEVELOPER_EMAILS).
 
 send(Subject, Body, Destination) ->
     Cmd = "echo " ++ "\"" ++ Body ++ "\"" ++ " | mail -a \"Content-Transfer-Encoding: BASE64;\"" ++ " -s " ++ "\"" ++ Subject ++ "\"" ++ " " ++ Destination,
