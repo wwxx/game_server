@@ -117,11 +117,6 @@ init([PlayerID]) ->
     process_flag(trap_exit, true),
     {ok, #player_state{playerID=PlayerID, circulation_persist_timer=Timer}}.
 
-handle_call({request, {Controller, Action}, Params}, _From,
-            State=#player_state{playerID=PlayerID}) ->
-    track_active(),
-    Response = Controller:Action(PlayerID, Params),
-    {reply, Response, State};
 handle_call({proxy, Module, Fun, Args}, _From, State) ->
     track_active(),
     Result = erlang:apply(Module, Fun, Args),
@@ -136,8 +131,13 @@ handle_call(_Request, _From, State) ->
 handle_cast({request, {Controller, Action}, Params},
             State=#player_state{playerID=PlayerID}) ->
     track_active(),
-    Response = Controller:Action(PlayerID, Params),
-    send_data(PlayerID, Response),
+    try Controller:Action(PlayerID, Params) of
+        Response -> 
+            send_data(PlayerID, Response)
+    catch
+        Type:Msg ->
+            exception:notify(Type, Msg)
+    end,
     {noreply, State};
 handle_cast({stop, shutdown}, State) ->
     {stop, shutdown, State};
@@ -183,7 +183,7 @@ handle_info(_Info, State) ->
 terminate(Reason, _State=#player_state{circulation_persist_timer=Timer}) ->
     case Reason of
         {shutdown, data_persisted} -> ok;
-        _ -> catch model:persist_all()
+        _ -> model:persist_all()
     end,
     erlang:cancel_timer(Timer),
     gproc:goodbye(),

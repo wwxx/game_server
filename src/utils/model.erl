@@ -222,6 +222,14 @@ generate_persist_sql(Table) ->
     end.
 
 persist_all() ->
+    try do_persist_all() of
+        Result -> Result
+    catch
+        Type:Msg ->
+            exception:notify(Type, Msg)
+    end.
+
+do_persist_all() ->
     Tables = all_loaded_tables(),
     % error_logger:info_msg("Tables: ~p~n", [Tables]),
     Sqls = lists:foldl(fun(Table, Result) ->
