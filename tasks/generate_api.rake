@@ -153,7 +153,7 @@ decode(<<ProtocolId:?SHORT, Data/binary>>) ->
       if COMMON_TYPE.include?(field_type)
         list << common_protocol(field_type, field.camelcase, 'encode')
         decode_list << common_decode_with_index(field_type, field.camelcase, field_idx)
-      elsif fields_definition.keys.include?(field_type)
+      elsif extension_types.keys.include?(field_type)
         list << "encode_protocol(#{field}, #{field.camelcase})"
         decode_list << "{#{field.camelcase}, Bin#{field_idx+1}} = api_decoder:decode_protocol(#{field_type}, Bin#{field_idx})"
       elsif field_type.index("array-") == 0
