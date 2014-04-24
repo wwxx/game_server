@@ -40,6 +40,7 @@
           update_by/3,
           find_by/3,
           find_by/4,
+          where/2,
           request/2,
           all/1,
           update_all/1,
@@ -87,6 +88,12 @@ update_all(Record) ->
     [TableName|Values] = tuple_to_list(Record),
     Fields = record_mapper:get_mapping(TableName),
     sqerl_execute({update, TableName, map(Fields, Values)}).
+
+%% Sqerl = {Field, '=', Value}
+%% Sqerl = {{Field, '=', Value}, 'or', {FieldB, '=', ValueB}}
+where(TableName, Sqerl) ->
+    SqlTuple = {select, '*', {from, TableName}, {where, Sqerl}},
+    request(TableName, SqlTuple).
 
 find_by(TableName, Field, Value) ->
     SqlTuple = {select, '*', {from, TableName}, {where, {Field, '=', Value}}},
