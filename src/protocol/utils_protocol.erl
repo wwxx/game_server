@@ -25,6 +25,8 @@
 -module (utils_protocol).
 -export ([encode/1,
           decode/2,
+          encode_boolean/1,
+          decode_boolean/1,
           encode_char/1,
           decode_char/1,
           encode_short/1,
@@ -45,17 +47,30 @@
 -include("include/protocol.hrl").
 
 %%单字节整数
-encode_char(Char) when is_boolean(Char) ->
-    if
-        Char =:= true ->
-            <<1:?CHAR>>;
-        true ->
-            <<0:?CHAR>>
-    end;
+% encode_char(Char) when is_boolean(Char) ->
+%     if
+%         Char =:= true ->
+%             <<1:?CHAR>>;
+%         true ->
+%             <<0:?CHAR>>
+%     end;
 encode_char(Char) when is_integer(Char) ->
     <<Char:?CHAR>>.
 decode_char(<<Char:?CHAR, Data/binary>>) ->
     {Char, Data}.
+
+encode_boolean(Boolean) when is_boolean(Boolean) ->
+    if
+        Boolean =:= true ->
+            <<1:?BOOLEAN>>;
+        true ->
+            <<0:?BOOLEAN>>
+    end.
+decode_boolean(<<BOOLEAN:?BOOLEAN, Data/binary>>) ->
+    if
+        BOOLEAN =:= 1 -> {true, Data};
+        true -> {false, Data}
+    end.
 
 %%短整数
 encode_short(Short) when is_integer(Short) ->

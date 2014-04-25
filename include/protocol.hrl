@@ -22,6 +22,7 @@
 %% SOFTWARE.
 
 
+-define (BOOLEAN,  8).
 -define (CHAR,     8).
 -define (SHORT,   16).
 -define (INTEGER, 32).
