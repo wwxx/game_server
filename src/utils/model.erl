@@ -341,7 +341,11 @@ ensure_load_data(Table) ->
                 {ok, []} -> undefined;
                 {ok, Recs} -> insert_recs(Recs, Module)
             end,
-            record_loaded_table(Table)
+            record_loaded_table(Table),
+            case erlang:function_exported(Module, after_load_data, 1) of
+                true -> Module:after_load_data(PlayerID);
+                false -> ok
+            end
     end.
 
 is_table_loaded(Table) ->

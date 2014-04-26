@@ -93,6 +93,10 @@ decode_float(<<Float:?FLOAT/float, Data/binary>>) ->
     {Float, Data}.
 
 %%字符串
+encode_string(Atom) when is_atom(Atom) ->
+    String = atom_to_binary(Atom, utf8),
+    Length = byte_size(String),
+    list_to_binary([<<Length:?STRING>>, String]);
 encode_string(String) when is_binary(String) ->
     Length = byte_size(String),
     list_to_binary([<<Length:?STRING>>, String]).
