@@ -173,7 +173,7 @@ match_delete(Table, FieldsAndValues) ->
                             erase({Table, Id});
                         false -> undefined
                     end
-            end, [], IdList),
+            end, IdList),
             ok
     end.
 
