@@ -152,7 +152,7 @@ handle_cast({request, {Controller, Action}, Params},
             send_data(PlayerID, Response)
     catch
         Type:Msg ->
-            exception:notify(Type, Msg)
+            exception:notify(Type, Msg, Controller, Action, Params)
     end,
     {noreply, State};
 handle_cast({stop, shutdown}, State) ->
