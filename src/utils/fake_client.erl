@@ -89,14 +89,16 @@ request(Udid, Protocol, Params) ->
 
 send_request(Path, Sock, Value) ->
     Data = api_encoder:encode(Path, Value),
-    gen_tcp:send(Sock, secure:encrypt(Data)).
+    NewData = list_to_binary([utils_protocol:encode_integer(0), Data]),
+    gen_tcp:send(Sock, secure:encrypt(NewData)).
 
 recv_response(Sock) ->
     case gen_tcp:recv(Sock, 0) of
         {ok, Packet} ->
             Data = secure:decrypt(Packet),
-            {Response, _LeftData} = api_decoder:decode(Data),
-            %error_logger:info_msg("Response: ~p~n", [Response]),
+            {_RequestId, RequestContent} = utils_protocol:decode_integer(Data),
+            {Response, _LeftData} = api_decoder:decode(RequestContent),
+            error_logger:info_msg("Response: ~p~n", [Response]),
             Response;
         Error -> error_logger:info_msg("Error Response: ~p~n", [Error])
     end.

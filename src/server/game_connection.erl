@@ -28,7 +28,7 @@
 -behaviour(ranch_protocol).
 
 %% API
--export([start_link/4, send_data/2, stop/1, sync_stop/1]).
+-export([start_link/4, send_data/2, send_data/3, stop/1, sync_stop/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -64,6 +64,9 @@ start_link(Ref, Socket, Transport, Opts) ->
 
 send_data(Pid, Data) ->
     gen_server:cast(Pid, {send_data, Data}).
+
+send_data(Pid, RequestId, Data) ->
+    gen_server:cast(Pid, {send_data, RequestId, Data}).
 
 stop(Pid) ->
     gen_server:cast(Pid, stop).
@@ -123,7 +126,13 @@ handle_call(_Request, _From, State) ->
 %%--------------------------------------------------------------------
 handle_cast(stop, State) ->
     {stop, normal, State};
-handle_cast({send_data, Data}, State=#protocol{transport = Transport, socket = Socket}) ->
+handle_cast({send_data, RequestId, Data}, 
+            State=#protocol{transport = Transport, socket = Socket}) ->
+    error_logger:info_msg("request_id: ~p, send_data: ~p~n", [RequestId, Data]),
+    send_socket_data(Transport, Socket, RequestId, encode_response(Data)),
+    {noreply, State};
+handle_cast({send_data, Data}, 
+            State=#protocol{transport = Transport, socket = Socket}) ->
     error_logger:info_msg("send_data: ~p~n", [Data]),
     send_socket_data(Transport, Socket, encode_response(Data)),
     {noreply, State}.
@@ -146,7 +155,8 @@ handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) -
     % error_logger:info_msg("CipherData: ~p~n", [CipherData]),
     ok = Transport:setopts(Socket, [{active, once}]),
     RawData = secure:decrypt(?AES_KEY, ?AES_IVEC, CipherData),
-    {RequestType, RequestBody} = utils_protocol:decode_short(RawData),
+    {RequestId, RequestContent} = utils_protocol:decode_integer(RawData),
+    {RequestType, _RequestBody} = utils_protocol:decode_short(RequestContent),
     % error_logger:info_msg("RequestType: ~p, RequestBody: ~p~n", [RequestType, RequestBody]),
     Path = case routes:route(RequestType) of
                {error, Msg} ->
@@ -155,9 +165,9 @@ handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) -
                RoutePath ->
                    RoutePath
            end,
-    {Params, _LeftData} = api_decoder:decode(RawData),
+    {Params, _LeftData} = api_decoder:decode(RequestContent),
     error_logger:info_msg("Request Path: ~p Parmas: ~p~n", [Path, Params]),
-    handle_request({Path, Params}, State);
+    handle_request({Path, Params, RequestId}, State);
 handle_info({tcp_closed, _Socket}, State) ->
     error_logger:info_msg("DISCONNECT: tcp_closed, playerID: ~p~n", [State#protocol.playerID]),
     {stop, normal, State};
@@ -168,7 +178,7 @@ handle_info(Msg, State) ->
     error_logger:info_msg("unhandled Msg: ~p~n", Msg),
     {noreply, State}.
 
-handle_request({{sessions_controller, login}, Params},
+handle_request({{sessions_controller, login}, Params, RequestId},
                State=#protocol{transport=Transport, socket=Socket}) ->
     %{Udid} = utils_protocol:decode(RequestBody, {string}),
     Udid = proplists:get_value(udid, Params),
@@ -178,15 +188,15 @@ handle_request({{sessions_controller, login}, Params},
     %% Start player process
     player_factory:start_player(PlayerID),
     LoginInfo = sessions_controller:login(PlayerID),
-    send_socket_data(Transport, Socket, encode_response(LoginInfo)),
+    send_socket_data(Transport, Socket, RequestId, encode_response(LoginInfo)),
     {noreply, State#protocol{playerID = PlayerID}};
-handle_request({Path, Params}, State=#protocol{playerID = PlayerID, transport=Transport, socket=Socket}) ->
+handle_request({Path, Params, RequestId}, State=#protocol{playerID = PlayerID}) ->
     case PlayerID of
         undefined ->
             {stop, {playerID, undefined}, State};
         _ ->
             % Response = player:request(PlayerID, Path, proplists_utils:values(Params)),
-            player:request(PlayerID, Path, proplists_utils:values(Params)),
+            player:request(PlayerID, Path, proplists_utils:values(Params), RequestId),
             % error_logger:info_msg("Path: ~p, Params: ~p, Response: ~p~n", [Path, Params, Response]),
             % send_socket_data(Transport, Socket, encode_response(Response)),
             {noreply, State}
@@ -264,6 +274,10 @@ register_connection(PlayerID) ->
     end.
 
 send_socket_data(Transport, Socket, Data) ->
+    send_socket_data(Transport, Socket, 0, Data).
+
+send_socket_data(Transport, Socket, RequestId, Data) ->
     % error_logger:info_msg("Response Binary: ~p~n", [Data]),
-    CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, Data),
+    NewData = list_to_binary([utils_protocol:encode_integer(RequestId), Data]),
+    CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, NewData),
     Transport:send(Socket, CipherData).

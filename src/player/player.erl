@@ -29,8 +29,9 @@
 %% API
 -export([start_link/1,
          stop/1,
-         request/3,
+         request/4,
          send_data/2,
+         send_data/3,
          save_data/1,
          player_pid/1,
          proxy/4,
@@ -71,13 +72,19 @@ stop(PlayerID) ->
         PlayerPID -> gen_server:cast(PlayerPID, {stop, shutdown})
     end.
 
-request(PlayerID, Path, Params) ->
-    gen_server:cast(player_pid(PlayerID), {request, Path, Params}).
+request(PlayerID, Path, Params, RequestId) ->
+    gen_server:cast(player_pid(PlayerID), {request, Path, Params, RequestId}).
 
 send_data(PlayerID, Data) ->
     case con_pid(PlayerID) of
         undefined -> do_nothing;
         ConPid -> game_connection:send_data(ConPid, Data)
+    end.
+
+send_data(PlayerID, RequestId, Data) ->
+    case con_pid(PlayerID) of
+        undefined -> do_nothing;
+        ConPid -> game_connection:send_data(ConPid, RequestId, Data)
     end.
 
 save_data(PlayerID) ->
@@ -144,12 +151,12 @@ handle_cast({wrap, Fun}, State) ->
     track_active(),
     Fun(),
     {noreply, State};
-handle_cast({request, {Controller, Action}, Params},
+handle_cast({request, {Controller, Action}, Params, RequestId},
             State=#player_state{playerID=PlayerID}) ->
     track_active(),
     try Controller:Action(PlayerID, Params) of
         Response -> 
-            send_data(PlayerID, Response)
+            send_data(PlayerID, RequestId, Response)
     catch
         Type:Msg ->
             exception:notify(Type, Msg, Controller, Action, Params)
