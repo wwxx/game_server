@@ -57,8 +57,9 @@ init([]) ->
     ChatServerSupSpec = ?CHILD(chat_server_sup, chat_server_sup, supervisor, []),
     GameServerSpec = ?CHILD(game_server, game_server, worker, []),
     TimertaskSupSpec = ?CHILD(timertask_sup, timertask_sup, supervisor, []),
+    LeaderboardSupSpec = ?CHILD(leaderboard_sup, leaderboard_sup, supervisor, []),
     Specs = [GameServerSpec, EnvSupSpec, RanchSupSpec, ListenerSpec,
              RecordMapperSupSpec, DBSupSpec, PlayerDataSupSpec,
              PlayerBaseSupSpec, GameNumericalSupSpec, 
-             ChatServerSupSpec, TimertaskSupSpec],
+             ChatServerSupSpec, TimertaskSupSpec, LeaderboardSupSpec],
     {ok, {{one_for_one, 10, 10}, Specs}}.
