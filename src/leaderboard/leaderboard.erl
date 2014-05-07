@@ -3,7 +3,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, proxy/2, proxy/3]).
+-export([start_link/1, proxy/2, proxy/3, wrap/2]).
 
 %% Warning: Invoke from proxy!!!
 -export([delete_leaderboard/1,
@@ -58,6 +58,9 @@ proxy(LeaderboardName, Fun) ->
 proxy(LeaderboardName, Fun, Args) ->
     gen_server:call(leaderboard_pid(LeaderboardName), {proxy, Fun, Args}).
 
+wrap(LeaderboardName, Fun) ->
+    gen_server:call(leaderboard_pid(LeaderboardName), {wrap, Fun}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -93,6 +96,8 @@ init([LeaderboardName]) ->
 handle_call({proxy, Fun, Args}, _From, State) ->
     Reply = apply(?MODULE, Fun, Args),
     {reply, Reply, State};
+handle_call({wrap, Fun}, _From, State) ->
+    {reply, Fun(), State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -131,10 +136,13 @@ rank_member(Member, Score, MemberData) ->
     end).
 
 member_data_for(Member) ->
-    redis_cmd(["hget", member_data_key(), Member]).
+    case redis_cmd(["hget", member_data_key(), Member]) of
+        {ok, undefined} -> undefined;
+        {ok, Data} -> decode_member_data(Data)
+    end.
 
 update_member_data(Member, MemberData) ->
-    redis_cmd(["hset", member_data_key(), Member, MemberData]).
+    redis_cmd(["hset", member_data_key(), Member, encode_member_data(MemberData)]).
 
 remove_member_data(Member) ->
     redis_cmd(["hdel", member_data_key(), Member]).
@@ -402,3 +410,11 @@ member_data_key() ->
 
 leaderboard_pid(LeaderboardName) ->
     ?GET_PID({leaderboard, LeaderboardName}).
+
+encode_member_data(Data) ->
+    Value = term_to_binary(Data),
+    base64:encode(Value).
+
+decode_member_data(Value) ->
+    Data = base64:decode(Value),
+    binary_to_term(Data).

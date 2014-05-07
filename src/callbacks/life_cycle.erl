@@ -50,6 +50,7 @@ after_start() ->
     %% add your custom initialize at here
     model_mapping:load(),
     game_numerical:load_data(),
+    after_game_server_start:setup(),
     ok.
 
 before_stop() ->

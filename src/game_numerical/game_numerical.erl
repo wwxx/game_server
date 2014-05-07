@@ -33,7 +33,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, find/2, find_element/3, all/1, all_element/2, first/1, load_data/0]).
+-export([start_link/0, find/2, find_element/3, all/1, first/1, load_data/0]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -54,10 +54,6 @@ start_link() ->
 
 all(TableName) ->
     ets:match_object(TableName, '$1').
-
-all_element(TableName, Field) ->
-    ok.
-    % ets:
 
 first(TableName) ->
     case ets:first(TableName) of
