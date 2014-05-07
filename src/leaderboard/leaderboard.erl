@@ -6,7 +6,7 @@
 -export([start_link/1, proxy/2, proxy/3, wrap/2]).
 
 %% Warning: Invoke from proxy!!!
--export([delete_leaderboard/1,
+-export([delete_leaderboard/0,
          rank_member/2,
          rank_member/3,
          member_data_for/1,
@@ -117,7 +117,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-delete_leaderboard(LeaderboardName) ->
+delete_leaderboard() ->
     LeaderboardName = get(leaderboard_name),
     transaction(fun() ->
         redis_cmd(["DEL", LeaderboardName]),

@@ -5,7 +5,7 @@
          incr_daily_action/2,
          get_daily_action/1,
          clean_daily_counters/0,
-         get/1, set/2, del/1]).
+         get/1, set/2, del/1, incr/1]).
 
 -record(mapper, {name, value}).
 -record(daily_counter, {name, value}).
@@ -43,6 +43,9 @@ set(Name, Value) ->
 
 del(Name) ->
     mnesia:dirty_delete(mapper, Name).
+
+incr(Name) ->
+    mnesia:dirty_update_counter(mapper, {counter, Name}, 1).
 
 incr_daily_action(Name) ->
     mnesia:dirty_update_counter(daily_counter, {Name, date()}, 1).
