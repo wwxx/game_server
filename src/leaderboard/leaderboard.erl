@@ -163,11 +163,13 @@ remove_member(Member) ->
     end).
 
 total_members() ->
-    redis_cmd(["zcard", get(leaderboard_name)]).
+    {ok, AmountBin} = redis_cmd(["zcard", get(leaderboard_name)]),
+    binary_to_integer(AmountBin).
 
 total_pages() ->
     total_pages(get(page_size)).
 total_pages(PageSize) ->
+    error_logger:info_msg("PageSize: ~p, TotalMembers: ~p~n", [PageSize, total_members()]),
     number:ceil(total_members() / PageSize).
 
 total_members_in_score_range(MinScore, MaxScore) ->
@@ -366,9 +368,9 @@ around_me(Member, Options) ->
             EndingOffset = StartingOffset + PageSize - 1,
             RawLeaderData = case get(reverse) of
                 true ->
-                    redis_cmd(["zrange", StartingOffset, EndingOffset]);
+                    redis_cmd(["zrange", get(leaderboard_name), StartingOffset, EndingOffset]);
                 false ->
-                    redis_cmd(["zrevrange", StartingOffset, EndingOffset])
+                    redis_cmd(["zrevrange", get(leaderboard_name), StartingOffset, EndingOffset])
             end,
             case RawLeaderData of 
                 {ok, undefined} -> [];
