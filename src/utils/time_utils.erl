@@ -31,7 +31,8 @@
          current_time_to_now/1,
          time_to_seconds/3,
          datetime/0,
-         to_i/1]).
+         to_i/1,
+         date_number/0]).
 
 now() ->
     current_time().
@@ -59,3 +60,8 @@ datetime() ->
 
 to_i({datetime, {Date, Time}}) ->
     calendar:datetime_to_gregorian_seconds({Date, Time})  - 62167219200.
+
+date_number() ->
+    {Year, Month, Day} = date(),
+    Year * 10000 + Month * 100 + Day.
+

@@ -5,6 +5,7 @@
          find_or_create/1,
          all/1,
          all/2,
+         count_all/1,
          where/1,
          delete/1,
          create/1,
@@ -28,6 +29,10 @@ find_or_create(Selector) ->
         undefined -> create(Selector);
         Rec -> Rec
     end.
+
+count_all(Table) ->
+    ensure_load_data(Table),
+    length(id_status_list(Table)).
 
 all(Table) ->
     ensure_load_data(Table),

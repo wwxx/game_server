@@ -21,7 +21,7 @@ start() ->
     create_table_daily_counter(),
     %% delete old daily counter table and reinit at the begining of tomorrow.
     MFA = {game_counter, clean_daily_counters, []},
-    timertask:add(clean_daily_counter, time_utils:remain_seconds_to_tomorrow(), MFA).
+    timertask:add(clean_daily_counter, time_utils:end_of_today(), MFA).
 
 create_table_daily_counter() ->
     mnesia:create_table(daily_counter, [{disc_copies, [node()]},
