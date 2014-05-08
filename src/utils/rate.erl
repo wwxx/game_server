@@ -1,9 +1,21 @@
 -module(rate).
--export([happen/1, range/1]).
+-export([happen/1, choose/1, range/1]).
 
 happen(Rate) ->
     RandomValue = random:uniform(10000),
     compare(RandomValue, Rate).
+
+%% Rates = [{RateA, ValueA}, {RateB, ValueB}, {default, DefaultValue}],
+choose([{_Rate, Value}]) -> Value;
+choose(Rates) ->
+    RandomValue = random:uniform(10000),
+    choose(Rates, RandomValue, 0).
+
+choose([{Rate, Value}|Rates], RandomValue, Offset) ->
+    case RandomValue =< Rate + Offset of
+        true -> Value;
+        false -> choose(Rates, RandomValue, Offset + Rate)
+    end.
 
 %% Range = [{RateA, ValueA}, {RateB, ValueB}, {default, DefaultValue}],
 %% select the happened Rate 
