@@ -54,7 +54,7 @@ stop(_Pid) ->
 %%%%%%%%%%%%%%%%%%%%
 add_test(_Pid) ->
     Key = <<"event_id_1">>,
-    AfterSecs = 1,
+    AfterSecs = time_utils:now() + 1,
     MFA = {timertask_tests, callback_ok, []},
     timertask:sync_add(Key, AfterSecs, MFA),
     AddResult = timertask:lookup(Key),

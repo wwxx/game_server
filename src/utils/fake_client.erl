@@ -33,6 +33,9 @@
 
 -include("../app/include/secure.hrl").
 
+-define(FAKE_REQUEST_ID, 111111).
+
+
 connect() ->
     SomeHostInNet = "localhost", % to make it runnable on one machine
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
@@ -89,16 +92,21 @@ request(Udid, Protocol, Params) ->
 
 send_request(Path, Sock, Value) ->
     Data = api_encoder:encode(Path, Value),
-    NewData = list_to_binary([utils_protocol:encode_integer(0), Data]),
+    NewData = list_to_binary([utils_protocol:encode_integer(?FAKE_REQUEST_ID), Data]),
     gen_tcp:send(Sock, secure:encrypt(NewData)).
 
 recv_response(Sock) ->
     case gen_tcp:recv(Sock, 0) of
         {ok, Packet} ->
             Data = secure:decrypt(Packet),
-            {_RequestId, RequestContent} = utils_protocol:decode_integer(Data),
-            {Response, _LeftData} = api_decoder:decode(RequestContent),
-            error_logger:info_msg("Response: ~p~n", [Response]),
-            Response;
+            {RequestId, RequestContent} = utils_protocol:decode_integer(Data),
+            case RequestId of 
+                ?FAKE_REQUEST_ID ->
+                    {Response, _LeftData} = api_decoder:decode(RequestContent),
+                    error_logger:info_msg("Response: ~p~n", [Response]),
+                    Response;
+                _ ->
+                    recv_response(Sock)
+            end;
         Error -> error_logger:info_msg("Error Response: ~p~n", [Error])
     end.

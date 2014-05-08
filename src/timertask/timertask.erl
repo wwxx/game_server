@@ -44,34 +44,41 @@
 
 -record(state, {}).
 
+-define(TABLE, game_server_timertask).
+-define(ORDER_TABLE, game_server_ordered_timertask).
+
+-record(?TABLE, {key, run_at, mfa}).
+-record(?ORDER_TABLE, {key, mfa}).
+
+
 %%%===================================================================
 %%% API
 %%%===================================================================
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
-add(Key, AfterSecs, MFA) ->
-    gen_server:cast(?SERVER, {add, Key, AfterSecs, MFA}).
+add(Key, RunAt, MFA) ->
+    gen_server:cast(?SERVER, {add, Key, RunAt, MFA}).
 
 cancel(Key) ->
     gen_server:cast(?SERVER, {cancel, Key}).
 
-update(Key, AfterSecs, MFA) ->
-    gen_server:cast(?SERVER, {update, Key, AfterSecs, MFA}).
+update(Key, RunAt, MFA) ->
+    gen_server:cast(?SERVER, {update, Key, RunAt, MFA}).
 
-sync_add(Key, AfterSecs, MFA) ->
-    gen_server:call(?SERVER, {add, Key, AfterSecs, MFA}).
+sync_add(Key, RunAt, MFA) ->
+    gen_server:call(?SERVER, {add, Key, RunAt, MFA}).
 
 sync_cancel(Key) ->
     gen_server:call(?SERVER, {cancel, Key}).
 
-sync_update(Key, AfterSecs, MFA) ->
-    gen_server:call(?SERVER, {update, Key, AfterSecs, MFA}).
+sync_update(Key, RunAt, MFA) ->
+    gen_server:call(?SERVER, {update, Key, RunAt, MFA}).
 
 lookup(Key) ->
-    case ets:lookup(?TAB, Key) of
+    case mnesia:dirty_read(?TABLE, Key) of
         [] -> undefined;
-        [Result] -> Result
+        [{?TABLE, Key, RunAt, MFA}] -> {Key, RunAt, MFA}
     end.
 
 %%%===================================================================
@@ -79,40 +86,42 @@ lookup(Key) ->
 %%%===================================================================
 
 init([]) ->
+    mnesia:create_table(?TABLE, [{disc_copies, [node()]},
+                                 {type, set},
+                                 {attributes, record_info(fields, ?TABLE)}]),
+    mnesia:create_table(?ORDER_TABLE, [{disc_copies, [node()]},
+                                       {type, ordered_set},
+                                       {attributes, record_info(fields, ?ORDER_TABLE)}]),
     {ok, #state{}}.
 
-handle_call({add, Key, AfterSecs, MFA}, _From, State) ->
-    add_timer(Key, AfterSecs, MFA),
+handle_call({add, Key, RunAt, MFA}, _From, State) ->
+    add_timer(Key, RunAt, MFA),
     {reply, ok, State};
 handle_call({cancel, Key}, _From, State) ->
     cancel_timer(Key),
     {reply, ok, State};
-handle_call({update, Key, AfterSecs, MFA}, _From, State) ->
-    update_timer(Key, AfterSecs, MFA),
+handle_call({update, Key, RunAt, MFA}, _From, State) ->
+    update_timer(Key, RunAt, MFA),
     {reply, ok, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
-handle_cast({add, Key, AfterSecs, MFA}, State) ->
-    add_timer(Key, AfterSecs, MFA),
+handle_cast({add, Key, RunAt, MFA}, State) ->
+    add_timer(Key, RunAt, MFA),
     {noreply, State};
 handle_cast({cancel, Key}, State) ->
     cancel_timer(Key),
     {noreply, State};
-handle_cast({update, Key, AfterSecs, MFA}, State) ->
-    update_timer(Key, AfterSecs, MFA),
+handle_cast({update, Key, RunAt, MFA}, State) ->
+    update_timer(Key, RunAt, MFA),
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info({timertask, Key, MFA}, State) ->
-    ets:delete(?TAB, Key),
-    case ets:lookup(?TAB, Key) of
-        [] -> do_nothing;
-        [{Key, Timer, _MFA}] -> erlang:cancel_timer(Timer)
-    end,
     dispatch_to_worker(MFA),
+    cancel_timer(Key),
     {noreply, State};
 handle_info(Info, State) ->
     error_logger:info_msg("Info: ~p~n", [Info]),
@@ -127,33 +136,77 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-add_timer(Key, AfterSecs, MFA) ->
-    case ets:lookup(?TAB, Key) of
+add_timer(Key, RunAt, MFA) ->
+    case mnesia:dirty_read(?TABLE, Key) of
         [] ->
-            Timer = erlang:send_after(AfterSecs, ?SERVER, {timertask, Key, MFA}),
-            ets:insert_new(?TAB, {Key, Timer, MFA});
-        _ -> do_nothing
+            mnesia:dirty_write({?TABLE, Key, RunAt, MFA}),
+            mnesia:dirty_write({?ORDER_TABLE, {RunAt, Key}, MFA}),
+            try_restart_timer();
+        _ -> ok
     end.
 
 cancel_timer(Key) ->
-    ets:delete(?TAB, Key),
-    case ets:lookup(?TAB, Key) of
-        [] -> do_nothing;
-        [{Key, Timer, _MFA}] ->
-            erlang:cancel_timer(Timer)
-    end.
-
-update_timer(Key, AfterSecs, MFA) ->
-    case ets:lookup(?TAB, Key) of
-        [] -> do_nothing;
-        [{Key, Timer, _MFA}] ->
+    case mnesia:dirty_read(?TABLE, Key) of
+        [{?TABLE, Key, RunAt, _MFA}] ->
+            mnesia:dirty_delete(?TABLE, Key),
+            mnesia:dirty_delete(?ORDER_TABLE, {RunAt, Key});
+        _ -> ok
+    end,
+    case get(current_timer) of
+        {Key, _RunAt, Timer} ->
             erlang:cancel_timer(Timer),
-            NewTimer = erlang:send_after(AfterSecs, ?SERVER, {timertask, Key, MFA}),
-            ets:insert_new(?TAB, {Key, NewTimer, MFA})
+            erase(current_timer),
+            try_restart_timer();
+        undefined -> ok
     end.
 
+update_timer(Key, RunAt, MFA) ->
+    case mnesia:dirty_read(?TABLE, Key) of
+        [{?TABLE, Key, OldRunAt, _OldMFA}] ->
+            mnesia:dirty_write({?TABLE, Key, RunAt, MFA}),
+            mnesia:dirty_delete(?ORDER_TABLE, {OldRunAt, Key}),
+            mnesia:dirty_write({?ORDER_TABLE, {RunAt, Key}, MFA});
+        _ -> ok
+    end,
+    case get(current_timer) of
+        {_Key, CRunAt, _MFA} ->
+            case CRunAt > RunAt of
+                true -> try_restart_timer();
+                false -> ok
+            end;
+        undefined -> try_restart_timer()
+    end.
 
 dispatch_to_worker(MFA) ->
     poolboy:transaction(timertask_worker_pool, fun(Worker) ->
         gen_server:call(Worker, {timertask, MFA})
     end).
+
+check_first_timer_changed() ->
+    case mnesia:dirty_first(?ORDER_TABLE) of
+        '$end_of_table' -> false;
+        {RunAt, Key} ->
+            case get(current_timer) of
+                {Key, _RunAt, _Timer} -> 
+                    false;
+                undefined -> 
+                    {Key, RunAt, true};
+                {_OtherKey, Timer} -> 
+                    erlang:cancel_timer(Timer),
+                    {Key, RunAt, true}
+            end
+    end.
+
+try_restart_timer() ->
+    case check_first_timer_changed() of
+        false -> ok;
+        {Key, RunAt, true} ->
+            case mnesia:dirty_read(?TABLE, Key) of
+                [] -> 
+                    mnesia:dirty_delete(?ORDER_TABLE, {RunAt, Key});
+                [{?TABLE, Key, RunAt, MFA}] ->
+                    AfterTime = lists:max([(RunAt - time_utils:now()) * 1000, 0]),
+                    Timer = erlang:send_after(AfterTime, ?SERVER, {timertask, Key, MFA}),
+                    put(current_timer, {Key, RunAt, Timer})
+            end
+    end.
