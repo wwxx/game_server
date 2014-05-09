@@ -4,6 +4,7 @@
          incr_daily_action/1,
          incr_daily_action/2,
          get_daily_action/1,
+         del_daily_action/1,
          clean_daily_counters/0,
          get/1, set/2, del/1, incr/1]).
 
@@ -58,6 +59,9 @@ get_daily_action(Name) ->
         [] -> 0;
         [Rec] -> Rec#daily_counter.value
     end.
+
+del_daily_action(Name) ->
+    mnesia:dirty_delete(daily_counter, Name).
 
 clean_daily_counters() ->
     mnesia:delete_table(daily_counter),
