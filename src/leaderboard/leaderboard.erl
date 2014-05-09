@@ -169,7 +169,6 @@ total_members() ->
 total_pages() ->
     total_pages(get(page_size)).
 total_pages(PageSize) ->
-    error_logger:info_msg("PageSize: ~p, TotalMembers: ~p~n", [PageSize, total_members()]),
     number:ceil(total_members() / PageSize).
 
 total_members_in_score_range(MinScore, MaxScore) ->
@@ -380,11 +379,10 @@ around_me(Member, Options) ->
 
 ranked_in_list(Members) ->
     {ok, RanksAndScores} = transaction(fun() ->
-        lists:foreach(fun(MemberBin) ->
-            Member = binary_to_list(MemberBin),
+        lists:foreach(fun(Member) ->
             case get(reverse) of
-                true -> redis_cmd(["zrank", get(leaderboard_name), member]);
-                false -> redis_cmd(["zrevrank", get(leaderboard_name), member])
+                true -> redis_cmd(["zrank", get(leaderboard_name), Member]);
+                false -> redis_cmd(["zrevrank", get(leaderboard_name), Member])
             end,
             redis_cmd(["zscore", get(leaderboard_name), Member])
         end, Members)
@@ -393,7 +391,7 @@ ranked_in_list(Members) ->
 
 ranked_in_list([], [], Result) -> lists:reverse(Result);
 ranked_in_list([Member|Members], [Rank, Score|RanksAndScores], Result) ->
-    ranked_in_list(Members, RanksAndScores, [{Member, Rank, Score, member_data_for(Member)}|Result]).
+    ranked_in_list(Members, RanksAndScores, [{Member, binary_to_integer(Rank) + 1, binary_to_integer(Score) + 1, member_data_for(Member)}|Result]).
 
 
 transaction(Fun) ->
