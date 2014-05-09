@@ -32,6 +32,7 @@
          all_members/0,
          members_from_score_range/2,
          members_from_rank_range/2,
+         top_member/0,
          member_at/1,
          around_me/1
         ]).
@@ -325,6 +326,12 @@ members_from_rank_range(StartingRank0, EndingRank0) ->
     case RawLeaderData of
         {ok, undefined} -> [];
         {ok, Data} -> ranked_in_list(Data)
+    end.
+
+top_member() ->
+    case members_from_rank_range(1, 1) of
+        [] -> undefined;
+        [Member] -> Member
     end.
 
 member_at(Position) ->
