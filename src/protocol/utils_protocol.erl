@@ -47,13 +47,6 @@
 -include("include/protocol.hrl").
 
 %%单字节整数
-% encode_char(Char) when is_boolean(Char) ->
-%     if
-%         Char =:= true ->
-%             <<1:?CHAR>>;
-%         true ->
-%             <<0:?CHAR>>
-%     end;
 encode_char(Char) when is_integer(Char) ->
     <<Char:?CHAR>>.
 decode_char(<<Char:?CHAR, Data/binary>>) ->

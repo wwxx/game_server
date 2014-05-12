@@ -93,12 +93,13 @@ request(Udid, Protocol, Params) ->
 send_request(Path, Sock, Value) ->
     Data = api_encoder:encode(Path, Value),
     NewData = list_to_binary([utils_protocol:encode_integer(?FAKE_REQUEST_ID), Data]),
-    gen_tcp:send(Sock, secure:encrypt(NewData)).
+    CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, NewData),
+    gen_tcp:send(Sock, CipherData).
 
 recv_response(Sock) ->
     case gen_tcp:recv(Sock, 0) of
         {ok, Packet} ->
-            Data = secure:decrypt(Packet),
+            Data = secure:decrypt(?AES_KEY, ?AES_IVEC, Packet),
             {RequestId, RequestContent} = utils_protocol:decode_integer(Data),
             case RequestId of 
                 ?FAKE_REQUEST_ID ->

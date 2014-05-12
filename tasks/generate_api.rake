@@ -68,7 +68,6 @@ task :generate_api => :environment do
   encoder_path  = "#{FRAMEWORK_ROOT_DIR}/app/generates/api_encoder.erl"
   decoder_path  = "#{FRAMEWORK_ROOT_DIR}/app/generates/api_decoder.erl"
   protocol_path = "#{FRAMEWORK_ROOT_DIR}/app/generates/api_protocol.erl"
-
   routes = YAML.load_file(routes)
   extension_types = YAML.load_file(extension_types)
 
