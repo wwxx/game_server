@@ -64,10 +64,16 @@ stop() ->
     end.
 
 force_stop() ->
+    application:stop(timertask),
+    application:stop(leaderboard),
+    application:stop(player_server),
     application:stop(game_server),
+    application:stop(record_mapper),
+    application:stop(db),
     application:stop(emysql),
     application:stop(gproc),
-    application:stop(crypto).
+    application:stop(crypto),
+    ok.
 
 %%%===================================================================
 %%% gen_server callbacks

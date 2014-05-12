@@ -43,7 +43,6 @@ start_link() ->
 %% supervisor.
 
 init([]) ->
-    EnvSupSpec = ?CHILD(game_env_sup, game_env_sup, supervisor, []),
     RanchSupSpec = ?CHILD(ranch_sup, ranch_sup, supervisor, []),
     ListenerSpec = ranch:child_spec(ranch_tcp_listener, 8,
         ranch_tcp, [{port, 5555}, {max_connections, infinity}],
@@ -52,6 +51,6 @@ init([]) ->
     GameNumericalSupSpec = ?CHILD(game_numerical_sup, game_numerical_sup, worker, []),
     GameServerSpec = ?CHILD(game_server, game_server, worker, []),
     RedisPoolSupSpec = ?CHILD(redis_pool_sup, redis_pool_sup, supervisor, []),
-    Specs = [GameServerSpec, EnvSupSpec, RanchSupSpec, ListenerSpec,
+    Specs = [GameServerSpec, RanchSupSpec, ListenerSpec,
              GameNumericalSupSpec, RedisPoolSupSpec],
     {ok, {{one_for_one, 10, 10}, Specs}}.

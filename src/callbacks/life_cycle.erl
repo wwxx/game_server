@@ -61,7 +61,7 @@ before_stop() ->
     %% shutdown auto executing events server
     %% ......
     %% Stop all player process and use terminate callback to persist data
-    supervisor:terminate_child(player_base_sup, player_sup),
+    % supervisor:terminate_child(player_base_sup, player_sup),
     %player_data:flush_to_mysql(),
     ok.
 
