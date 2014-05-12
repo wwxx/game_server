@@ -34,6 +34,9 @@
 		 after_stop/0
 		 ]).
 
+-include("include/config_names.hrl").
+
+
 %%%===================================================================
 %%% Framework Callbacks
 %%%===================================================================
@@ -49,6 +52,7 @@ after_start() ->
     error_logger:info_msg("Game Server Life Cycle Callback: after_start!~n"),
     %% add your custom initialize at here
     model_mapping:load(),
+    game_numerical:register_model_names(?CONFIG_MODELS),
     game_numerical:load_data(),
     after_game_server_start:setup(),
     ok.

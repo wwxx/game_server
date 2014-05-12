@@ -68,6 +68,7 @@ force_stop() ->
     application:stop(leaderboard),
     application:stop(player_server),
     application:stop(game_server),
+    application:stop(game_numerical),
     application:stop(record_mapper),
     application:stop(db),
     application:stop(emysql),

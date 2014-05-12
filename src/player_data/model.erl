@@ -1,3 +1,26 @@
+%% The MIT License (MIT)
+%%
+%% Copyright (c) 2014-2024
+%% Savin Max <mafei.198@gmail.com>
+%%
+%% Permission is hereby granted, free of charge, to any person obtaining a copy
+%% of this software and associated documentation files (the "Software"), to deal
+%% in the Software without restriction, including without limitation the rights
+%% to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+%% copies of the Software, and to permit persons to whom the Software is
+%% furnished to do so, subject to the following conditions:
+%%
+%% The above copyright notice and this permission notice shall be included in all
+%% copies or substantial portions of the Software.
+%%
+%% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+%% IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+%% FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+%% AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+%% LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+%% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+%% SOFTWARE.
+
 -module(model).
 -export([update/2,
          update/1,
@@ -11,10 +34,12 @@
          create/1,
          create/2,
          count/1,
-         %persist_table/1,
          persist_all/0]).
 
--include("include/common_const.hrl").
+-define(MODEL_ORIGIN, 1).
+-define(MODEL_UPDATE, 2).
+-define(MODEL_DELETE, 3).
+-define(MODEL_CREATE, 4).
 
 find(Selector) ->
     [Table|Values] = tuple_to_list(Selector),
@@ -203,15 +228,6 @@ create(Record, load) ->
     [Table, Id|_] = tuple_to_list(Record),
     update_status(Table, Id, ?MODEL_ORIGIN),
     put({Table, Id}, Record).
-
-%persist_table(Table) ->
-    %error_logger:info_msg("Table: ~p, will be persist!~n", [Table]),
-    %case generate_persist_sql(Table) of
-        %<<>> -> do_nothing;
-        %Sql ->
-            %execute_with_procedure(Sql),
-            %reset_status(Table)
-    %end.
 
 generate_persist_sql(Table) ->
     case id_status_list(Table) of

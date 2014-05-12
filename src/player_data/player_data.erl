@@ -40,13 +40,6 @@
          count/2
         ]).
 
--define(STATE_TAB, player_data_state_tracker).
--define(ACTIVE_CHECK_DURATION, 600). % 6 minutes
--define(DATA_EXPIRE_DURATION, 1800). % 30 minutes
-
--include("include/db_schema.hrl").
--include("include/gproc_macros.hrl").
-
 %%%===================================================================
 %%% API
 %%%===================================================================

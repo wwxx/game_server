@@ -48,9 +48,7 @@ init([]) ->
         ranch_tcp, [{port, 5555}, {max_connections, infinity}],
         game_connection, []
     ),
-    GameNumericalSupSpec = ?CHILD(game_numerical_sup, game_numerical_sup, worker, []),
     GameServerSpec = ?CHILD(game_server, game_server, worker, []),
     RedisPoolSupSpec = ?CHILD(redis_pool_sup, redis_pool_sup, supervisor, []),
-    Specs = [GameServerSpec, RanchSupSpec, ListenerSpec,
-             GameNumericalSupSpec, RedisPoolSupSpec],
+    Specs = [GameServerSpec, RanchSupSpec, ListenerSpec, RedisPoolSupSpec],
     {ok, {{one_for_one, 10, 10}, Specs}}.
