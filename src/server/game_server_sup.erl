@@ -53,11 +53,10 @@ init([]) ->
     PlayerDataSupSpec = ?CHILD(player_data_sup, player_data_sup, supervisor, []),
     PlayerBaseSupSpec = ?CHILD(player_base_sup, player_base_sup, supervisor, []),
     GameNumericalSupSpec = ?CHILD(game_numerical_sup, game_numerical_sup, worker, []),
-    ChatServerSupSpec = ?CHILD(chat_server_sup, chat_server_sup, supervisor, []),
     GameServerSpec = ?CHILD(game_server, game_server, worker, []),
     RedisPoolSupSpec = ?CHILD(redis_pool_sup, redis_pool_sup, supervisor, []),
     Specs = [GameServerSpec, EnvSupSpec, RanchSupSpec, ListenerSpec,
              DBSupSpec, PlayerDataSupSpec,
              PlayerBaseSupSpec, GameNumericalSupSpec, 
-             ChatServerSupSpec, RedisPoolSupSpec],
+             RedisPoolSupSpec],
     {ok, {{one_for_one, 10, 10}, Specs}}.
