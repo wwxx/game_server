@@ -3,47 +3,45 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1, proxy/2, proxy/3, wrap/2]).
+-export([start_link/1]).
 
-%% Warning: Invoke from proxy!!!
--export([delete_leaderboard/0,
-         rank_member/2,
+-export([delete_leaderboard/1,
          rank_member/3,
-         member_data_for/1,
-         update_member_data/2,
-         remove_member_data/1,
-         rank_members/1,
-         remove_member/1,
-         total_members/0,
-         total_pages/0,
+         rank_member/4,
+         member_data_for/2,
+         update_member_data/3,
+         remove_member_data/2,
+         rank_members/2,
+         remove_member/2,
+         total_members/1,
          total_pages/1,
-         total_members_in_score_range/2,
-         change_score_for/2,
-         rank_for/1,
-         score_for/1,
-         is_member_ranked/1,
-         score_and_rank_for/1,
-         remove_members_in_score_range/2,
-         remove_members_outside_rank/1,
-         page_for/1,
-         expire_leaderboard/1,
-         expire_leaderboard_at/1,
-         members/1,
-         all_members/0,
-         members_from_score_range/2,
-         members_from_rank_range/2,
-         top_member/0,
-         member_at/1,
-         around_me/1
+         total_members_in_score_range/3,
+         change_score_for/3,
+         rank_for/2,
+         score_for/2,
+         is_member_ranked/2,
+         score_and_rank_for/2,
+         remove_members_in_score_range/3,
+         remove_members_outside_rank/2,
+         page_for/2,
+         expire_leaderboard/2,
+         expire_leaderboard_at/2,
+         members/2,
+         all_members/1,
+         members_from_score_range/3,
+         members_from_rank_range/3,
+         top_member/1,
+         member_at/2,
+         around_me/2
         ]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-    terminate/2, code_change/3]).
+         terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {redis, name, reverse, page_size}).
 
 -include("include/gproc_macros.hrl").
 
@@ -53,61 +51,265 @@
 start_link(LeaderboardName) ->
     gen_server:start_link(?MODULE, [LeaderboardName], []).
 
-proxy(LeaderboardName, Fun) ->
-    gen_server:call(leaderboard_pid(LeaderboardName), {proxy, Fun, []}).
+delete_leaderboard(Name) ->
+    gen_server:cast(leaderboard_pid(Name), {delete_leaderboard}).
 
-proxy(LeaderboardName, Fun, Args) ->
-    gen_server:call(leaderboard_pid(LeaderboardName), {proxy, Fun, Args}).
+rank_member(Name, Member, Score) ->
+    gen_server:cast(leaderboard_pid(Name), {rank_member, Member, Score}).
 
-wrap(LeaderboardName, Fun) ->
-    gen_server:call(leaderboard_pid(LeaderboardName), {wrap, Fun}).
+rank_member(Name, Member, Score, MemberData) ->
+    gen_server:cast(leaderboard_pid(Name), {rank_member, Member, Score, MemberData}).
+
+member_data_for(Name, Member) ->
+    gen_server:call(leaderboard_pid(Name), {member_data_for, Member}).
+
+update_member_data(Name, Member, MemberData) ->
+    gen_server:cast(leaderboard_pid(Name), {update_member_data, Member, MemberData}).
+
+remove_member_data(Name, Member) ->
+    gen_server:cast(leaderboard_pid(Name), {remove_member_data, Member}).
+
+rank_members(Name, MembersAndScores) ->
+    gen_server:cast(leaderboard_pid(Name), {rank_members, MembersAndScores}).
+
+remove_member(Name, Member) ->
+    gen_server:cast(leaderboard_pid(Name), {remove_member, Member}).
+
+total_members(Name) ->
+    gen_server:call(leaderboard_pid(Name), {total_members}).
+
+total_pages(Name) ->
+    gen_server:call(leaderboard_pid(Name), {total_pages}).
+
+total_members_in_score_range(Name, MinScore, MaxScore) ->
+    gen_server:call(leaderboard_pid(Name), 
+                    {total_members_in_score_range, MinScore, MaxScore}).
+
+change_score_for(Name, Member, Delta) ->
+    gen_server:cast(leaderboard_pid(Name), {change_score_for, Member, Delta}).
+
+rank_for(Name, Member) ->
+    gen_server:call(leaderboard_pid(Name), {rank_for, Member}).
+
+score_for(Name, Member) ->
+    gen_server:call(leaderboard_pid(Name), {score_for, Member}).
+
+is_member_ranked(Name, Member) ->
+    gen_server:call(leaderboard_pid(Name), {is_member_ranked, Member}).
+
+score_and_rank_for(Name, Member) ->
+    gen_server:call(leaderboard_pid(Name), {score_and_rank_for, Member}).
+
+remove_members_in_score_range(Name, MinScore, MaxScore) ->
+    gen_server:cast(leaderboard_pid(Name), 
+                    {remove_members_in_score_range, MinScore, MaxScore}).
+
+remove_members_outside_rank(Name, Rank) ->
+    gen_server:cast(leaderboard_pid(Name), {remove_members_outside_rank, Rank}).
+
+page_for(Name, Member) ->
+    gen_server:call(leaderboard_pid(Name), {page_for, Member}).
+
+expire_leaderboard(Name, Seconds) ->
+    gen_server:cast(leaderboard_pid(Name), {expire_leaderboard, Seconds}).
+
+expire_leaderboard_at(Name, TimeStamp) ->
+    gen_server:cast(leaderboard_pid(Name), {expire_leaderboard_at, TimeStamp}).
+
+members(Name, Page) ->
+    gen_server:call(leaderboard_pid(Name), {members, Page}).
+
+all_members(Name) ->
+    gen_server:call(leaderboard_pid(Name), {all_members}).
+
+members_from_score_range(Name, MinScore, MaxScore) ->
+    gen_server:call(leaderboard_pid(Name), {members_from_score_range, MinScore, MaxScore}).
+
+members_from_rank_range(Name, MinRank, MaxRank) ->
+    gen_server:call(leaderboard_pid(Name), {members_from_rank_range, MinRank, MaxRank}).
+
+top_member(Name) ->
+    gen_server:call(leaderboard_pid(Name), {top_member}).
+
+member_at(Name, Position) ->
+    gen_server:call(leaderboard_pid(Name), {member_at, Position}).
+
+around_me(Name, Member) ->
+    gen_server:call(leaderboard_pid(Name), {around_me, Member}).
+
 
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
-
 init([LeaderboardName]) ->
     ?REG_PID({leaderboard, LeaderboardName}),
-    put(leaderboard_name, LeaderboardName),
-    % Default options when creating a leaderboard. Page size is 25 and reverse
-    % is set to false, meaning various methods will return results in
-    % highest-to-lowest order.
-    put(page_size, 25),
-    put(reverse, false),
-    put(member_key, "member"),
-    put(rank_key, "rank"),
-    put(score_key, "score"),
-    put(member_data_key, "member_data"),
-    put(member_data_namespace, "member_data"),
-
-    % Default options when requesting data from a leaderboard.
-    % +:with_member_data+ false: Return member data along with the member names.
-    % +:page_size+ nil: The default page size will be used.
-    % +:members_only+ false: Only return the member name, not their score and rank.
-    % +:sort_by+ :none: The default sort for a call to `ranked_in_list`.
-    put(with_member_data, true),
-    % put(page_size, undefined),
-    put(members_only, false),
-    put(sort_by, none),
-
     {ok, Redis} = eredis:start_link(),
-    put(redis, Redis),
-    {ok, #state{}}.
+    {ok, #state{redis = Redis, 
+                name = LeaderboardName,
+                reverse = false,
+                page_size = 25}}.
 
-handle_call({proxy, Fun, Args}, _From, State) ->
-    Reply = apply(?MODULE, Fun, Args),
-    {reply, Reply, State};
-handle_call({wrap, Fun}, _From, State) ->
-    {reply, Fun(), State};
-handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
+handle_call({member_data_for, Member}, _From, State) ->
+    MemberData = member_data_for(State#state.redis, State#state.name, Member),
+    {reply, MemberData, State};
 
-handle_cast(_Msg, State) ->
+handle_call({total_members}, _From, State=#state{redis = Redis, name = Name}) ->
+    TotalMembers = total_members(Redis, Name),
+    {reply, TotalMembers, State};
+
+handle_call({total_pages}, _From, State=#state{redis = Redis, name = Name, 
+                                               page_size = PageSize}) ->
+    TotalMembers = total_pages(Redis, Name, PageSize),
+    {reply, TotalMembers, State};
+
+handle_call({total_members_in_score_range, MinScore, MaxScore}, _From, 
+            State=#state{redis = Redis, name = Name}) ->
+    TotalMembers = total_members_in_score_range(Redis, Name, MinScore, MaxScore),
+    {reply, TotalMembers, State};
+
+handle_call({rank_for, Member}, _From, 
+            State=#state{redis = Redis, name = Name, reverse = Reverse}) ->
+    Rank = rank_for(Redis, Name, Reverse, Member),
+    {reply, Rank, State};
+
+handle_call({score_for, Member}, _From, State=#state{redis = Redis, name = Name}) ->
+    Score = score_for(Redis, Name, Member),
+    {reply, Score, State};
+
+handle_call({score_and_rank_for, Member}, _From, 
+            State=#state{redis = Redis, name = Name, reverse = Reverse}) ->
+    ScoreAndRank = score_and_rank_for(Redis, Name, Reverse, Member),
+    {reply, ScoreAndRank, State};
+
+handle_call({is_member_ranked, Member}, _From, State=#state{redis = Redis, name = Name}) ->
+    IsRanked = is_member_ranked(Redis, Name, Member),
+    {reply, IsRanked, State};
+
+handle_call({page_for, Member}, _From, 
+            State=#state{redis = Redis, name = Name, 
+                         reverse = Reverse, page_size = PageSize}) ->
+    Page = page_for(Redis, Name, Reverse, PageSize, Member),
+    {reply, Page, State};
+
+handle_call({members, Page}, _From, 
+            State=#state{redis = Redis, name = Name, 
+                         reverse = Reverse, page_size = PageSize}) ->
+    Members = members(Redis, Name, Reverse, PageSize, Page),
+    {reply, Members, State};
+
+handle_call({all_members}, _From, 
+            State=#state{redis = Redis, name = Name, reverse = Reverse}) ->
+    Members = all_members(Redis, Name, Reverse),
+    {reply, Members, State};
+
+handle_call({members_from_score_range, MinScore, MaxScore}, _From, 
+            State=#state{redis = Redis, name = Name, reverse = Reverse}) ->
+    Members = members_from_score_range(Redis, Name, Reverse, MinScore, MaxScore),
+    {reply, Members, State};
+
+handle_call({members_from_rank_range, MinRank, MaxRank}, _From, 
+            State=#state{redis = Redis, name = Name, reverse = Reverse}) ->
+    Members = members_from_rank_range(Redis, Name, Reverse, MinRank, MaxRank),
+    {reply, Members, State};
+
+handle_call({top_member}, _From, 
+            State=#state{redis = Redis, name = Name, reverse = Reverse}) ->
+    Member = top_member(Redis, Name, Reverse),
+    {reply, Member, State};
+
+handle_call({member_at, Position}, _From, 
+            State=#state{redis = Redis, name = Name, 
+                         reverse = Reverse, page_size = PageSize}) ->
+    Member = member_at(Redis, Name, Reverse, PageSize, Position),
+    {reply, Member, State};
+
+handle_call({around_me, Member}, _From, 
+            State=#state{redis = Redis, name = Name, 
+                         reverse = Reverse, page_size = PageSize}) ->
+    Members = around_me(Redis, Name, Reverse, PageSize, Member),
+    {reply, Members, State}.
+
+
+handle_cast({delete_leaderboard}, State) ->
+    delete_leaderboard(State#state.redis, State#state.name),
+    {noreply, State};
+
+handle_cast({change_score_for, Member, Delta}, State=#state{redis = Redis, name = Name}) ->
+    change_score_for(Redis, Name, Member, Delta),
+    {noreply, State};
+
+handle_cast({rank_member, Member, Score}, State) ->
+    Redis = State#state.redis, 
+    LeaderboardName = State#state.name,
+    eredis:q(Redis, ["zadd", LeaderboardName, Score, Member]),
+    {noreply, State};
+
+handle_cast({rank_member, Member, Score, MemberData}, State) ->
+    Redis = State#state.redis, 
+    LeaderboardName = State#state.name,
+    transaction(Redis, fun() ->
+        eredis:q(Redis, ["zadd", LeaderboardName, Score, Member]),
+        eredis:q(Redis, ["hset", member_data_key(LeaderboardName), 
+                         Member, encode_member_data(MemberData)])
+    end),
+    {noreply, State};
+
+handle_cast({update_member_data, Member, MemberData}, State) ->
+    Redis = State#state.redis,
+    LeaderboardName = State#state.name,
+    eredis:q(Redis, ["hset", member_data_key(LeaderboardName), 
+                     Member, encode_member_data(MemberData)]),
+    {noreply, State};
+
+handle_cast({remove_member_data, Member}, State) ->
+    Redis = State#state.redis,
+    LeaderboardName = State#state.name,
+    eredis:q(Redis, ["hdel", member_data_key(LeaderboardName), Member]),
+    {noreply, State};
+
+handle_cast({rank_members, MembersAndScores}, State) ->
+    Redis = State#state.redis,
+    LeaderboardName = State#state.name,
+    transaction(Redis, fun() ->
+        lists:foreach(fun({Member, Score}) ->
+            eredis:q(Redis, ["zadd", LeaderboardName, Score, Member])
+        end, MembersAndScores)
+    end),
+    {noreply, State};
+
+handle_cast({remove_member, Member}, State) ->
+    Redis = State#state.redis,
+    LeaderboardName = State#state.name,
+    transaction(Redis, fun() ->
+        eredis:q(Redis, ["zrem", LeaderboardName, Member]),
+        eredis:q(Redis, ["hdel", member_data_key(LeaderboardName), Member])
+    end),
+    {noreply, State};
+
+handle_cast({remove_members_in_score_range, MinScore, MaxScore}, 
+            State=#state{redis = Redis, name = Name}) ->
+    remove_members_in_score_range(Redis, Name, MinScore, MaxScore),
+    {noreply, State};
+
+handle_cast({remove_members_outside_rank, Rank}, 
+            State=#state{redis = Redis, name = Name, reverse = Reverse}) ->
+    remove_members_outside_rank(Redis, Name, Reverse, Rank),
+    {noreply, State};
+
+handle_cast({expire_leaderboard, Seconds}, 
+            State=#state{redis = Redis, name = Name}) ->
+    expire_leaderboard(Redis, Name, Seconds),
+    {noreply, State};
+
+handle_cast({expire_leaderboard_at, TimeStamp}, 
+            State=#state{redis = Redis, name = Name}) ->
+    expire_leaderboard_at(Redis, Name, TimeStamp),
     {noreply, State}.
+
 
 handle_info(_Info, State) ->
     {noreply, State}.
+
 
 terminate(_Reason, _State) ->
     ok.
@@ -118,99 +320,65 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
-delete_leaderboard() ->
-    LeaderboardName = get(leaderboard_name),
-    transaction(fun() ->
-        redis_cmd(["DEL", LeaderboardName]),
-        redis_cmd(["DEL", member_data_key()])
+
+delete_leaderboard(Redis, LeaderboardName) ->
+    transaction(Redis, fun() ->
+        eredis:q(Redis, ["DEL", LeaderboardName]),
+        eredis:q(Redis, ["DEL", member_data_key(LeaderboardName)])
     end).
 
-% Rank a member in the named leaderboard.
-rank_member(Member, Score) ->
-    LeaderboardName = get(leaderboard_name),
-    redis_cmd(["zadd", LeaderboardName, Score, Member]).
-rank_member(Member, Score, MemberData) ->
-    LeaderboardName = get(leaderboard_name),
-    transaction(fun() ->
-        redis_cmd(["zadd", LeaderboardName, Score, Member]),
-        redis_cmd(["hset", member_data_key(), Member, MemberData])
-    end).
-
-member_data_for(Member) ->
-    case redis_cmd(["hget", member_data_key(), Member]) of
+member_data_for(Redis, LeaderboardName, Member) ->
+    case eredis:q(Redis, ["hget", member_data_key(LeaderboardName), Member]) of
         {ok, undefined} -> undefined;
         {ok, Data} -> decode_member_data(Data)
     end.
 
-update_member_data(Member, MemberData) ->
-    redis_cmd(["hset", member_data_key(), Member, encode_member_data(MemberData)]).
-
-remove_member_data(Member) ->
-    redis_cmd(["hdel", member_data_key(), Member]).
-
-rank_members(MembersAndScores) ->
-    LeaderboardName = get(leaderboard_name),
-    transaction(fun() ->
-        lists:foreach(fun({Member, Score}) ->
-            redis_cmd(["zadd", LeaderboardName, Score, Member])
-        end, MembersAndScores)
-    end).
-
-remove_member(Member) ->
-    LeaderboardName = get(leaderboard_name),
-    transaction(fun() ->
-        redis_cmd(["zrem", LeaderboardName, Member]),
-        redis_cmd(["hdel", member_data_key(), Member])
-    end).
-
-total_members() ->
-    {ok, AmountBin} = redis_cmd(["zcard", get(leaderboard_name)]),
+total_members(Redis, LeaderboardName) ->
+    {ok, AmountBin} = eredis:q(Redis, ["zcard", LeaderboardName]),
     binary_to_integer(AmountBin).
 
-total_pages() ->
-    total_pages(get(page_size)).
-total_pages(PageSize) ->
-    number:ceil(total_members() / PageSize).
+total_pages(Redis, LeaderboardName, PageSize) ->
+    number:ceil(total_members(Redis, LeaderboardName) / PageSize).
 
-total_members_in_score_range(MinScore, MaxScore) ->
-    redis_cmd(["zcount", get(leaderboard_name), MinScore, MaxScore]).
+total_members_in_score_range(Redis, LeaderboardName, MinScore, MaxScore) ->
+    {ok, AmountBin} = eredis:q(Redis, ["zcount", LeaderboardName, MinScore, MaxScore]),
+    binary_to_integer(AmountBin).
 
-change_score_for(Member, Delta) ->
-    redis_cmd(["zincrby", get(leaderboard_name), Delta, Member]).
+change_score_for(Redis, LeaderboardName, Member, Delta) ->
+    eredis:q(Redis, ["zincrby", LeaderboardName, Delta, Member]).
 
-rank_for(Member) ->
-    case get(reverse) of
+rank_for(Redis, LeaderboardName, Reverse, Member) ->
+    case Reverse of
         true ->
-            case redis_cmd(["zrank", get(leaderboard_name), Member]) of
+            case eredis:q(Redis, ["zrank", LeaderboardName, Member]) of
                 {ok, undefined} -> undefined;
                 {ok, Rank} -> binary_to_integer(Rank) + 1
             end;
         false ->
-            case redis_cmd(["zrevrank", get(leaderboard_name), Member]) of
+            case eredis:q(Redis, ["zrevrank", LeaderboardName, Member]) of
                 {ok, undefined} -> undefined;
                 {ok, Rank} -> binary_to_integer(Rank) + 1
             end
     end.
 
-score_for(Member) ->
-    case redis_cmd(["zscore", get(leaderboard_name), Member]) of
+score_for(Redis, LeaderboardName, Member) ->
+    case eredis:q(Redis, ["zscore", LeaderboardName, Member]) of
         {ok, undefined} -> undefined;
         {ok, Score} -> binary_to_integer(Score)
     end.
 
-is_member_ranked(Member) ->
-    case redis_cmd(["zscore", get(leaderboard_name), Member]) of
+is_member_ranked(Redis, LeaderboardName, Member) ->
+    case eredis:q(Redis, ["zscore", LeaderboardName, Member]) of
         {ok, undefined} -> false;
         _ -> true
     end.
 
-score_and_rank_for(Member) ->
-    LeaderboardName = get(leaderboard_name),
-    Results = transaction(fun() ->
-        redis_cmd(["zscore", LeaderboardName, Member]),
-        case get(reverse) of
-            true -> redis_cmd(["zrank", LeaderboardName, Member]);
-            false -> redis_cmd(["zrevrank", LeaderboardName, Member])
+score_and_rank_for(Redis, LeaderboardName, Reverse, Member) ->
+    Results = transaction(Redis, fun() ->
+        eredis:q(Redis, ["zscore", LeaderboardName, Member]),
+        case Reverse of
+            true ->  eredis:q(Redis, ["zrank", LeaderboardName, Member]);
+            false -> eredis:q(Redis, ["zrevrank", LeaderboardName, Member])
         end
     end),
 
@@ -221,199 +389,177 @@ score_and_rank_for(Member) ->
             {Score, Rank}
     end.
 
-remove_members_in_score_range(MinScore, MaxScore) ->
-    redis_cmd(["zremrangebyscore", get(leaderboard_name), MinScore, MaxScore]).
+remove_members_in_score_range(Redis, LeaderboardName, MinScore, MaxScore) ->
+    eredis:q(Redis, ["zremrangebyscore", LeaderboardName, MinScore, MaxScore]).
 
-remove_members_outside_rank(Rank) ->
-    case get(reverse) of
+remove_members_outside_rank(Redis, LeaderboardName, Reverse, Rank) ->
+    case Reverse of
         true ->
-            redis_cmd(["zremrangebyrank", get(leaderboard_name), Rank, -1]);
+            eredis:q(Redis, ["zremrangebyrank", LeaderboardName, Rank, -1]);
         false ->
-            redis_cmd(["zremrangebyrank", get(leaderboard_name), 0, -(Rank) - 1])
+            eredis:q(Redis, ["zremrangebyrank", LeaderboardName, 0, -(Rank) - 1])
     end.
 
-page_for(Member) ->
-    LeaderboardName = get(leaderboard_name),
-    RankForMember = case get(reverse) of
+page_for(Redis, LeaderboardName, Reverse, PageSize, Member) ->
+    RankForMember = case Reverse of
         true ->
-            redis_cmd(["zrank", LeaderboardName, Member]);
+            eredis:q(Redis, ["zrank", LeaderboardName, Member]);
         false ->
-            redis_cmd(["zrevrank", LeaderboardName, Member])
+            eredis:q(Redis, ["zrevrank", LeaderboardName, Member])
     end,
-    Rank = case RankForMember of
-        {ok, undefined} -> 0;
-        {ok, RankBin} -> binary_to_integer(RankBin) + 1
-    end,
-    number:ceil(Rank / get(page_size)).
+    case RankForMember of
+        {ok, undefined} -> 
+            undefined;
+        {ok, RankBin} -> 
+            Rank = binary_to_integer(RankBin) + 1,
+            number:ceil(Rank / PageSize)
+    end.
 
-expire_leaderboard(Seconds) ->
-    transaction(fun() ->
-        redis_cmd(["expire", get(leaderboard_name), Seconds]),
-        redis_cmd(["expire", member_data_key(), Seconds])
+expire_leaderboard(Redis, LeaderboardName, Seconds) ->
+    transaction(Redis, fun() ->
+        eredis:q(Redis, ["expire", LeaderboardName, Seconds]),
+        eredis:q(Redis, ["expire", member_data_key(LeaderboardName), Seconds])
     end).
 
-expire_leaderboard_at(Timestamp) ->
-    transaction(fun() ->
-        redis_cmd(["expireat", get(leaderboard_name), Timestamp]),
-        redis_cmd(["expireat", member_data_key(), Timestamp])
+expire_leaderboard_at(Redis, LeaderboardName, Timestamp) ->
+    transaction(Redis, fun() ->
+        eredis:q(Redis, ["expireat", LeaderboardName, Timestamp]),
+        eredis:q(Redis, ["expireat", member_data_key(LeaderboardName), Timestamp])
     end).
 
-members(CurrentPage0) ->
-    members(CurrentPage0, []).
-
-members(CurrentPage0, Options) ->
-    PageSize = case proplists:get_value(page_size, Options) of
-                   undefined -> get(page_size);
-                   Size -> Size
-               end,
-    TotalPages = total_pages(PageSize),
+members(Redis, LeaderboardName, Reverse, PageSize, CurrentPage0) ->
+    TotalPages = total_pages(Redis, LeaderboardName, PageSize),
     CurrentPage = lists:min([lists:max([CurrentPage0, 1]), TotalPages]),
     IndexForRedis = CurrentPage - 1,
     StartingOffset = lists:max([IndexForRedis * PageSize, 0]),
     EndingOffset = StartingOffset + PageSize - 1,
 
-    RawLeaderData = case get(reverse) of
+    RawLeaderData = case Reverse of
         true ->
-            redis_cmd(["zrange", get(leaderboard_name), StartingOffset, EndingOffset]);
+            eredis:q(Redis, ["zrange", LeaderboardName, StartingOffset, EndingOffset]);
         false ->
-            redis_cmd(["zrevrange", get(leaderboard_name), StartingOffset, EndingOffset])
+            eredis:q(Redis, ["zrevrange", LeaderboardName, StartingOffset, EndingOffset])
     end,
 
     case RawLeaderData of
         {ok, undefined} -> [];
-        {ok, Data} -> ranked_in_list(Data)
+        {ok, Data} -> ranked_in_list(Redis, LeaderboardName, Reverse, Data)
     end.
 
-all_members() ->
-    RawLeaderData = case get(reverse) of
+all_members(Redis, LeaderboardName, Reverse) ->
+    RawLeaderData = case Reverse of
         true ->
-            redis_cmd(["zrange", get(leaderboard_name), 0, -1]);
+            eredis:q(Redis, ["zrange", LeaderboardName, 0, -1]);
         false ->
-            redis_cmd(["zrevrange", get(leaderboard_name), 0, -1])
+            eredis:q(["zrevrange", LeaderboardName, 0, -1])
     end,
 
     case RawLeaderData of 
         {ok, undefined} -> [];
-        {ok, Data} -> ranked_in_list(Data)
+        {ok, Data} -> ranked_in_list(Redis, LeaderboardName, Reverse, Data)
     end.
 
-members_from_score_range(MinimumScore, MaximumScore) ->
-    RawLeaderData = case get(reverse) of
+members_from_score_range(Redis, LeaderboardName, Reverse, MinimumScore, MaximumScore) ->
+    RawLeaderData = case Reverse of
         true ->
-            redis_cmd(["zrangebyscore", get(leaderboard_name), MinimumScore, MaximumScore]);
+            eredis:q(Redis, ["zrangebyscore", LeaderboardName, MinimumScore, MaximumScore]);
         false ->
-            redis_cmd(["zrevrangebyscore", get(leaderboard_name), MaximumScore, MinimumScore])
+            eredis:q(Redis, ["zrevrangebyscore", LeaderboardName, MaximumScore, MinimumScore])
     end,
 
     case RawLeaderData of
         {ok, undefined} -> [];
-        {ok, Data} -> ranked_in_list(Data)
+        {ok, Data} -> ranked_in_list(Redis, LeaderboardName, Reverse, Data)
     end.
 
-members_from_rank_range(StartingRank0, EndingRank0) ->
+members_from_rank_range(Redis, LeaderboardName, Reverse, StartingRank0, EndingRank0) ->
     StartingRank = lists:max([StartingRank0 - 1, 0]),
 
-    TotalMembers = total_members(),
+    TotalMembers = total_members(Redis, LeaderboardName),
     EndingRank = lists:min([EndingRank0 - 1, TotalMembers - 1]),
 
-    RawLeaderData = case get(reverse) of
+    RawLeaderData = case Reverse of
         true ->
-            redis_cmd(["zrange", get(leaderboard_name), StartingRank, EndingRank]);
+            eredis:q(Redis, ["zrange", LeaderboardName, StartingRank, EndingRank]);
         false ->
-            redis_cmd(["zrevrange", get(leaderboard_name), StartingRank, EndingRank])
+            eredis:q(Redis, ["zrevrange", LeaderboardName, StartingRank, EndingRank])
     end,
 
     case RawLeaderData of
         {ok, undefined} -> [];
-        {ok, Data} -> ranked_in_list(Data)
+        {ok, Data} -> ranked_in_list(Redis, LeaderboardName, Reverse, Data)
     end.
 
-top_member() ->
-    case members_from_rank_range(1, 1) of
+top_member(Redis, LeaderboardName, Reverse) ->
+    case members_from_rank_range(Redis, LeaderboardName, Reverse, 1, 1) of
         [] -> undefined;
         [Member] -> Member
     end.
 
-member_at(Position) ->
-    member_at(Position, []).
-member_at(Position, Options) ->
-    case Position =< total_members() of
+member_at(Redis, LeaderboardName, Reverse, PageSize, Position) ->
+    case Position =< total_members(Redis, LeaderboardName) of
         true ->
-            PageSize = case proplists:get_value(page_size, Options) of
-                           undefined -> get(page_size);
-                           Size -> Size
-                       end,
             CurrentPage = number:ceil(Position/ PageSize),
-            case members(CurrentPage, Options) of
+            case members(Redis, LeaderboardName, Reverse, PageSize, CurrentPage) of
                 [] -> undefined;
                 Leaders -> lists:nth(Position, Leaders)
             end;
         false -> undefined
     end.
 
-around_me(Member) ->
-    around_me(Member, []).
-around_me(Member, Options) ->
-    ReverseRankForMember = case get(reverse) of
+around_me(Redis, LeaderboardName, Reverse, PageSize, Member) ->
+    ReverseRankForMember = case Reverse of
         true ->
-            redis_cmd(["zrank", get(leaderboard_name), Member]);
+            eredis:q(Redis, ["zrank", LeaderboardName, Member]);
         false ->
-            redis_cmd(["zrevrank", get(leaderboard_name), Member])
+            eredis:q(Redis, ["zrevrank", LeaderboardName, Member])
     end,
 
     case ReverseRankForMember of 
         {ok, undefined} -> [];
         {ok, RankBin} ->
             Rank = binary_to_integer(RankBin),
-            PageSize = case proplists:get_value(page_size, Options) of
-                           undefined -> get(page_size);
-                           Size -> Size
-                       end,
             StartingOffset0 = Rank - trunc(PageSize / 2),
             StartingOffset = lists:max([StartingOffset0, 0]),
             EndingOffset = StartingOffset + PageSize - 1,
-            RawLeaderData = case get(reverse) of
+            RawLeaderData = case Reverse of
                 true ->
-                    redis_cmd(["zrange", get(leaderboard_name), StartingOffset, EndingOffset]);
+                    eredis:q(Redis, ["zrange", LeaderboardName, 
+                                     StartingOffset, EndingOffset]);
                 false ->
-                    redis_cmd(["zrevrange", get(leaderboard_name), StartingOffset, EndingOffset])
+                    eredis:q(Redis, ["zrevrange", LeaderboardName, 
+                                     StartingOffset, EndingOffset])
             end,
             case RawLeaderData of 
                 {ok, undefined} -> [];
-                {ok, Data} -> ranked_in_list(Data)
+                {ok, Data} -> ranked_in_list(Redis, LeaderboardName, Reverse, Data)
             end
     end.
 
-ranked_in_list(Members) ->
-    {ok, RanksAndScores} = transaction(fun() ->
+ranked_in_list(Redis, LeaderboardName, Reverse, Members) ->
+    {ok, RanksAndScores} = transaction(Redis, fun() ->
         lists:foreach(fun(Member) ->
-            case get(reverse) of
-                true -> redis_cmd(["zrank", get(leaderboard_name), Member]);
-                false -> redis_cmd(["zrevrank", get(leaderboard_name), Member])
+            case Reverse of
+                true ->  eredis:q(Redis, ["zrank", LeaderboardName, Member]);
+                false -> eredis:q(Redis, ["zrevrank", LeaderboardName, Member])
             end,
-            redis_cmd(["zscore", get(leaderboard_name), Member])
+            eredis:q(Redis, ["zscore", LeaderboardName, Member])
         end, Members)
     end),
-    ranked_in_list(Members, RanksAndScores, []).
+    ranked_in_list(Members, RanksAndScores, Redis, LeaderboardName, []).
 
-ranked_in_list([], [], Result) -> lists:reverse(Result);
-ranked_in_list([Member|Members], [Rank, Score|RanksAndScores], Result) ->
-    ranked_in_list(Members, RanksAndScores, [{Member, binary_to_integer(Rank) + 1, binary_to_integer(Score) + 1, member_data_for(Member)}|Result]).
+ranked_in_list([], [], _, _, Result) -> lists:reverse(Result);
+ranked_in_list([Member|Members], [Rank, Score|RanksAndScores], 
+               Redis, LeaderboardName, Result) ->
+    Cell = {Member, binary_to_integer(Rank) + 1, 
+            binary_to_integer(Score) + 1, member_data_for(Redis, LeaderboardName, Member)},
+    ranked_in_list(Members, RanksAndScores, Redis, LeaderboardName, [Cell|Result]).
 
 
-transaction(Fun) ->
-    Redis = get(redis),
+transaction(Redis, Fun) ->
     eredis:q(Redis, ["MULTI"]),
     Fun(),
     eredis:q(Redis, ["EXEC"]).
-
-redis_cmd(List) ->
-    Redis = get(redis),
-    eredis:q(Redis, List).
-
-member_data_key() ->
-    LeaderboardName = get(leaderboard_name),
-    LeaderboardName ++ ":" ++ get(member_data_namespace).
 
 leaderboard_pid(LeaderboardName) ->
     ?GET_PID({leaderboard, LeaderboardName}).
@@ -425,3 +571,10 @@ encode_member_data(Data) ->
 decode_member_data(Value) ->
     Data = base64:decode(Value),
     binary_to_term(Data).
+
+member_data_key(Name) when is_list(Name) ->
+    Name ++ ":" ++ "member_data";
+member_data_key(Name) when is_binary(Name) ->
+    binary_to_list(Name) ++ ":" ++ "member_data";
+member_data_key(Name) when is_atom(Name) ->
+    atom_to_list(Name) ++ ":" ++ "member_data".
