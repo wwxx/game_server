@@ -28,6 +28,8 @@
 -export([start/2]).
 -export([prep_stop/1, stop/1]).
 
+-include("include/db_config.hrl").
+
 start(_Type, _Args) ->
     ensure_started(crypto),
     case application:get_env(game_server, server_environment) of
@@ -39,10 +41,17 @@ start(_Type, _Args) ->
     mnesia:start(),
     game_counter:start(),
     ensure_started(gproc),
-    ensure_started(emysql),
     ensure_started(record_mapper),
     ensure_started(leaderboard),
     ensure_started(timertask),
+    DB_Config = case application:get_env(game_server, server_environment) of
+        {ok, production} -> ?DB_PRODUCTION;
+        {ok, development} -> ?DB_DEVELOPMENT;
+        {ok, test} -> ?DB_TEST
+    end,
+    ensure_started(db),
+    db:init_pool(DB_Config),
+    ensure_started(player_server),
     life_cycle:before_start(),
     R = game_server_sup:start_link(),
     life_cycle:after_start(),
