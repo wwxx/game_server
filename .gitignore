@@ -1,7 +1,6 @@
 *.swp
 *.beam
 *.dump
-deps/*
 ebin/*
 rel/pusher*
 log

@@ -1,0 +1,12 @@
+{application, record_mapper,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { record_mapper_app, []}},
+  {env, []}
+ ]}.
