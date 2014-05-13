@@ -72,7 +72,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 gen_user_name() ->
-    UserName = list_to_binary(["Guest:", game_counter:incr(guest_user_counter)]),
+    UserName = list_to_binary([<<"Guest:">>, integer_to_binary(game_counter:incr(guest_user_counter))]),
     case game_counter:get({user_name, UserName}) of
         undefined -> 
             game_counter:set({user_name, UserName}, true),
