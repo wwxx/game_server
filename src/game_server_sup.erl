@@ -50,5 +50,7 @@ init([]) ->
     ),
     GameServerSpec = ?CHILD(game_server, game_server, worker, []),
     RedisPoolSupSpec = ?CHILD(redis_pool_sup, redis_pool_sup, supervisor, []),
-    Specs = [GameServerSpec, RanchSupSpec, ListenerSpec, RedisPoolSupSpec],
+    NameServerSupSpec = ?CHILD(name_server_sup, name_server, supervisor, []),
+    Specs = [GameServerSpec, RanchSupSpec, ListenerSpec, 
+             RedisPoolSupSpec, NameServerSupSpec],
     {ok, {{one_for_one, 10, 10}, Specs}}.
