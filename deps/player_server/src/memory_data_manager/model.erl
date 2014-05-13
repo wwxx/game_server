@@ -496,7 +496,7 @@ deserialize(Rec, Fields, Rule) ->
 deserialize([], [], _Rule, Result) -> 
     lists:reverse(Result);
 deserialize([Value|Values], [Field|Fields], Rule, Result) ->
-    case proplists:get_bool(Field, Rule) of
+    case lists:member(Field, Rule) of
         true when Value =/= undefined -> 
             Data = base64:decode(Value),
             TermValue = binary_to_term(Data),

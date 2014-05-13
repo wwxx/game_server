@@ -1,6 +1,6 @@
 -module(for).
 
--export([times/2, each/2, upto/3]).
+-export([times/2, each/2, upto/3, upto/4]).
 
 times(0, _) -> ok;
 times(N, Fun) ->
@@ -17,3 +17,7 @@ upto(From, To, Fun) ->
     Fun(From),
     upto(From + 1, To, Fun).
 
+upto(To, To, Fun, Acc) -> Fun(To, Acc);
+upto(From, To, Fun, Acc) ->
+    NewAcc = Fun(From, Acc),
+    upto(From + 1, To, Fun, NewAcc).

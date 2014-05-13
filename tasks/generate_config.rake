@@ -21,6 +21,11 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
+class String
+  def is_number?
+    true if Float(self) rescue false
+  end
+end
 
 desc "Generate configs Sql format file from Excel"
 task :generate_config => :environment do
@@ -100,6 +105,9 @@ task :generate_config => :environment do
           next if field_indexes[index].nil?
           if ['string', 'text'].include?(field_indexes[index])
             value = ActiveRecord::Base.sanitize(value)
+          end
+          if field_indexes[index] == 'string' and value.is_number?
+            value = value.to_i.to_s
           end
           value = 0 if field_types[index] == 'integer' and value.blank?
           value = 0.0 if field_types[index] == 'float' and value.blank?
