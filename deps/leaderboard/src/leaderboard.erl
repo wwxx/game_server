@@ -449,7 +449,7 @@ all_members(Redis, LeaderboardName, Reverse) ->
         true ->
             eredis:q(Redis, ["zrange", LeaderboardName, 0, -1]);
         false ->
-            eredis:q(["zrevrange", LeaderboardName, 0, -1])
+            eredis:q(Redis, ["zrevrange", LeaderboardName, 0, -1])
     end,
 
     case RawLeaderData of 
