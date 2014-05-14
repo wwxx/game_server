@@ -188,6 +188,7 @@ handle_request({{sessions_controller, login}, Params, RequestId},
     %% Start player process
     player_factory:start_player(PlayerID),
     LoginInfo = sessions_controller:login(PlayerID),
+    error_logger:info_msg("request_id: ~p, send_data: ~p~n", [RequestId, LoginInfo]),
     send_socket_data(Transport, Socket, RequestId, encode_response(LoginInfo)),
     {noreply, State#protocol{playerID = PlayerID}};
 handle_request({Path, Params, RequestId}, State=#protocol{playerID = PlayerID}) ->
