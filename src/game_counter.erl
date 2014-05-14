@@ -61,7 +61,7 @@ get_daily_action(Name) ->
     end.
 
 del_daily_action(Name) ->
-    mnesia:dirty_delete(daily_counter, Name).
+    mnesia:dirty_delete(daily_counter, {Name, date()}).
 
 clean_daily_counters() ->
     mnesia:delete_table(daily_counter),
