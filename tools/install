@@ -38,4 +38,5 @@ RAILS_ENV=$server_env bundle install
 RAILS_ENV=$server_env bundle exec rake setup
 cd ../../game_server
 ./rebar get-deps
+./rebar clean
 ./rebar compile
