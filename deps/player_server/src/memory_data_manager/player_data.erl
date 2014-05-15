@@ -37,7 +37,8 @@
          find/2,
          where/2,
          all/2,
-         count/2
+         count/2,
+         count_all/2
         ]).
 
 %%%===================================================================
@@ -110,6 +111,12 @@ count(PlayerID, Selector) ->
     case validate_ownership(PlayerID) of
         true -> model:count(Selector);
         false -> player:proxy(PlayerID, model, count, [Selector])
+    end.
+
+count_all(PlayerID, Table) ->
+    case validate_ownership(PlayerID) of
+        true -> model:count_all(Table);
+        false -> player:proxy(PlayerID, model, count_all, [Table])
     end.
 
 %%%===================================================================

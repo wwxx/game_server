@@ -97,6 +97,11 @@ find_by(TableName, Field, Value) ->
     SqlTuple = {select, '*', {from, TableName}, {where, {Field, '=', Value}}},
     request(TableName, SqlTuple).
 
+%% OrderArgs: {created_at, desc}
+find_by(TableName, Field, Value, {order_by, OrderArgs}) ->
+    SqlTuple = {select, '*', {from, TableName}, 
+                {where, {Field, '=', Value}}, {order_by, OrderArgs}},
+    request(TableName, SqlTuple);
 find_by(TableName, Field, Value, {fields, SelectFields}) ->
     SqlTuple = {select, SelectFields, {from, TableName}, {where, {Field, '=', Value}}},
     request(TableName, SqlTuple);

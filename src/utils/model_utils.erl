@@ -29,23 +29,18 @@
 
 -module(model_utils).
 
--compile(export_all).
-
-%%--------------------------------------------------------------------
-%% @doc:    Merge Binary String ID and ExtraValue to record tuple
-%% @spec:    merge(Record::tuple()) -> tuple().
-%% @end
-%%--------------------------------------------------------------------
+-export([info/1, infos/1, info/2]).
 
 -spec(info(record()) -> tuple()).
+infos(Records) ->
+    [info(Record) || Record <- Records].
+
 info(Record) ->
-    [_Name, Key|Values] = tuple_to_list(Record),
-    Id = db:objectid_to_binary_string(Key),
-    list_to_tuple([Id|Values]).
+    [_Name|Values] = tuple_to_list(Record),
+    list_to_tuple(Values).
 
 -spec(info(record(), list()) -> tuple()).
 info(Record, ExtraValueList) ->
-    [_Name, Key|Values] = tuple_to_list(Record),
-    Id = db:objectid_to_binary_string(Key),
-    L = lists:append([Id|Values], ExtraValueList),
+    [_Name|Values] = tuple_to_list(Record),
+    L = lists:append(Values, ExtraValueList),
     list_to_tuple(L).

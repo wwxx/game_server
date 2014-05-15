@@ -68,7 +68,7 @@ decode_boolean(<<BOOLEAN:?BOOLEAN, Data/binary>>) ->
 %%短整数
 encode_short(Short) when is_integer(Short) ->
     <<Short:?SHORT>>.
-decode_short(<<Short:?SHORT, Data/binary>>) ->
+decode_short(<<Short:?SHORT/signed, Data/binary>>) ->
     {Short, Data}.
 
 %%整数
@@ -76,7 +76,7 @@ encode_integer(Integer) when Integer =:= undefined ->
     <<0:?INTEGER>>;
 encode_integer(Integer) when is_integer(Integer) ->
     <<Integer:?INTEGER>>.
-decode_integer(<<Integer:?INTEGER, Data/binary>>) ->
+decode_integer(<<Integer:?INTEGER/signed, Data/binary>>) ->
     {Integer, Data}.
 
 %%浮点数

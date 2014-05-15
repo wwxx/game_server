@@ -28,6 +28,7 @@
          find_or_create/1,
          all/1,
          all/2,
+         id_status_list/1,
          count_all/1,
          where/1,
          delete/1,
@@ -306,25 +307,38 @@ selectOne(Table, [{Id, _}|IdList], FieldsAndValues) ->
     end.
 
 update_status(Table, Id, Status) ->
-    case id_status_list(Table) of
-        [] ->
-            put({Table, idList}, [{Id, Status}]);
-        IdList ->
-            case lists:keyfind(Id, 1, IdList) of
-                false ->
-                    put({Table, idList}, [{Id, Status}|IdList]);
-                {Id, ?MODEL_CREATE} when Status =:= ?MODEL_UPDATE ->
-                    do_nothing;
-                {Id, ?MODEL_CREATE} when Status =:= ?MODEL_DELETE ->
+    IdList = id_status_list(Table),
+    case lists:keyfind(Id, 1, IdList) of
+        false ->
+            if 
+                Status =:= ?MODEL_ORIGIN orelse
+                Status =:= ?MODEL_CREATE ->
+                    put({Table, idList}, [{Id, Status}|IdList])
+            end;
+        {Id, ?MODEL_CREATE} ->
+            if 
+                Status =:= ?MODEL_UPDATE -> ok;
+                Status =:= ?MODEL_DELETE ->
                     NewIdList = lists:delete({Id, ?MODEL_CREATE}, IdList),
-                    put({Table, idList}, NewIdList);
-                {Id, OldStatus} when Status =:= ?MODEL_DELETE ->
-                    NewIdList = lists:delete({Id, OldStatus}, IdList),
+                    put({Table, idList}, NewIdList)
+            end;
+        {Id, ?MODEL_UPDATE} ->
+            if 
+                Status =:= ?MODEL_UPDATE -> ok;
+                Status =:= ?MODEL_DELETE ->
+                    NewIdList = lists:delete({Id, ?MODEL_UPDATE}, IdList),
                     put({Table, idList}, NewIdList),
-                    add_to_delete_list(Table, Id);
-                {Id, OldStatus} ->
-                    NewIdList = lists:delete({Id, OldStatus}, IdList),
-                    put({Table, idList}, [{Id, Status}|NewIdList])
+                    add_to_delete_list(Table, Id)
+            end;
+        {Id, ?MODEL_ORIGIN} ->
+            if 
+                Status =:= ?MODEL_UPDATE ->
+                    NewIdList = lists:delete({Id, ?MODEL_ORIGIN}, IdList),
+                    put({Table, idList}, [{Id, Status}|NewIdList]);
+                Status =:= ?MODEL_DELETE ->
+                    NewIdList = lists:delete({Id, ?MODEL_ORIGIN}, IdList),
+                    put({Table, idList}, NewIdList),
+                    add_to_delete_list(Table, Id)
             end
     end.
 

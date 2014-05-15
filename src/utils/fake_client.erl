@@ -104,7 +104,7 @@ recv_response(Sock) ->
             case RequestId of 
                 ?FAKE_REQUEST_ID ->
                     {Response, _LeftData} = api_decoder:decode(RequestContent),
-                    error_logger:info_msg("Response: ~p~n", [Response]),
+                    % error_logger:info_msg("Response: ~p~n", [Response]),
                     Response;
                 _ ->
                     recv_response(Sock)
