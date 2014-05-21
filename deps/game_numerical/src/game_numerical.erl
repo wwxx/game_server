@@ -39,7 +39,8 @@
          find_element/3, 
          all/1, 
          first/1, 
-         load_data/0]).
+         load_data/0,
+         wrap/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -82,6 +83,9 @@ find_element(TableName, Key, Pos) ->
 load_data() ->
     gen_server:call(?SERVER, load_data).
 
+wrap(Fun) ->
+    gen_server:call(?SERVER, {wrap, Fun}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -92,6 +96,8 @@ init([]) ->
 handle_call({register_model_names, ModelNames}, _From, State) ->
     put(model_names, ModelNames),
     {reply, ok, State};
+handle_call({wrap, Fun}, _From, State) ->
+    {reply, Fun(), State};
 handle_call(load_data, _From, State) ->
     load_config_data(),
     {reply, ok, State}.
