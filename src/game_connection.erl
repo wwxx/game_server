@@ -169,10 +169,20 @@ handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) -
     error_logger:info_msg("Request Path: ~p Parmas: ~p~n", [Path, Params]),
     handle_request({Path, Params, RequestId}, State);
 handle_info({tcp_closed, _Socket}, State) ->
-    error_logger:info_msg("DISCONNECT: tcp_closed, playerID: ~p~n", [State#protocol.playerID]),
+    error_logger:info_msg("DISCONNECT: tcp_closed, playerID: ~p~n", 
+                          [State#protocol.playerID]),
+    case State#protocol.playerID of
+        undefined -> ok;
+        PlayerID -> player:on_tcp_closed(PlayerID)
+    end,
     {stop, normal, State};
 handle_info({tcp_error, _Socket, _Msg}, State) ->
-    error_logger:info_msg("DISCONNECT: tcp_error, playerID: ~p~n", [State#protocol.playerID]),
+    error_logger:info_msg("DISCONNECT: tcp_error, playerID: ~p~n", 
+                          [State#protocol.playerID]),
+    case State#protocol.playerID of
+        undefined -> ok;
+        PlayerID -> player:on_tcp_closed(PlayerID)
+    end,
     {stop, normal, State};
 handle_info(Msg, State) ->
     error_logger:info_msg("unhandled Msg: ~p~n", Msg),

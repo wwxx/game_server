@@ -40,7 +40,10 @@
          async_wrap/2,
          subscribe/2,
          unsubscribe/2,
-         publish/3
+         publish/3,
+         on_tcp_closed/1,
+         register_tcp_closed_callback/4,
+         cancel_tcp_closed_callback/2
         ]).
 
 %% gen_server callbacks
@@ -121,6 +124,15 @@ unsubscribe(PlayerID, Channel) ->
 publish(PlayerID, Channel, Msg) ->
     gen_server:cast(player_pid(PlayerID), {publish, Channel, Msg}).
 
+on_tcp_closed(PlayerID) ->
+    gen_server:cast(player_pid(PlayerID), {on_tcp_closed}).
+
+register_tcp_closed_callback(PlayerID, Key, Type, Fun) ->
+    gen_server:call(player_pid(PlayerID), {register_tcp_closed_callback, Key, Type, Fun}).
+
+cancel_tcp_closed_callback(PlayerID, Key) ->
+    gen_server:call(player_pid(PlayerID), {cancel_tcp_closed_callback, Key}).
+
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
@@ -139,6 +151,25 @@ handle_call({proxy, Module, Fun, Args}, _From, State) ->
 handle_call({wrap, Fun}, _From, State) ->
     track_active(),
     {reply, Fun(), State};
+handle_call({register_tcp_closed_callback, Key, Type, Fun}, _From, State) ->
+    case get(tcp_closed_callback) of
+        undefined -> put(tcp_closed_callback, [{Key, Type, Fun}]);
+        List -> put(tcp_closed_callback, [{Key, Type, Fun}|List])
+    end,
+    {reply, ok, State};
+handle_call({cancel_tcp_closed_callback, DelKey}, _From, State) ->
+    case get(tcp_closed_callback) of
+        undefined -> ok;
+        Callbacks ->
+            NewCallbacks = lists:foldl(fun({Key, Type, Fun}, Result) ->
+                case Key =:= DelKey of
+                    true -> Result;
+                    false -> [{Key, Type, Fun}|Result]
+                end
+            end, [], Callbacks),
+            put(tcp_closed_callback, NewCallbacks)
+    end,
+    {reply, ok, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -187,6 +218,25 @@ handle_cast({unsubscribe, Channel}, State) ->
     {noreply, State};
 handle_cast({publish, Channel, Msg}, State) ->
     ?PUBLISH(Channel, {gproc_msg, Channel, Msg}),
+    {noreply, State};
+handle_cast({on_tcp_closed}, State) ->
+    case get(tcp_closed_callback) of
+        undefined -> ok;
+        Callbacks ->
+            NewCallbacks = lists:foldl(fun({Key, Type, Fun}, Result) ->
+                try Fun() of
+                    _Response -> ok
+                catch
+                    Type:Msg ->
+                        exception:notify(Type, Msg)
+                end,
+                case Type of
+                    callback_once -> Result;
+                    callback_ever -> [{Key, Type, Fun}|Result]
+                end
+            end, [], Callbacks),
+            put(tcp_closed_callback, NewCallbacks)
+    end,
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
