@@ -168,10 +168,22 @@ handle_cast({save_data}, State) ->
     model:persist_all(),
     {noreply, State};
 handle_cast({subscribe, Channel}, State) ->
-    ?SUBSCRIBE(Channel),
+    List = proplists:get_value(gproc, gproc:info(self())),
+    case proplists:is_defined({p, l, Channel}, List) of
+        true -> ok;
+        false -> ?SUBSCRIBE(Channel)
+    end,
     {noreply, State};
 handle_cast({unsubscribe, Channel}, State) ->
-    ?UNSUBSCRIBE(Channel),
+    case proplists:get_value(gproc, gproc:info(self())) of
+        [] -> ?UNSUBSCRIBE(Channel);
+        _ -> ok
+    end,
+    List = proplists:get_value(gproc, gproc:info(self())),
+    case proplists:is_defined({p, l, Channel}, List) of
+        true -> ?UNSUBSCRIBE(Channel);
+        false -> ok
+    end,
     {noreply, State};
 handle_cast({publish, Channel, Msg}, State) ->
     ?PUBLISH(Channel, {gproc_msg, Channel, Msg}),
