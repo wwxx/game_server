@@ -92,8 +92,8 @@ create_test(_Pid) ->
 
 select_test(_Pid) ->
     PlayerID = player_data:get_player_id(<<"eunit_test_udid">>),
-    towns = player_data:where(PlayerID, #towns{user_id = PlayerID}),
-    [?_assertEqual(length(towns), 1)].
+    Towns = player_data:where(PlayerID, #towns{user_id = PlayerID}),
+    [?_assertEqual(length(Towns), 1)].
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%

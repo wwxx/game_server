@@ -128,10 +128,10 @@ on_tcp_closed(PlayerID) ->
     gen_server:cast(player_pid(PlayerID), {on_tcp_closed}).
 
 register_tcp_closed_callback(PlayerID, Key, Type, Fun) ->
-    gen_server:call(player_pid(PlayerID), {register_tcp_closed_callback, Key, Type, Fun}).
+    gen_server:cast(player_pid(PlayerID), {register_tcp_closed_callback, Key, Type, Fun}).
 
 cancel_tcp_closed_callback(PlayerID, Key) ->
-    gen_server:call(player_pid(PlayerID), {cancel_tcp_closed_callback, Key}).
+    gen_server:cast(player_pid(PlayerID), {cancel_tcp_closed_callback, Key}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -151,25 +151,6 @@ handle_call({proxy, Module, Fun, Args}, _From, State) ->
 handle_call({wrap, Fun}, _From, State) ->
     track_active(),
     {reply, Fun(), State};
-handle_call({register_tcp_closed_callback, Key, Type, Fun}, _From, State) ->
-    case get(tcp_closed_callback) of
-        undefined -> put(tcp_closed_callback, [{Key, Type, Fun}]);
-        List -> put(tcp_closed_callback, [{Key, Type, Fun}|List])
-    end,
-    {reply, ok, State};
-handle_call({cancel_tcp_closed_callback, DelKey}, _From, State) ->
-    case get(tcp_closed_callback) of
-        undefined -> ok;
-        Callbacks ->
-            NewCallbacks = lists:foldl(fun({Key, Type, Fun}, Result) ->
-                case Key =:= DelKey of
-                    true -> Result;
-                    false -> [{Key, Type, Fun}|Result]
-                end
-            end, [], Callbacks),
-            put(tcp_closed_callback, NewCallbacks)
-    end,
-    {reply, ok, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -233,6 +214,25 @@ handle_cast({on_tcp_closed}, State) ->
                 case Type of
                     callback_once -> Result;
                     callback_ever -> [{Key, Type, Fun}|Result]
+                end
+            end, [], Callbacks),
+            put(tcp_closed_callback, NewCallbacks)
+    end,
+    {noreply, State};
+handle_cast({register_tcp_closed_callback, Key, Type, Fun}, State) ->
+    case get(tcp_closed_callback) of
+        undefined -> put(tcp_closed_callback, [{Key, Type, Fun}]);
+        List -> put(tcp_closed_callback, [{Key, Type, Fun}|List])
+    end,
+    {noreply, State};
+handle_cast({cancel_tcp_closed_callback, DelKey}, State) ->
+    case get(tcp_closed_callback) of
+        undefined -> ok;
+        Callbacks ->
+            NewCallbacks = lists:foldl(fun({Key, Type, Fun}, Result) ->
+                case Key =:= DelKey of
+                    true -> Result;
+                    false -> [{Key, Type, Fun}|Result]
                 end
             end, [], Callbacks),
             put(tcp_closed_callback, NewCallbacks)
