@@ -33,6 +33,7 @@
          send_data/2,
          send_data/3,
          save_data/1,
+         sync_save_data/1,
          player_pid/1,
          proxy/4,
          async_proxy/4,
@@ -93,6 +94,9 @@ send_data(PlayerID, RequestId, Data) ->
 save_data(PlayerID) ->
     gen_server:cast(player_pid(PlayerID), {save_data}).
 
+sync_save_data(PlayerID) ->
+    gen_server:call(player_pid(PlayerID), {save_data}).
+
 proxy(PlayerID, Module, Fun, Args) ->
     case validate_ownership(PlayerID) of
         true ->
@@ -151,6 +155,9 @@ handle_call({proxy, Module, Fun, Args}, _From, State) ->
 handle_call({wrap, Fun}, _From, State) ->
     track_active(),
     {reply, Fun(), State};
+handle_call({save_data}, _From, State) ->
+    model:persist_all(),
+    {reply, ok, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.

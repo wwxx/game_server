@@ -35,6 +35,7 @@
          create/1,
          create/2,
          count/1,
+         sql/2,
          persist_all/0]).
 
 -define(MODEL_ORIGIN, 1).
@@ -438,15 +439,18 @@ sqls(Table, IdList) ->
 
 sql(Rec, ?MODEL_CREATE) ->
     {Table, Fields, Values} = rec_info(Rec),
-    sqerl:sql({insert, Table, {Fields, [Values]}});
+    db_fmt:format("INSERT INTO `~s` (~s) VALUES (~s)", 
+                  [Table, join_fields(Fields), join_values(Values)]);
 sql(Rec, ?MODEL_UPDATE) ->
     {Table, Fields, Values} = rec_info(Rec),
     Uuid = hd(Values),
-    sqerl:sql({update, Table, map(Fields, Values), {where, {uuid, '=', Uuid}}});
+    db_fmt:format("UPDATE `~s` SET ~s WHERE `uuid` = ~s", 
+                  [Table, db_fmt:map(Fields, Values), db_fmt:encode(Uuid)]);
 sql(Rec, ?MODEL_DELETE) ->
     {Table, _Fields, Values} = rec_info(Rec),
     Uuid = hd(Values),
-    sqerl:sql({delete, Table, {uuid, '=', Uuid}}).
+    db_fmt:format("DELETE FROM `~s` WHERE `uuid` = ~s", 
+                  [Table, db_fmt:encode(Uuid)]).
 
 rec_info(Rec) ->
     [Table|Values] = tuple_to_list(Rec),
@@ -455,16 +459,6 @@ rec_info(Rec) ->
     Rule = proplists:get_value(serialize, Module:module_info(attributes)),
     SerializedValues = serialize(Values, Fields, Rule),
     {Table, Fields, SerializedValues}.
-
-map(Fields, Values) ->
-    map(Fields, Values, []).
-
-map([], [], Result) ->
-    Result;
-map([_Field|Fields], [Value|Values], Result) when Value =:= undefined ->
-    map(Fields, Values, Result);
-map([Field|Fields], [Value|Values], Result) ->
-    map(Fields, Values, [{Field, Value}|Result]).
 
 add_to_delete_list(Table, Id) ->
     case get({Table, deleteIdList}) of
@@ -536,3 +530,17 @@ serialize([Value|Values], [Field|Fields], Rule, Result) ->
             serialize(Values, Fields, Rule, [Value|Result])
     end.
 
+join_fields(Fields) ->
+    join_fields(Fields, []).
+join_fields([], Result) ->
+    binary_string:join(lists:reverse(Result), <<", ">>);
+join_fields([Field|Fields], Result) ->
+    NewField = list_to_binary([<<"`">>, atom_to_binary(Field, utf8), <<"`">>]),
+    join_fields(Fields, [NewField|Result]).
+
+join_values(Values) ->
+    join_values(Values, []).
+join_values([], Result) ->
+    binary_string:join(lists:reverse(Result), <<", ">>);
+join_values([Value|Values], Result) -> 
+    join_values(Values, [db_fmt:encode(Value)|Result]).

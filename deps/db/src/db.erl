@@ -41,11 +41,9 @@
           update_by/3,
           find_by/3,
           find_by/4,
-          where/2,
           request/2,
           all/1,
           update_all/1,
-          sqerl_execute/1,
           execute/1,
           procedure_name/2,
           execute_with_procedure/2,
@@ -69,57 +67,65 @@
 create(Record) ->
     [TableName|Values] = tuple_to_list(Record),
     Fields = record_mapper:get_mapping(TableName),
-    sqerl_execute({insert, TableName, map(Fields, Values)}).
+    Sql = db_fmt:format("INSERT INTO `~s` (~s) VALUES (~s)", 
+                        [TableName, db_fmt:map(Fields, Values)]),
+    execute(Sql).
 
 delete_by(TableName, Field, Value) ->
-    sqerl_execute({delete, TableName, {Field, '=', Value}}).
+    Sql = db_fmt:format("DELETE FROM `~s` WHERE `~s` = ~s", 
+                        [TableName, Field, db_fmt:encode(Value)]),
+    execute(Sql).
 
 delete_all(TableName) ->
-    sqerl_execute({delete, TableName}).
+    execute(db_fmt:format("DELETE FROM `~s`", [TableName])).
 
 update_by(Field, Value, Record) ->
-    [TableName|Values] = tuple_to_list(Record),
-    Fields = record_mapper:get_mapping(TableName),
-    sqerl_execute({update, TableName, map(Fields, Values), {where, {Field, '=', Value}}}).
+    [Table|Values] = tuple_to_list(Record),
+    Fields = record_mapper:get_mapping(Table),
+    Sql = db_fmt:format("UPDATE `~s` SET ~s WHERE `~s` = ~s", 
+                        [Table, db_fmt:map(Fields, Values), Field, db_fmt:encode(Value)]),
+    execute(Sql).
 
 update_all(Record) ->
-    [TableName|Values] = tuple_to_list(Record),
-    Fields = record_mapper:get_mapping(TableName),
-    sqerl_execute({update, TableName, map(Fields, Values)}).
+    [Table|Values] = tuple_to_list(Record),
+    Fields = record_mapper:get_mapping(Table),
+    Sql = db_fmt:format("UPDATE `~s` SET ~s", [Table, db_fmt:map(Fields, Values)]),
+    execute(Sql).
 
 %% Sqerl = {Field, '=', Value}
 %% Sqerl = {{Field, '=', Value}, 'or', {FieldB, '=', ValueB}}
-where(TableName, Sqerl) ->
-    SqlTuple = {select, '*', {from, TableName}, {where, Sqerl}},
-    request(TableName, SqlTuple).
+% where(TableName, Sqerl) ->
+%     SqlTuple = {select, '*', {from, TableName}, {where, Sqerl}},
+%     request(TableName, SqlTuple).
 
-find_by(TableName, Field, Value) ->
-    SqlTuple = {select, '*', {from, TableName}, {where, {Field, '=', Value}}},
-    request(TableName, SqlTuple).
+find_by(Table, Field, Value) ->
+    Sql = db_fmt:format("SELECT * FROM `~s` WHERE `~s` = ~s", 
+                        [Table, Field, db_fmt:encode(Value)]),
+    request(Table, Sql).
 
 %% OrderArgs: {created_at, desc}
-find_by(TableName, Field, Value, {order_by, OrderArgs}) ->
-    SqlTuple = {select, '*', {from, TableName}, 
-                {where, {Field, '=', Value}}, {order_by, OrderArgs}},
-    request(TableName, SqlTuple);
-find_by(TableName, Field, Value, {fields, SelectFields}) ->
-    SqlTuple = {select, SelectFields, {from, TableName}, {where, {Field, '=', Value}}},
-    request(TableName, SqlTuple);
-find_by(TableName, Field, Value, {limit, Limit}) ->
-    SqlTuple = {select, '*', {from, TableName}, {where, {Field, '=', Value}}, {limit, Limit}},
-    request(TableName, SqlTuple).
+find_by(Table, Field, Value, {order_by, {OrderField, Arrow}}) ->
+    Sql = db_fmt:format("SELECT * FROM `~s` WHERE `~s` = ~s ORDER BY ~s ~s", 
+                        [Table, Field, db_fmt:encode(Value), OrderField, Arrow]),
+    request(Table, Sql);
+find_by(Table, Field, Value, {fields, SelectFields}) ->
+    Sql = db_fmt:format("SELECT ~s FROM `~s` WHERE `~s` = ~s",
+                        [db_fmt:join_fields(SelectFields), Table, 
+                         Field, db_fmt:encode(Value)]),
+    request(Table, Sql);
+find_by(Table, Field, Value, {limit, Limit}) ->
+    Sql = db_fmt:format("SELECT * FROM `~s` WHERE `~s` = ~s LIMIT ~s",
+                        [Table, Field, db_fmt:encode(Value), Limit]),
+    request(Table, Sql).
 
-all(TableName) ->
-    SqlTuple = {select, '*', {from, TableName}},
-    request(TableName, SqlTuple).
+all(Table) ->
+    Sql = db_fmt:format("SELECT * FROM `~s`", [Table]),
+    request(Table, Sql).
 
-request(TableName, SqlTuple) ->
-    Res = sqerl_execute(SqlTuple),
+request(TableName, Sql) ->
+    Res = execute(Sql),
     Fields = record_mapper:get_mapping(TableName),
     {ok, emysql_util:as_record(Res, TableName, Fields)}.
-
-sqerl_execute(SqlTuple) ->
-    execute(sqerl:sql(SqlTuple)).
 
 clean_all_procedures() ->
     execute(<<"DELETE FROM mysql.proc;">>).
@@ -163,6 +169,7 @@ execute_with_procedure(ProcedureName, Sql) ->
 %%--------------------------------------------------------------------
 -spec(execute(binary()) -> list() ).
 execute(SQL) ->
+    % error_logger:info_msg("SQL: ~p~n", [SQL]),
     Result = emysql:execute(?DB_POOL, SQL),
     % error_logger:info_msg("SQL EXECUTE RESULT: ~p~n", [Result]),
     case is_tuple(Result) of
@@ -234,12 +241,12 @@ remove_pool() ->
     ok = emysql:remove_pool(?DB_POOL).
 
 
-map(Fields, Values) ->
-    map(Fields, Values, []).
+% map(Fields, Values) ->
+%     map(Fields, Values, []).
 
-map([], [], Result) ->
-    Result;
-map([_Field|Fields], [Value|Values], Result) when Value =:= undefined ->
-    map(Fields, Values, Result);
-map([Field|Fields], [Value|Values], Result) ->
-    map(Fields, Values, [{Field, Value}|Result]).
+% map([], [], Result) ->
+%     Result;
+% map([_Field|Fields], [Value|Values], Result) when Value =:= undefined ->
+%     map(Fields, Values, Result);
+% map([Field|Fields], [Value|Values], Result) ->
+%     map(Fields, Values, [{Field, Value}|Result]).
