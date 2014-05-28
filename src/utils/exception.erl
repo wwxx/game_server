@@ -16,9 +16,9 @@ notify(ErrorType, ErrorMsg, Controller, Action, Params) ->
     do_notify(Stacktrace).
 
 do_notify(Stacktrace) ->
-    error_logger:error_msg("Caught Exception: ~s~n", [Stacktrace]),
-    case application:get_env(game_server, server_environment) of
-        {ok, production} ->
-            mail:exception_notify(Stacktrace);
-        _ -> do_nothing
-    end.
+    error_logger:error_msg("Caught Exception: ~s~n", [Stacktrace]).
+    % case application:get_env(game_server, server_environment) of
+    %     {ok, production} ->
+    %         mail:exception_notify(Stacktrace);
+    %     _ -> do_nothing
+    % end.
