@@ -10,6 +10,8 @@ main([Node]) ->
             io:fwrite("==> Stopping Game Server...~n"),
             receive
                 stopped ->
-                    io:fwrite("GAME SERVER STOPPED!~n")
+                    io:fwrite("GAME SERVER STOPPED!~n");
+                is_stopping ->
+                    io:fwrite("ERROR GAME SERVER IS STOPPING!~n")
             end
     end.

@@ -35,8 +35,10 @@
     terminate/2, code_change/3]).
 
 -define(SERVER, ?MODULE).
+-define(GS_RUNNING, 1).
+-define(GS_STOPPING, 2).
 
--record(state, {}).
+-record(state, {status}).
 
 %%%===================================================================
 %%% API
@@ -70,6 +72,7 @@ force_stop() ->
     application:stop(game_server),
     application:stop(game_numerical),
     application:stop(record_mapper),
+    application:stop(mnesia),
     application:stop(db),
     application:stop(emysql),
     application:stop(gproc),
@@ -82,17 +85,22 @@ force_stop() ->
 
 init([]) ->
     process_flag(trap_exit, true),
-    {ok, #state{}}.
+    {ok, #state{status = ?GS_RUNNING}}.
 
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
 handle_cast(stop, State) ->
-    error_logger:info_msg("==========PREPARING SHUTDOWN APPLICATION===========~n"),
-    player_factory:shutdown_players(),
-    error_logger:info_msg("================SHUTDOWNING PLAYERS================~n"),
-    {noreply, State};
+    case State#state.status of
+        ?GS_RUNNING ->
+            error_logger:info_msg("==========PREPARING SHUTDOWN APPLICATION===========~n"),
+            player_factory:shutdown_players(),
+            error_logger:info_msg("================SHUTDOWNING PLAYERS================~n"),
+            {noreply, State#state{status = ?GS_STOPPING}};
+        ?GS_STOPPING ->
+            send_msg_to_stop_deamon(is_stopping)
+    end;
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
@@ -103,9 +111,7 @@ handle_info({finished_shutdown_players, _From}, State) ->
     {noreply, State}.
 
 terminate(_Reason, _State) ->
-    {ok, Hostname} = inet:gethostname(),
-    RemoteNode = list_to_atom("console@" ++ Hostname),
-    {stop_deamon, RemoteNode} ! stopped,
+    send_msg_to_stop_deamon(stopped),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
@@ -120,3 +126,8 @@ ensure_started(App) ->
         ok -> ok;
         {error, {already_started, App}} -> ok
     end.
+
+send_msg_to_stop_deamon(Msg) ->
+    {ok, Hostname} = inet:gethostname(),
+    RemoteNode = list_to_atom("console@" ++ Hostname),
+    {stop_deamon, RemoteNode} ! Msg.
