@@ -5,7 +5,8 @@
 -define(DEVELOPER_EMAILS, "mafei.198@gmail.com").
 
 exception_notify(ExceptionMsg) ->
-    send(inet:gethostname(), ?DEVELOPER_EMAILS, "Server_Exception", ExceptionMsg).
+    {ok, From} = inet:gethostname(),
+    send(From, ?DEVELOPER_EMAILS, "Server_Exception", ExceptionMsg).
 
 send(From, To, Subject, Body) ->
     Content = io_lib:format("Subject: ~s \r\nFrom: ~s \r\nTo: ~s \r\n\r\n~s", [Subject, From, To, Body]), 
