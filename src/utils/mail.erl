@@ -11,6 +11,7 @@ send(From, To, Subject, Body) ->
     Content = io_lib:format("Subject: ~s \r\nFrom: ~s \r\nTo: ~s \r\n\r\n~s", [Subject, From, To, Body]), 
     gen_smtp_client:send({From, [To], Content}, [{relay, "localhost"}, {port, 25}]).
 
+
 % send(Subject, Body, Destination) ->
 %     Cmd = "echo " ++ "\"" ++ Body ++ "\"" ++ " | mail -a \"Content-Transfer-Encoding: BASE64;\"" ++ " -s " ++ "\"" ++ Subject ++ "\"" ++ " " ++ Destination,
 %     os:cmd(Cmd).
