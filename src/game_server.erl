@@ -81,6 +81,7 @@ force_stop() ->
 %%%===================================================================
 
 init([]) ->
+    process_flag(trap_exit, true),
     {ok, #state{}}.
 
 handle_call(_Request, _From, State) ->
@@ -99,11 +100,12 @@ handle_info({finished_shutdown_players, _From}, State) ->
     error_logger:info_msg("==========FINISHED TO SHUTDOWN ALL THE PLAYERS===========~n"),
     init:stop(),
     error_logger:info_msg("======INVOKE init:stop() TO STOP WHOLE APPLICATION=======~n"),
-    {noreply, State};
-handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, _State) ->
+    {ok, Hostname} = inet:gethostname(),
+    RemoteNode = list_to_atom("console@" ++ Hostname),
+    {stop_deamon, RemoteNode} ! stopped,
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
