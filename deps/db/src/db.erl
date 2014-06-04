@@ -39,6 +39,7 @@
           delete_by/3,
           delete_all/1,
           update_by/3,
+          count_by/3,
           find_by/3,
           find_by/4,
           request/2,
@@ -90,6 +91,11 @@ update_all(Record) ->
     [Table|Values] = tuple_to_list(Record),
     Fields = record_mapper:get_mapping(Table),
     Sql = db_fmt:format("UPDATE `~s` SET ~s", [Table, db_fmt:map(Fields, Values)]),
+    execute(Sql).
+
+count_by(Table, Field, Value) ->
+    Sql = db_fmt:format("SELECT count(*) FROM `~s` WHERE `~s` = ~s", 
+                        [Table, Field, db_fmt:encode(Value)]),
     execute(Sql).
 
 %% Sqerl = {Field, '=', Value}

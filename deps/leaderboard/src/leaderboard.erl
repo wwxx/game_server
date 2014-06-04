@@ -32,7 +32,8 @@
          members_from_rank_range/3,
          top_member/1,
          member_at/2,
-         around_me/2
+         around_me/2,
+         ranked_in_list/2
         ]).
 
 %% gen_server callbacks
@@ -135,6 +136,9 @@ member_at(Name, Position) ->
 around_me(Name, Member) ->
     gen_server:call(leaderboard_pid(Name), {around_me, Member}).
 
+ranked_in_list(Name, MemberIds) ->
+    gen_server:call(leaderboard_pid(Name), {ranked_in_list, MemberIds}).
+
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -225,6 +229,11 @@ handle_call({around_me, Member}, _From,
             State=#state{redis = Redis, name = Name, 
                          reverse = Reverse, page_size = PageSize}) ->
     Members = around_me(Redis, Name, Reverse, PageSize, Member),
+    {reply, Members, State};
+
+handle_call({ranked_in_list, MemberIds}, _From, 
+            State=#state{redis = Redis, name = Name, reverse = Reverse}) ->
+    Members = ranked_in_list(Redis, Name, Reverse, MemberIds),
     {reply, Members, State}.
 
 
