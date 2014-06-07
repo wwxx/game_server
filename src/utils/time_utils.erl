@@ -25,6 +25,7 @@
 -module(time_utils).
 
 -export([now/0,
+         one_week/0,
          current_time/0,
          remain_seconds_to_tomorrow/0,
          end_of_today/0,
@@ -36,6 +37,9 @@
 
 now() ->
     current_time().
+
+one_week() ->
+    604800.
 
 current_time() ->
     {MegaSecs, Secs, _MicroSecs} = os:timestamp(),
