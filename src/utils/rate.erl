@@ -8,7 +8,10 @@ happen(Rate) ->
 %% Rates = [{RateA, ValueA}, {RateB, ValueB}, {default, DefaultValue}],
 choose([{_Rate, Value}]) -> Value;
 choose(Rates) ->
-    RandomValue = random:uniform(10000),
+    Value = lists:foldl(fun({Rate, _}, Result) ->
+                            Result + Rate
+                        end, 0, Rates),
+    RandomValue = random:uniform(Value),
     choose(Rates, RandomValue, 0).
 
 choose([{Rate, Value}|Rates], RandomValue, Offset) ->
