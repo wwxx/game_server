@@ -553,7 +553,11 @@ ranked_in_list(Redis, LeaderboardName, Reverse, Members) ->
             eredis:q(Redis, ["zscore", LeaderboardName, Member])
         end, Members)
     end),
-    ranked_in_list(Members, RanksAndScores, Redis, LeaderboardName, []).
+    if
+        RanksAndScores =:= [undefined, undefined] -> [];
+        true ->
+            ranked_in_list(Members, RanksAndScores, Redis, LeaderboardName, [])
+    end.
 
 ranked_in_list([], [], _, _, Result) -> lists:reverse(Result);
 ranked_in_list([Member|Members], [Rank, Score|RanksAndScores], 
