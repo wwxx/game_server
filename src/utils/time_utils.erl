@@ -33,7 +33,8 @@
          time_to_seconds/3,
          datetime/0,
          to_i/1,
-         date_number/0]).
+         date_number/0,
+         time_string_to_timestamp/1]).
 
 now() ->
     current_time().
@@ -69,3 +70,8 @@ date_number() ->
     {Year, Month, Day} = date(),
     Year * 10000 + Month * 100 + Day.
 
+time_string_to_timestamp(TimeString) ->
+    [HourStr, MinutesStr] = binary_string:split(TimeString, <<":">>),
+    Hour = binary_to_integer(HourStr),
+    Minutes = binary_to_integer(MinutesStr),
+    calendar:datetime_to_gregorian_seconds({date(),{Hour, Minutes,0}}) - 62167219200.
