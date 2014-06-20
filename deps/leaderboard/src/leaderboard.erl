@@ -14,7 +14,7 @@
          rank_members/2,
          remove_member/2,
          total_members/1,
-         total_pages/1,
+         total_pages/2,
          total_members_in_score_range/3,
          change_score_for/3,
          rank_for/2,
@@ -23,16 +23,16 @@
          score_and_rank_for/2,
          remove_members_in_score_range/3,
          remove_members_outside_rank/2,
-         page_for/2,
+         page_for/3,
          expire_leaderboard/2,
          expire_leaderboard_at/2,
-         members/2,
+         members/3,
          all_members/1,
          members_from_score_range/3,
          members_from_rank_range/3,
          top_member/1,
-         member_at/2,
-         around_me/2,
+         member_at/3,
+         around_me/3,
          ranked_in_list/2
         ]).
 
@@ -77,8 +77,8 @@ remove_member(Name, Member) ->
 total_members(Name) ->
     gen_server:call(leaderboard_pid(Name), {total_members}).
 
-total_pages(Name) ->
-    gen_server:call(leaderboard_pid(Name), {total_pages}).
+total_pages(Name, PageSize) ->
+    gen_server:call(leaderboard_pid(Name), {total_pages, PageSize}).
 
 total_members_in_score_range(Name, MinScore, MaxScore) ->
     gen_server:call(leaderboard_pid(Name), 
@@ -106,8 +106,8 @@ remove_members_in_score_range(Name, MinScore, MaxScore) ->
 remove_members_outside_rank(Name, Rank) ->
     gen_server:cast(leaderboard_pid(Name), {remove_members_outside_rank, Rank}).
 
-page_for(Name, Member) ->
-    gen_server:call(leaderboard_pid(Name), {page_for, Member}).
+page_for(Name, Member, PageSize) ->
+    gen_server:call(leaderboard_pid(Name), {page_for, Member, PageSize}).
 
 expire_leaderboard(Name, Seconds) ->
     gen_server:cast(leaderboard_pid(Name), {expire_leaderboard, Seconds}).
@@ -115,8 +115,8 @@ expire_leaderboard(Name, Seconds) ->
 expire_leaderboard_at(Name, TimeStamp) ->
     gen_server:cast(leaderboard_pid(Name), {expire_leaderboard_at, TimeStamp}).
 
-members(Name, Page) ->
-    gen_server:call(leaderboard_pid(Name), {members, Page}).
+members(Name, Page, PageSize) ->
+    gen_server:call(leaderboard_pid(Name), {members, Page, PageSize}).
 
 all_members(Name) ->
     gen_server:call(leaderboard_pid(Name), {all_members}).
@@ -130,11 +130,11 @@ members_from_rank_range(Name, MinRank, MaxRank) ->
 top_member(Name) ->
     gen_server:call(leaderboard_pid(Name), {top_member}).
 
-member_at(Name, Position) ->
-    gen_server:call(leaderboard_pid(Name), {member_at, Position}).
+member_at(Name, Position, PageSize) ->
+    gen_server:call(leaderboard_pid(Name), {member_at, Position, PageSize}).
 
-around_me(Name, Member) ->
-    gen_server:call(leaderboard_pid(Name), {around_me, Member}).
+around_me(Name, Member, PageSize) ->
+    gen_server:call(leaderboard_pid(Name), {around_me, Member, PageSize}).
 
 ranked_in_list(Name, MemberIds) ->
     gen_server:call(leaderboard_pid(Name), {ranked_in_list, MemberIds}).
@@ -148,8 +148,7 @@ init([LeaderboardName]) ->
     {ok, Redis} = eredis:start_link(),
     {ok, #state{redis = Redis, 
                 name = LeaderboardName,
-                reverse = false,
-                page_size = 25}}.
+                reverse = false}}.
 
 handle_call({member_data_for, Member}, _From, State) ->
     MemberData = member_data_for(State#state.redis, State#state.name, Member),
@@ -159,8 +158,7 @@ handle_call({total_members}, _From, State=#state{redis = Redis, name = Name}) ->
     TotalMembers = total_members(Redis, Name),
     {reply, TotalMembers, State};
 
-handle_call({total_pages}, _From, State=#state{redis = Redis, name = Name, 
-                                               page_size = PageSize}) ->
+handle_call({total_pages, PageSize}, _From, State=#state{redis = Redis, name = Name}) ->
     TotalMembers = total_pages(Redis, Name, PageSize),
     {reply, TotalMembers, State};
 
@@ -187,15 +185,14 @@ handle_call({is_member_ranked, Member}, _From, State=#state{redis = Redis, name 
     IsRanked = is_member_ranked(Redis, Name, Member),
     {reply, IsRanked, State};
 
-handle_call({page_for, Member}, _From, 
-            State=#state{redis = Redis, name = Name, 
-                         reverse = Reverse, page_size = PageSize}) ->
+handle_call({page_for, Member, PageSize}, _From, 
+            State=#state{redis = Redis, name = Name, reverse = Reverse}) ->
     Page = page_for(Redis, Name, Reverse, PageSize, Member),
     {reply, Page, State};
 
-handle_call({members, Page}, _From, 
+handle_call({members, Page, PageSize}, _From, 
             State=#state{redis = Redis, name = Name, 
-                         reverse = Reverse, page_size = PageSize}) ->
+                         reverse = Reverse}) ->
     Members = members(Redis, Name, Reverse, PageSize, Page),
     {reply, Members, State};
 
@@ -219,15 +216,14 @@ handle_call({top_member}, _From,
     Member = top_member(Redis, Name, Reverse),
     {reply, Member, State};
 
-handle_call({member_at, Position}, _From, 
+handle_call({member_at, Position, PageSize}, _From, 
             State=#state{redis = Redis, name = Name, 
-                         reverse = Reverse, page_size = PageSize}) ->
+                         reverse = Reverse}) ->
     Member = member_at(Redis, Name, Reverse, PageSize, Position),
     {reply, Member, State};
 
-handle_call({around_me, Member}, _From, 
-            State=#state{redis = Redis, name = Name, 
-                         reverse = Reverse, page_size = PageSize}) ->
+handle_call({around_me, Member, PageSize}, _From, 
+            State=#state{redis = Redis, name = Name, reverse = Reverse}) ->
     Members = around_me(Redis, Name, Reverse, PageSize, Member),
     {reply, Members, State};
 
