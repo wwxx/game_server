@@ -56,7 +56,6 @@ task :generate_config => :environment do
         io.write "class #{model_name} < ActiveRecord::Base;end"
       end
       fields_define = []
-      field_types = []
       field_names = []
       field_indexes = {}
       s.row(2).each_with_index do |field, index|
@@ -65,7 +64,6 @@ task :generate_config => :environment do
           name, type = field.split(":")
           field_indexes[index] = type
           field_names << name
-          field_types << type
           case type
           when 'string'
             fields_define << "`#{name}` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL"
@@ -109,8 +107,8 @@ task :generate_config => :environment do
           if field_indexes[index] == 'string' and value.is_number?
             value = value.to_i.to_s
           end
-          value = 0 if field_types[index] == 'integer' and value.blank?
-          value = 0.0 if field_types[index] == 'float' and value.blank?
+          value = 0 if field_indexes[index] == 'integer' and value.blank?
+          value = 0.0 if field_indexes[index] == 'float' and value.blank?
           row_values << value
         end
         "(#{row_values.join(',')})"
