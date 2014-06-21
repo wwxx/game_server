@@ -25,17 +25,19 @@
 -module(game_server_app).
 -behaviour(application).
 
--export([start/2]).
+-export([start/2, handle_apns_error/2, handle_apns_delete_subscription/1]).
 -export([prep_stop/1, stop/1]).
 
 -include("include/db_config.hrl").
 
 start(_Type, _Args) ->
     ensure_started(crypto),
+    ensure_started(asn1),
+    start_apn_application(),
     case application:get_env(game_server, server_environment) of
         {ok, test} -> ok;
         {ok, development} -> ok;
-        _ -> ok = lager:start()
+        {ok, production} -> ok = lager:start()
     end,
     mnesia:create_schema([node()]),
     mnesia:start(),
@@ -73,3 +75,40 @@ ensure_started(App) ->
         ok -> ok;
         {error, {already_started, App}} -> ok
     end.
+
+start_apn_application() ->
+    apns:start(),
+    DEV_APN_GATEAY = "gateway.sandbox.push.apple.com",
+    PRO_APN_GATEAY = "gateway.push.apple.com",
+    DEV_APN_FEEDBACK = "feedback.sandbox.push.apple.com",
+    PRO_APN_FEEDBACK = "feedback.push.apple.com",
+    case application:get_env(game_server, server_environment) of
+        {ok, test} -> ok;
+        {ok, development} ->
+            Path = filename:absname("../app/certificates/apns_development.pem"),
+            case filelib:is_file(Path) of
+                true ->
+                    application:set_env(apns, apple_host, DEV_APN_GATEAY),
+                    application:set_env(apns, feedback_host, DEV_APN_FEEDBACK),
+                    application:set_env(apns, cert_file, Path);
+                false -> ok
+            end;
+        {ok, production} -> 
+            Path = filename:absname("../app/certificates/apns_production.pem"),
+            case filelib:is_file(Path) of
+                true ->
+                    application:set_env(apns, apple_host, PRO_APN_GATEAY),
+                    application:set_env(apns, feedback_host, PRO_APN_FEEDBACK),
+                    application:set_env(apns, cert_file, Path);
+                false -> ok
+            end
+    end,
+    apns:connect(push, 
+                 fun ?MODULE:handle_apns_error/2,
+                 fun ?MODULE:handle_apns_delete_subscription/1).
+
+handle_apns_error(MsgId, Status) ->
+    error_logger:error_msg("[APN] error: ~p - ~p~n", [MsgId, Status]).
+
+handle_apns_delete_subscription(Data) ->
+    error_logger:info_msg("[APN] delete subscription: ~p~n", [Data]).

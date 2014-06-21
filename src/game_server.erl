@@ -56,6 +56,7 @@ start([Mode]) ->
         Mode =:= development -> ensure_started(sync)
     end,
     error_logger:info_msg("Game Server Starting~n"),
+    error_logger:info_msg("env: ~p~n", [application:get_all_env()]),
     application:set_env(game_server, server_environment, Mode),
     ok = application:start(game_server).
 
