@@ -90,7 +90,10 @@ start_apn_application() ->
                 true ->
                     application:set_env(apns, apple_host, DEV_APN_GATEAY),
                     application:set_env(apns, feedback_host, DEV_APN_FEEDBACK),
-                    application:set_env(apns, cert_file, Path);
+                    application:set_env(apns, cert_file, Path),
+                    apns:connect(push, 
+                                 fun ?MODULE:handle_apns_error/2,
+                                 fun ?MODULE:handle_apns_delete_subscription/1);
                 false -> ok
             end;
         {ok, production} -> 
@@ -99,13 +102,13 @@ start_apn_application() ->
                 true ->
                     application:set_env(apns, apple_host, PRO_APN_GATEAY),
                     application:set_env(apns, feedback_host, PRO_APN_FEEDBACK),
-                    application:set_env(apns, cert_file, Path);
+                    application:set_env(apns, cert_file, Path),
+                    apns:connect(push, 
+                                 fun ?MODULE:handle_apns_error/2,
+                                 fun ?MODULE:handle_apns_delete_subscription/1);
                 false -> ok
             end
-    end,
-    apns:connect(push, 
-                 fun ?MODULE:handle_apns_error/2,
-                 fun ?MODULE:handle_apns_delete_subscription/1).
+    end.
 
 handle_apns_error(MsgId, Status) ->
     error_logger:error_msg("[APN] error: ~p - ~p~n", [MsgId, Status]).
