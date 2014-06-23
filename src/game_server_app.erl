@@ -86,30 +86,25 @@ start_apn_application() ->
         {ok, development} ->
             Path = filename:absname("../app/certificates/apns_development.pem"),
             case filelib:is_file(Path) of
-                true ->
-                    apns:start(),
-                    application:set_env(apns, apple_host, DEV_APN_GATEAY),
-                    application:set_env(apns, feedback_host, DEV_APN_FEEDBACK),
-                    application:set_env(apns, cert_file, Path),
-                    apns:connect(push, 
-                                 fun ?MODULE:handle_apns_error/2,
-                                 fun ?MODULE:handle_apns_delete_subscription/1);
+                true -> setup_apns(DEV_APN_GATEAY, DEV_APN_FEEDBACK, Path);
                 false -> ok
             end;
         {ok, production} -> 
             Path = filename:absname("../app/certificates/apns_production.pem"),
             case filelib:is_file(Path) of
-                true ->
-                    apns:start(),
-                    application:set_env(apns, apple_host, PRO_APN_GATEAY),
-                    application:set_env(apns, feedback_host, PRO_APN_FEEDBACK),
-                    application:set_env(apns, cert_file, Path),
-                    apns:connect(push, 
-                                 fun ?MODULE:handle_apns_error/2,
-                                 fun ?MODULE:handle_apns_delete_subscription/1);
+                true -> setup_apns(PRO_APN_GATEAY, PRO_APN_FEEDBACK, Path);
                 false -> ok
             end
     end.
+
+setup_apns(Gateway, Feedback, Path) ->
+    apns:start(),
+    application:set_env(apns, apple_host, Gateway),
+    application:set_env(apns, feedback_host, Feedback),
+    application:set_env(apns, cert_file, Path),
+    apns:connect(push, 
+                 fun ?MODULE:handle_apns_error/2,
+                 fun ?MODULE:handle_apns_delete_subscription/1).
 
 handle_apns_error(MsgId, Status) ->
     error_logger:error_msg("[APN] error: ~p - ~p~n", [MsgId, Status]).
