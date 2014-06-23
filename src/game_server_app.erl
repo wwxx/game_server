@@ -77,7 +77,6 @@ ensure_started(App) ->
     end.
 
 start_apn_application() ->
-    apns:start(),
     DEV_APN_GATEAY = "gateway.sandbox.push.apple.com",
     PRO_APN_GATEAY = "gateway.push.apple.com",
     DEV_APN_FEEDBACK = "feedback.sandbox.push.apple.com",
@@ -88,6 +87,7 @@ start_apn_application() ->
             Path = filename:absname("../app/certificates/apns_development.pem"),
             case filelib:is_file(Path) of
                 true ->
+                    apns:start(),
                     application:set_env(apns, apple_host, DEV_APN_GATEAY),
                     application:set_env(apns, feedback_host, DEV_APN_FEEDBACK),
                     application:set_env(apns, cert_file, Path),
@@ -100,6 +100,7 @@ start_apn_application() ->
             Path = filename:absname("../app/certificates/apns_production.pem"),
             case filelib:is_file(Path) of
                 true ->
+                    apns:start(),
                     application:set_env(apns, apple_host, PRO_APN_GATEAY),
                     application:set_env(apns, feedback_host, PRO_APN_FEEDBACK),
                     application:set_env(apns, cert_file, Path),
