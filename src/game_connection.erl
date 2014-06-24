@@ -236,7 +236,8 @@ encode_response(Response) ->
         {Protocol, Msg} when is_list(Msg) ->
             api_encoder:encode(Protocol, {Msg});
         {Protocol, Msg} ->
-            erlang:error(io_lib:format("Response Msg type error: ~p", [Msg])),
+            error_logger:info_msg("Response Msg type error: ~p", [Msg]),
+            erlang:error("Invalid Msg type!"),
             api_encoder:encode(ok, {?OK})
     end.
 
