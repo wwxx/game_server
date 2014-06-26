@@ -48,6 +48,7 @@ task :generate_config => :environment do
     sheets += s.sheets
 
     s.sheets.each do |sheet|
+      next if sheet !~ /^config_.+/
       s.default_sheet = sheet
       table_name = sheet.pluralize
       File.open("#{Rails.root.to_s}/app/models/#{sheet.singularize}.rb", 'w') do |io|
