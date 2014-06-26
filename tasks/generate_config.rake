@@ -45,7 +45,10 @@ task :generate_config => :environment do
 
     sql = ""
 
-    sheets += s.sheets
+    s.sheets.each do |sheet|
+      next if sheet !~ /^config_.+/
+      sheets << sheet
+    end
 
     s.sheets.each do |sheet|
       next if sheet !~ /^config_.+/
