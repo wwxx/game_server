@@ -53,7 +53,8 @@ start([Mode]) ->
     if
         Mode =:= production -> ok;
         Mode =:= test -> ok;
-        Mode =:= development -> ensure_started(sync)
+        % Mode =:= development -> ensure_started(sync)
+        Mode =:= development -> ok
     end,
     error_logger:info_msg("Game Server Starting~n"),
     error_logger:info_msg("env: ~p~n", [application:get_all_env()]),
