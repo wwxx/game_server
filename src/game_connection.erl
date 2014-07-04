@@ -160,7 +160,7 @@ handle_info({tcp, Socket, CipherData}, State=#protocol{transport = Transport}) -
     % error_logger:info_msg("RequestType: ~p, RequestBody: ~p~n", [RequestType, RequestBody]),
     Path = case routes:route(RequestType) of
                {error, Msg} ->
-                   Response = api_encoder:encode({fail, {0, Msg}}),
+                   Response = api_encoder:encode(fail, {0, Msg}),
                    send_socket_data(Transport, Socket, Response);
                RoutePath ->
                    RoutePath
