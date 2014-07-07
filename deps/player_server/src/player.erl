@@ -215,8 +215,8 @@ handle_cast({on_tcp_closed}, State) ->
                 try Fun() of
                     _Response -> ok
                 catch
-                    Type:Msg ->
-                        exception:notify(Type, Msg)
+                    Exception:Msg ->
+                        exception:notify(Exception, Msg)
                 end,
                 case Type of
                     callback_once -> Result;
