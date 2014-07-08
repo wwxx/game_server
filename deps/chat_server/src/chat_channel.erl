@@ -32,7 +32,7 @@
 
 %% API
 -export([start_link/2,
-         history/1,
+         history/2,
          broadcast/2,
          join/2,
          leave/2]).
@@ -64,8 +64,8 @@ leave(PlayerID, Channel) ->
     player:unsubscribe(PlayerID, Channel).
 
 % cached history messages.
-history(Channel) ->
-    gen_server:call(channel_pid(Channel), {history}).
+history(Channel, Amount) ->
+    gen_server:call(channel_pid(Channel), {history, Amount}).
 
 broadcast(Channel, Msg) ->
     gen_server:cast(channel_pid(Channel), {broadcast, Msg}).
@@ -77,8 +77,8 @@ init([Channel, MaxCacheAmount]) ->
     ?REG_PID({chat_channel, Channel}),
     {ok, #state{channel=Channel, maxCacheAmount = MaxCacheAmount}}.
 
-handle_call({history}, _From, State) ->
-    {reply, history_msg(), State};
+handle_call({history, Amount}, _From, State) ->
+    {reply, history_msg(Amount), State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
@@ -113,10 +113,10 @@ add_msg(Msg, MaxAmount) ->
             put(msg_list, [Msg|SubMsgList])
     end.
 
-history_msg() ->
+history_msg(Amount) ->
     case get(msg_list) of
         undefined -> [];
-        MsgList -> MsgList
+        MsgList -> lists:sublist(MsgList, Amount)
     end.
 
 channel_pid(Channel) ->
