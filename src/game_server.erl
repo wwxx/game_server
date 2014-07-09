@@ -68,6 +68,7 @@ stop() ->
     end.
 
 force_stop() ->
+    application:stop(chat_server),
     application:stop(timertask),
     application:stop(leaderboard),
     application:stop(player_server),

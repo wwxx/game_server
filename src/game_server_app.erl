@@ -55,6 +55,7 @@ start(_Type, _Args) ->
     ensure_started(player_server),
     ensure_started(leaderboard),
     ensure_started(timertask),
+    ensure_started(chat_server),
 
     life_cycle:before_start(),
     R = game_server_sup:start_link(),
