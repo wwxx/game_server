@@ -506,8 +506,10 @@ deserialize([], [], _Rule, Result) ->
 deserialize([Value|Values], [Field|Fields], Rule, Result) ->
     case lists:member(Field, Rule) of
         true when Value =/= undefined -> 
-            Data = base64:decode(Value),
-            TermValue = binary_to_term(Data),
+            TermValue = case base64:decode(Value) of
+                <<>> -> undefined;
+                Data -> binary_to_term(Data)
+            end,
             deserialize(Values, Fields, Rule, [TermValue|Result]);
         _ ->
             deserialize(Values, Fields, Rule, [Value|Result])
