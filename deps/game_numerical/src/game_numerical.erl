@@ -40,7 +40,8 @@
          all/1, 
          first/1, 
          load_data/0,
-         wrap/1]).
+         wrap/1,
+         next_key/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -85,6 +86,12 @@ load_data() ->
 
 wrap(Fun) ->
     gen_server:call(?SERVER, {wrap, Fun}).
+
+next_key(TableName, Key) -> 
+    case ets:next(TableName, Key) of
+        '$end_of_table' -> undefined;
+        NewKey -> NewKey
+    end.
 
 %%%===================================================================
 %%% gen_server callbacks
