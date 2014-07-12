@@ -43,7 +43,7 @@ task :generate_const => :environment do
 
       s.default_sheet = sheet
       const_type = s.row(2)[1].split(":").last
-      values = 3.upto(s.last_row).map do |row|
+      values = 4.upto(s.last_row).map do |row|
         const_name  = s.row(row)[0]
         if const_type == 'float'
           const_value = s.row(row)[1]
