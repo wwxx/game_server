@@ -20,6 +20,10 @@ start() ->
                                   {type, set},
                                   {attributes, record_info(fields, counter)}]),
     create_table_daily_counter(),
+
+    %% block and wait for certain tables to be accessible in order to do useful work.
+    mnesia:wait_for_tables([mapper, daily_counter, counter], 100),
+
     %% delete old daily counter table and reinit at the begining of tomorrow.
     MFA = {game_counter, clean_daily_counters, []},
     timertask:add(clean_daily_counter, time_utils:end_of_today(), MFA).
