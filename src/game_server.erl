@@ -132,5 +132,5 @@ ensure_started(App) ->
 
 send_msg_to_stop_deamon(Msg) ->
     {ok, Hostname} = inet:gethostname(),
-    RemoteNode = list_to_atom("console@" ++ Hostname),
+    RemoteNode = list_to_atom("stop_console@" ++ Hostname),
     {stop_deamon, RemoteNode} ! Msg.
