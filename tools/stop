@@ -1,6 +1,6 @@
 #!/usr/bin/env escript
 %% -*- erlang -*-
-%%! -sname console -setcookie server_local_cookie
+%%! -sname stop_console -setcookie server_local_cookie
 
 main([Node]) ->
     register(stop_deamon, self()),
