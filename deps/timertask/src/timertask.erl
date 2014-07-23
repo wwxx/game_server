@@ -204,8 +204,8 @@ try_restart_timer() ->
     end.
 
 current_time() ->
-    {MegaSecs, Secs, _MicroSecs} = os:timestamp(),
-    MegaSecs * 1000000 + Secs.
+    Datetime = calendar:universal_time(),
+    calendar:datetime_to_gregorian_seconds(Datetime) - 62167219200.
 
 encode(Data) ->
     Value = term_to_binary(Data),

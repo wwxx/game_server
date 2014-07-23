@@ -36,6 +36,8 @@
          date_number/0,
          time_string_to_timestamp/1]).
 
+-define(ORI_SECONDS, 62167219200).
+
 now() ->
     current_time().
 
@@ -43,14 +45,14 @@ one_week() ->
     604800.
 
 current_time() ->
-    {MegaSecs, Secs, _MicroSecs} = os:timestamp(),
-    MegaSecs * 1000000 + Secs.
+    Datetime = calendar:universal_time(),
+    calendar:datetime_to_gregorian_seconds(Datetime) - ?ORI_SECONDS.
 
 remain_seconds_to_tomorrow() ->
     end_of_today() - current_time().
 
 end_of_today() ->
-    calendar:datetime_to_gregorian_seconds({date(),{24,0,0}}) - 62167219200.
+    calendar:datetime_to_gregorian_seconds({date(),{24,0,0}}) - ?ORI_SECONDS.
 
 current_time_to_now(CurrentTime) ->
     MegaSecs = CurrentTime div 1000000,
@@ -64,7 +66,7 @@ datetime() ->
     {datetime, {erlang:date(), erlang:time()}}.
 
 to_i({datetime, {Date, Time}}) ->
-    calendar:datetime_to_gregorian_seconds({Date, Time})  - 62167219200.
+    calendar:datetime_to_gregorian_seconds({Date, Time})  - ?ORI_SECONDS.
 
 date_number() ->
     {Year, Month, Day} = date(),
@@ -74,4 +76,4 @@ time_string_to_timestamp(TimeString) ->
     [HourStr, MinutesStr] = binary_string:split(TimeString, <<":">>),
     Hour = binary_to_integer(HourStr),
     Minutes = binary_to_integer(MinutesStr),
-    calendar:datetime_to_gregorian_seconds({date(),{Hour, Minutes,0}}) - 62167219200.
+    calendar:datetime_to_gregorian_seconds({date(),{Hour, Minutes,0}}) - ?ORI_SECONDS.
