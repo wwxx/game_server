@@ -209,16 +209,18 @@ encode_response(Response) ->
     {Protocol, Msg} = Response,
     case Response of
         {fail, ErrorAtom} ->
-            case game_numerical:find(config_error_msgs, atom_to_binary(ErrorAtom, utf8)) of
+            ErrorString = atom_to_binary(ErrorAtom, utf8),
+            case game_numerical:find(config_error_msgs, ErrorString) of
                 undefined ->
-                    api_encoder:encode(fail, {0, atom_to_binary(ErrorAtom, utf8)});
+                    api_encoder:encode(fail, {0, ErrorString});
                 Conf ->
                     api_encoder:encode(fail, {Conf#config_error_msgs.no, <<"">>})
             end;
         {fail, ErrorAtom, Msg} ->
-            case game_numerical:find(config_error_msgs, atom_to_binary(ErrorAtom, utf8)) of
+            ErrorString = atom_to_binary(ErrorAtom, utf8),
+            case game_numerical:find(config_error_msgs, ErrorString) of
                 undefined ->
-                    api_encoder:encode(fail, {0, atom_to_binary(ErrorAtom, utf8)});
+                    api_encoder:encode(fail, {0, ErrorString});
                 Conf ->
                     api_encoder:encode(fail, {Conf#config_error_msgs.no, Msg})
             end;
