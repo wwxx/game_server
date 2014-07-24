@@ -19,11 +19,11 @@
                  attachment}).
 
 -define(assert_error_msg(Response, ErrorAtom), 
-        case error_msg:const(ErrorAtom) of
-        {fail, ErrorAtom} ->
+        case game_numerical:find(config_error_msgs, ErrorAtom) of
+        undefined ->
             ?_assertEqual([{code, 0}, {desc, atom_to_binary(ErrorAtom, utf8)}], Response);
-        ErrorCode ->
-            ?_assertEqual(ErrorCode, proplists:get_value(code, Response))
+        Conf ->
+            ?_assertEqual(Conf#config_error_msgs.no, proplists:get_value(code, Response))
         end
        ).
 
