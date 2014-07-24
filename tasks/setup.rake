@@ -43,10 +43,6 @@ task :setup => :environment do
   Rake::Task['generate_database_record'].execute
   puts ""
 
-  puts ">>>>>>>>> Generate Const"
-  Rake::Task['generate_const'].execute
-  puts ""
-
   puts ">>>>>>>>> Generate API"
   Rake::Task['generate_api'].execute
   puts ""

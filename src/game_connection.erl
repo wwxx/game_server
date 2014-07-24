@@ -46,6 +46,7 @@
 -include("include/gproc_macros.hrl").
 -include("../app/include/secure.hrl").
 -include ("include/common_const.hrl").
+-include ("include/db_schema.hrl").
 
 %%%===================================================================
 %%% API
@@ -208,19 +209,18 @@ encode_response(Response) ->
     {Protocol, Msg} = Response,
     case Response of
         {fail, ErrorAtom} ->
-            case error_msg:const(ErrorAtom) of
-                {fail, ErrorAtom} ->
+            case game_numerical:find(config_error_msgs, ErrorAtom) of
+                undefined ->
                     api_encoder:encode(fail, {0, atom_to_binary(ErrorAtom, utf8)});
-                ErrorCode ->
-                    api_encoder:encode(fail, {ErrorCode, <<"">>})
+                Conf ->
+                    api_encoder:encode(fail, {Conf#config_error_msgs.no, <<"">>})
             end;
         {fail, ErrorAtom, Msg} ->
-            ErrorCode = error_msg:const(ErrorAtom),
-            case error_msg:const(ErrorAtom) of
-                {fail, ErrorAtom} ->
+            case game_numerical:find(config_error_msgs, ErrorAtom) of
+                undefined ->
                     api_encoder:encode(fail, {0, atom_to_binary(ErrorAtom, utf8)});
-                ErrorCode ->
-                    api_encoder:encode(fail, {ErrorCode, Msg})
+                Conf ->
+                    api_encoder:encode(fail, {Conf#config_error_msgs.no, Msg})
             end;
         {Protocol, Msg} when is_tuple(Msg) ->
             api_encoder:encode(Protocol, Msg);
