@@ -27,7 +27,7 @@ desc "Generate Error Code"
 task :generate_error_code => :environment do
   controller_dir = File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/controllers")
 
-  error_code_file = File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/config_data/const_data/error_code.xlsx")
+  error_code_file = File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/config_data/gameconfig/error_code.xlsx")
   s = Roo::Excelx.new(error_code_file)
 
   old_error_atoms = []
@@ -47,12 +47,12 @@ task :generate_error_code => :environment do
       next
     end
     File.open(controller_dir + "/" + file_path, "r") do |io|
-      atoms = io.read.scan(/{fail, error.*\w};/)
+      atoms = io.read.scan(/{fail, error.*\w}/)
       new_error_atoms += atoms
     end
   end
   
-  new_error_atoms = new_error_atoms.map{|atom| atom[7..-3] }
+  new_error_atoms = new_error_atoms.map{|atom| atom[7..-2] }
   new_error_atoms.uniq!.sort!
 
   new_added = []
