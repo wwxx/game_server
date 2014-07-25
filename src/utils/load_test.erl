@@ -28,6 +28,8 @@
 
 -define(TAB, ?MODULE).
 
+-define(IP, "115.29.14.9").
+-define(PORT, 5555).
 
 %% C: 并发客户端数量
 %% N: 每个客户端发送请求数量
@@ -74,8 +76,7 @@ bench(N, I) ->
     exit(normal).
 
 connect() ->
-    SomeHostInNet = "127.0.0.1", % to make it runnable on one machine
-    case gen_tcp:connect(SomeHostInNet, 5555, [{active, false}, {packet, 2}]) of 
+    case gen_tcp:connect(?IP, ?PORT, [{active, false}, {packet, 2}]) of 
         {ok, Socket} -> Socket;
         {error, Reason} -> 
             error_logger:info_msg("connect error: ~p~n", [Reason])
