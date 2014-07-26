@@ -106,8 +106,21 @@ recv_response(Sock) ->
                     {Response, _LeftData} = api_decoder:decode(RequestContent),
                     % error_logger:info_msg("Response: ~p~n", [Response]),
                     Response;
+                -1 ->
+                    decode_multi_response(RequestContent);
                 _ ->
                     recv_response(Sock)
             end;
         Error -> error_logger:info_msg("Error Response: ~p~n", [Error])
     end.
+
+decode_multi_response(ResponseData) ->
+    {Response, LeftData} = api_decoder:decode(ResponseData),
+    error_logger:info_msg("MultiResponse: ~p~n", [Response]),
+    if 
+        LeftData =:= <<>> ->
+            error_logger:info_msg("FinishDecodeMulti!~n");
+        true ->
+            decode_multi_response(LeftData)
+    end.
+

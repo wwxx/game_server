@@ -32,6 +32,7 @@
          request/4,
          send_data/2,
          send_data/3,
+         send_multi_data/2,
          save_data/1,
          sync_save_data/1,
          player_pid/1,
@@ -89,6 +90,12 @@ send_data(PlayerID, RequestId, Data) ->
     case con_pid(PlayerID) of
         undefined -> do_nothing;
         ConPid -> game_connection:send_data(ConPid, RequestId, Data)
+    end.
+
+send_multi_data(PlayerID, MultiData) ->
+    case con_pid(PlayerID) of
+        undefined -> do_nothing;
+        ConPid -> game_connection:send_multi_data(ConPid, MultiData)
     end.
 
 save_data(PlayerID) ->

@@ -28,7 +28,7 @@
 -behaviour(ranch_protocol).
 
 %% API
--export([start_link/4, send_data/2, send_data/3, stop/1, sync_stop/1]).
+-export([start_link/4, send_data/2, send_data/3, send_multi_data/2, stop/1, sync_stop/1]).
 
 %% gen_server callbacks
 -export([init/1,
@@ -68,6 +68,9 @@ send_data(Pid, Data) ->
 
 send_data(Pid, RequestId, Data) ->
     gen_server:cast(Pid, {send_data, RequestId, Data}).
+
+send_multi_data(Pid, MultiData) ->
+    gen_server:cast(Pid, {send_multi_data, MultiData}).
 
 stop(Pid) ->
     gen_server:cast(Pid, stop).
@@ -138,6 +141,12 @@ handle_cast({send_data, Data},
             State=#protocol{transport = Transport, socket = Socket, playerID = PlayerID}) ->
     error_logger:info_msg("PlayerID: ~p, SendData: ~p~n", [PlayerID, Data]),
     send_socket_data(Transport, Socket, encode_response(Data)),
+    {noreply, State};
+handle_cast({send_multi_data, MultiData}, 
+            State=#protocol{transport = Transport, socket = Socket, playerID = PlayerID}) ->
+    error_logger:info_msg("PlayerID: ~p, SendMultiData: ~p~n", [PlayerID, MultiData]),
+    EncodedDataList = [encode_response(Data) || Data <- MultiData],
+    send_socket_data(Transport, Socket, -1, list_to_binary(EncodedDataList)),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
