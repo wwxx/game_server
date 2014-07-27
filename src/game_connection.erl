@@ -146,7 +146,7 @@ handle_cast({send_multi_data, MultiData},
             State=#protocol{transport = Transport, socket = Socket, playerID = PlayerID}) ->
     error_logger:info_msg("PlayerID: ~p, SendMultiData: ~p~n", [PlayerID, MultiData]),
     PackedData = [pack_response_data(RequestId, Data) || {RequestId, Data} <- MultiData],
-    Transport:send(Socket, list_to_binary(PackedData)),
+    send_socket_data(Transport, Socket, list_to_binary(PackedData)),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -286,11 +286,14 @@ register_connection(PlayerID) ->
             ?REG_PID({connection, PlayerID})
     end.
 
+send_single_socket_data(Transport, Socket, RequestId, Data) ->
+    PureData = pack_response_data(RequestId, Data),
+    send_socket_data(Transport, Socket, PureData).
+
 pack_response_data(RequestId, Data) ->
     EncodedData = encode_response(Data),
-    NewData = list_to_binary([utils_protocol:encode_integer(RequestId), EncodedData]),
-    secure:encrypt(?AES_KEY, ?AES_IVEC, NewData).
+    list_to_binary([utils_protocol:encode_integer(RequestId), EncodedData]).
 
-send_single_socket_data(Transport, Socket, RequestId, Data) ->
-    CipherData = pack_response_data(RequestId, Data),
+send_socket_data(Transport, Socket, PureData) ->
+    CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, PureData),
     Transport:send(Socket, CipherData).
