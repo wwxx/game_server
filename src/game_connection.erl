@@ -135,18 +135,18 @@ handle_cast({send_data, RequestId, Data}, State=#protocol{transport = Transport,
                                                           playerID = PlayerID}) ->
     error_logger:info_msg("PlayerID: ~p, RequestId: ~p, SendData: ~p~n", 
                           [PlayerID, RequestId, Data]),
-    send_socket_data(Transport, Socket, RequestId, encode_response(Data)),
+    send_single_socket_data(Transport, Socket, RequestId, Data),
     {noreply, State};
 handle_cast({send_data, Data}, 
             State=#protocol{transport = Transport, socket = Socket, playerID = PlayerID}) ->
     error_logger:info_msg("PlayerID: ~p, SendData: ~p~n", [PlayerID, Data]),
-    send_socket_data(Transport, Socket, encode_response(Data)),
+    send_single_socket_data(Transport, Socket, 0, Data),
     {noreply, State};
 handle_cast({send_multi_data, MultiData}, 
             State=#protocol{transport = Transport, socket = Socket, playerID = PlayerID}) ->
     error_logger:info_msg("PlayerID: ~p, SendMultiData: ~p~n", [PlayerID, MultiData]),
-    EncodedDataList = [encode_response(Data) || Data <- MultiData],
-    send_socket_data(Transport, Socket, -1, list_to_binary(EncodedDataList)),
+    PackedData = [pack_response_data(RequestId, Data) || {RequestId, Data} <- MultiData],
+    Transport:send(Socket, list_to_binary(PackedData)),
     {noreply, State}.
 
 %%--------------------------------------------------------------------
@@ -173,8 +173,7 @@ handle_info({tcp, Socket, CipherData},
         {error, Msg} ->
             error_logger:info_msg("PlayerID: ~p, Route Error! Invalid RequestType: ~p~n", 
                                   [PlayerID, RequestType]),
-            Response = api_encoder:encode(fail, {0, Msg}),
-            send_socket_data(Transport, Socket, Response);
+            send_single_socket_data(Transport, Socket, RequestId, {0, Msg});
         RoutePath ->
             {Params, _LeftData} = api_decoder:decode(RequestContent),
             error_logger:info_msg("PlayerID: ~p, Request Path: ~p Parmas: ~p~n", 
@@ -287,10 +286,11 @@ register_connection(PlayerID) ->
             ?REG_PID({connection, PlayerID})
     end.
 
-send_socket_data(Transport, Socket, Data) ->
-    send_socket_data(Transport, Socket, 0, Data).
+pack_response_data(RequestId, Data) ->
+    EncodedData = encode_response(Data),
+    NewData = list_to_binary([utils_protocol:encode_integer(RequestId), EncodedData]),
+    secure:encrypt(?AES_KEY, ?AES_IVEC, NewData).
 
-send_socket_data(Transport, Socket, RequestId, Data) ->
-    NewData = list_to_binary([utils_protocol:encode_integer(RequestId), Data]),
-    CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, NewData),
+send_single_socket_data(Transport, Socket, RequestId, Data) ->
+    CipherData = pack_response_data(RequestId, Data),
     Transport:send(Socket, CipherData).

@@ -201,6 +201,9 @@ handle_cast({request, {Controller, Action}, Params, RequestId},
     try Controller:Action(PlayerID, Params) of
         Response -> 
             send_data(PlayerID, RequestId, Response)
+            % CachedData = [{RequestId ,Response}|get_cached_data()],
+            % erase(cached_responses),
+            % send_multi_data(PlayerID, lists:reverse(CachedData))
     catch
         Type:Msg ->
             exception:notify(Type, Msg, Controller, Action, 
@@ -346,9 +349,15 @@ validate_ownership(PlayerID) ->
 do_cache_data(Data) ->
     case get(cached_responses) of
         undefined -> 
-            put(cached_responses, [Data]);
+            put(cached_responses, [{0, Data}]);
         CachedResponses ->
-            put(cached_responses, [Data|CachedResponses])
+            put(cached_responses, [{0, Data}|CachedResponses])
+    end.
+
+get_cached_data() ->
+    case get(cached_responses) of
+        undefined -> [];
+        CachedResponses -> CachedResponses
     end.
 
 do_flush_data(PlayerID) ->
