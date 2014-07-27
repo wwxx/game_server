@@ -559,7 +559,7 @@ ranked_in_list([], [], _, _, Result) -> lists:reverse(Result);
 ranked_in_list([Member|Members], [Rank, Score|RanksAndScores], 
                Redis, LeaderboardName, Result) ->
     Cell = {Member, binary_to_integer(Rank) + 1, 
-            binary_to_integer(Score) + 1, member_data_for(Redis, LeaderboardName, Member)},
+            binary_to_integer(Score), member_data_for(Redis, LeaderboardName, Member)},
     ranked_in_list(Members, RanksAndScores, Redis, LeaderboardName, [Cell|Result]).
 
 
