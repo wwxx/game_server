@@ -7,6 +7,7 @@ Erlang Game Server
 3. Ruby   1.9.3
 4. Rails  3.2.9
 
+### Setup
 Checkout game_server
 
 ```
