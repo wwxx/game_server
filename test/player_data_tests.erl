@@ -72,9 +72,7 @@ create_test(_Pid) ->
     player:proxy(PlayerID, player_data, flush_to_mysql, []),
     EmptyUser = player_data:find(PlayerID, #users{udid = NewUdid}),
     player:proxy(PlayerID, player_data, create, [PlayerID, #users{udid = NewUdid,
-                                                                  name = NewName,
-                                                                  created_at = time_utils:datetime(),
-                                                                  updated_at = time_utils:datetime()}]),
+                                                                  name = NewName}]),
 
     R = player_data:find(PlayerID, #users{udid = NewUdid}),
 
@@ -170,9 +168,7 @@ record_status_test(_Pid) ->
     [[PlayerID, delete, undefined]] = player_data:get_player_record_status(PlayerID, users),
     [[users, PlayerID, delete, undefined]] = player_data:get_player_records_status(PlayerID),
 
-    CModifier = #users{name = <<"new name">>,
-                      created_at = time_utils:datetime(),
-                      updated_at = time_utils:datetime()},
+    CModifier = #users{name = <<"new name">>},
     player:proxy(PlayerID, player_data, create, [PlayerID, CModifier]),
     NewPlayer = player_data:ets_find(Modifier),
     NewPlayerID = NewPlayer#users.uuid,
