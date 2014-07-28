@@ -2,21 +2,39 @@ Erlang Game Server
 ==============
 
 ### Requirements
-1. Erlang R16B03
-2. Ruby   1.9.3
-3. Rails  3.2.9
+1. Git
+2. Erlang R16B03
+3. Ruby   1.9.3
+4. Rails  3.2.9
 
-At this project's root dir type the following command to setup:
-
-```
-$ tools/install
-```
-
-And then you can start the Game Server with the following command:
+Checkout game_server
 
 ```
-$ tools/start
+git clone https://github.com/mafei198/game_server.git
 ```
+
+Create Your Game Server
+
+```
+$ cd game_server
+$ ./setup /path/to/your/server
+```
+
+Compile Game Server
+
+```
+$ cd /path/to/your/server
+$ make
+$ make test
+```
+
+Start Game Server
+
+```
+$ make console
+```
+
+More commands please see the Makefile.
 
 ## License
 Erlang Game Server is under The MIT License (MIT)
