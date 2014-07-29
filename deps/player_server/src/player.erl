@@ -31,10 +31,6 @@
          stop/1,
          request/4,
          send_data/2,
-         send_data/3,
-         send_multi_data/2,
-         cache_data/2,
-         flush_data/1,
          save_data/1,
          sync_save_data/1,
          player_pid/1,
@@ -88,32 +84,23 @@ send_data(PlayerID, Data) ->
         ConPid -> game_connection:send_data(ConPid, Data)
     end.
 
-send_data(PlayerID, RequestId, Data) ->
+% send_data(PlayerID, Data) ->
+%     case validate_ownership(PlayerID) of
+%         true -> 
+%             case is_requesting() of
+%                 true -> 
+%                     pending_response(Data);
+%                 false ->
+%                     send_data_to_connection(PlayerID, Data)
+%             end;
+%         false ->
+%             send_data_to_connection(PlayerID, Data)
+%     end.
+
+send_data_to_connection(PlayerID, Data) ->
     case con_pid(PlayerID) of
         undefined -> do_nothing;
-        ConPid -> game_connection:send_data(ConPid, RequestId, Data)
-    end.
-
-send_multi_data(PlayerID, MultiData) ->
-    case con_pid(PlayerID) of
-        undefined -> do_nothing;
-        ConPid -> game_connection:send_multi_data(ConPid, MultiData)
-    end.
-
-cache_data(PlayerID, Data) ->
-    case validate_ownership(PlayerID) of
-        true -> 
-            do_cache_data(Data);
-        false ->
-            gen_server:cast(player_pid(PlayerID), {cache_data, Data})
-    end.
-
-flush_data(PlayerID) ->
-    case validate_ownership(PlayerID) of
-        true ->
-            do_flush_data(PlayerID);
-        false ->
-            gen_server:cast(player_pid(PlayerID), {flush_data})
+        ConPid -> game_connection:send_data(ConPid, Data)
     end.
 
 save_data(PlayerID) ->
@@ -198,17 +185,18 @@ handle_cast({wrap, Fun}, State) ->
 handle_cast({request, {Controller, Action}, Params, RequestId},
             State=#player_state{playerID=PlayerID}) ->
     track_active(),
+    begin_request(),
     try Controller:Action(PlayerID, Params) of
         Response -> 
-            % send_data(PlayerID, RequestId, Response)
-            CachedData = [{RequestId ,Response}|get_cached_data()],
-            erase(cached_responses),
+            CachedData = [{RequestId ,Response}|get_pending_responses()],
+            del_pending_responses(),
             send_multi_data(PlayerID, lists:reverse(CachedData))
     catch
         Type:Msg ->
             exception:notify(Type, Msg, Controller, Action, 
                              [{playerID, PlayerID}|Params])
     end,
+    finish_request(),
     {noreply, State};
 handle_cast({stop, shutdown}, State) ->
     {stop, shutdown, State};
@@ -273,12 +261,6 @@ handle_cast({cancel_tcp_closed_callback, DelKey}, State) ->
             end, [], Callbacks),
             put(tcp_closed_callback, NewCallbacks)
     end,
-    {noreply, State};
-handle_cast({cache_data, Data}, State) ->
-    do_cache_data(Data),
-    {noreply, State};
-handle_cast({flush_data}, State=#player_state{playerID=PlayerID}) ->
-    do_flush_data(PlayerID),
     {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
@@ -346,24 +328,37 @@ get_last_active() ->
 validate_ownership(PlayerID) ->
     PlayerID =:= get(player_id).
 
-do_cache_data(Data) ->
-    case get(cached_responses) of
-        undefined -> 
-            put(cached_responses, [{0, Data}]);
-        CachedResponses ->
-            put(cached_responses, [{0, Data}|CachedResponses])
+send_multi_data(PlayerID, MultiData) ->
+    case con_pid(PlayerID) of
+        undefined -> do_nothing;
+        ConPid -> game_connection:send_multi_data(ConPid, MultiData)
     end.
 
-get_cached_data() ->
-    case get(cached_responses) of
+pending_response(Data) ->
+    case get(pending_responses) of
+        undefined -> 
+            put(pending_responses, [{0, Data}]);
+        PendingResponses ->
+            put(pending_responses, [{0, Data}|PendingResponses])
+    end.
+
+get_pending_responses() ->
+    case get(pending_responses) of
         undefined -> [];
         CachedResponses -> CachedResponses
     end.
 
-do_flush_data(PlayerID) ->
-    case get(cached_responses) of
-        undefined -> ok;
-        CachedResponses ->
-            send_multi_data(PlayerID, CachedResponses),
-            erase(cached_responses)
+del_pending_responses() ->
+    erase(pending_responses).
+
+is_requesting() ->
+    case get({status, is_requesting}) of
+        undefined -> false;
+        true -> true
     end.
+
+begin_request() ->
+    put({status, is_requesting}, true).
+
+finish_request() ->
+    erase({status, is_requesting}).
