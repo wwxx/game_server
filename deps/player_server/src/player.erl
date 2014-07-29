@@ -200,10 +200,10 @@ handle_cast({request, {Controller, Action}, Params, RequestId},
     track_active(),
     try Controller:Action(PlayerID, Params) of
         Response -> 
-            send_data(PlayerID, RequestId, Response)
-            % CachedData = [{RequestId ,Response}|get_cached_data()],
-            % erase(cached_responses),
-            % send_multi_data(PlayerID, lists:reverse(CachedData))
+            % send_data(PlayerID, RequestId, Response)
+            CachedData = [{RequestId ,Response}|get_cached_data()],
+            erase(cached_responses),
+            send_multi_data(PlayerID, lists:reverse(CachedData))
     catch
         Type:Msg ->
             exception:notify(Type, Msg, Controller, Action, 
