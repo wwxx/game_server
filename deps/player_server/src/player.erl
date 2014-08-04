@@ -78,24 +78,24 @@ stop(PlayerID) ->
 request(PlayerID, Path, Params, RequestId) ->
     gen_server:cast(player_pid(PlayerID), {request, Path, Params, RequestId}).
 
-send_data(PlayerID, Data) ->
-    case con_pid(PlayerID) of
-        undefined -> do_nothing;
-        ConPid -> game_connection:send_data(ConPid, Data)
-    end.
-
 % send_data(PlayerID, Data) ->
-%     case validate_ownership(PlayerID) of
-%         true -> 
-%             case is_requesting() of
-%                 true -> 
-%                     pending_response(Data);
-%                 false ->
-%                     send_data_to_connection(PlayerID, Data)
-%             end;
-%         false ->
-%             send_data_to_connection(PlayerID, Data)
+%     case con_pid(PlayerID) of
+%         undefined -> do_nothing;
+%         ConPid -> game_connection:send_data(ConPid, Data)
 %     end.
+
+send_data(PlayerID, Data) ->
+    case validate_ownership(PlayerID) of
+        true -> 
+            case is_requesting() of
+                true -> 
+                    pending_response(Data);
+                false ->
+                    send_data_to_connection(PlayerID, Data)
+            end;
+        false ->
+            send_data_to_connection(PlayerID, Data)
+    end.
 
 send_data_to_connection(PlayerID, Data) ->
     case con_pid(PlayerID) of
