@@ -14,7 +14,7 @@ send(From, Receivers, Subject, Body) ->
                              Acc =:= "" ->
                                  Receiver;
                              true ->
-                                 lists:concat([Acc, ", ", Receiver])
+                                 lists:concat([Acc, ",", Receiver])
                          end
                          
                      end, "", Receivers),
