@@ -39,6 +39,8 @@ task :generate_record => :environment do
   r_string << header
   m_string << header
 
+  r_string << %Q{-include("include/config_data_records.hrl").\n}
+
   m_string << "-module(model_mapping).\n"
   m_string << "-export([load/0]).\n"
   m_string << "-include(\"include/db_schema.hrl\").\n"

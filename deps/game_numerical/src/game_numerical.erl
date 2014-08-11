@@ -35,7 +35,6 @@
 %% API
 -export([start_link/0, 
          find/2, 
-         find_element/3, 
          all/1, 
          first/1, 
          load_data/1,
@@ -58,24 +57,13 @@ start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
 all(TableName) ->
-    ets:match_object(TableName, '$1').
+    config_data:all(TableName).
 
 first(TableName) ->
-    case ets:first(TableName) of
-        '$end_of_table' -> undefined;
-        Key -> find(TableName, Key)
-    end.
+    config_data:first(TableName).
 
 find(TableName, Key) ->
-    case ets:lookup(TableName, Key) of
-        [Object] ->
-            Object;
-        [] ->
-            undefined
-    end.
-
-find_element(TableName, Key, Pos) ->
-    ets:lookup_element(TableName, Key, Pos).
+    config_data:find(TableName, Key).
 
 load_data(ConfigModels) ->
     gen_server:call(?SERVER, {load_data, ConfigModels}).
@@ -84,10 +72,7 @@ wrap(Fun) ->
     gen_server:call(?SERVER, {wrap, Fun}).
 
 next_key(TableName, Key) -> 
-    case ets:next(TableName, Key) of
-        '$end_of_table' -> undefined;
-        NewKey -> NewKey
-    end.
+    config_data:next_key(TableName, Key).
 
 %%%===================================================================
 %%% gen_server callbacks
