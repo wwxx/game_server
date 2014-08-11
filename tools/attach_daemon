@@ -23,5 +23,10 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
+SHELL_NAME=$1
 host=`hostname -s`
-erl -sname console -remsh "game_server@$host" -setcookie server_local_cookie
+if [ $SHELL_NAME ]; then
+  erl -sname $SHELL_NAME -remsh "game_server@$host" -setcookie server_local_cookie
+else
+  erl -sname console -remsh "game_server@$host" -setcookie server_local_cookie
+fi
