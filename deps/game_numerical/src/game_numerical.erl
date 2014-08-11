@@ -34,12 +34,11 @@
 
 %% API
 -export([start_link/0, 
-         register_model_names/1,
          find/2, 
          find_element/3, 
          all/1, 
          first/1, 
-         load_data/0,
+         load_data/1,
          wrap/1,
          next_key/2]).
 
@@ -57,9 +56,6 @@
 
 start_link() ->
     gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
-
-register_model_names(ModelNames) ->
-    gen_server:call(?SERVER, {register_model_names, ModelNames}).
 
 all(TableName) ->
     ets:match_object(TableName, '$1').
@@ -81,8 +77,8 @@ find(TableName, Key) ->
 find_element(TableName, Key, Pos) ->
     ets:lookup_element(TableName, Key, Pos).
 
-load_data() ->
-    gen_server:call(?SERVER, load_data).
+load_data(ConfigModels) ->
+    gen_server:call(?SERVER, {load_data, ConfigModels}).
 
 wrap(Fun) ->
     gen_server:call(?SERVER, {wrap, Fun}).
@@ -100,13 +96,10 @@ next_key(TableName, Key) ->
 init([]) ->
     {ok, #state{}}.
 
-handle_call({register_model_names, ModelNames}, _From, State) ->
-    put(model_names, ModelNames),
-    {reply, ok, State};
 handle_call({wrap, Fun}, _From, State) ->
     {reply, Fun(), State};
-handle_call(load_data, _From, State) ->
-    load_config_data(),
+handle_call({load_data, ConfigModels}, _From, State) ->
+    load_config_data(ConfigModels),
     {reply, ok, State}.
 
 handle_cast(_Msg, State) ->
@@ -126,12 +119,15 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 
-load_config_data() ->
-    ModelNames = get(model_names),
-    lists:foreach(fun(ModelName) -> load_config_model(ModelName) end, ModelNames).
+load_config_data(ConfigModels) ->
+    lists:foreach(fun(ModelName) -> load_config_model(ModelName) end, ConfigModels).
 
 load_config_model(ModelName) ->
     {ok, Records} = db:all(ModelName),
+    case ets:info(ModelName) of
+        undefined -> ok;
+        _ -> ets:delete(ModelName)
+    end,
     ets:new(ModelName,
             [ordered_set, protected, named_table, {keypos, 2}, {read_concurrency, true}]),
     ets:insert(ModelName, Records).

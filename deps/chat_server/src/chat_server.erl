@@ -53,7 +53,7 @@
 -define(SERVER, ?MODULE).
 -define(TAB, ?MODULE).
 
--include("include/chat_server_macros.hrl").
+-include("chat_server_macros.hrl").
 
 %%%===================================================================
 %%% API

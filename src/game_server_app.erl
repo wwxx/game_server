@@ -37,7 +37,7 @@ start(_Type, _Args) ->
     case application:get_env(game_server, server_environment) of
         {ok, test} -> ok;
         {ok, development} -> ok;
-        {ok, production} -> ok = lager:start()
+        {ok, production} -> lager:start()
     end,
     mnesia:create_schema([node()]),
     mnesia:start(),
@@ -56,6 +56,7 @@ start(_Type, _Args) ->
     ensure_started(player_server),
     ensure_started(leaderboard),
     ensure_started(chat_server),
+    ensure_started(sync),
 
     life_cycle:before_start(),
     R = game_server_sup:start_link(),

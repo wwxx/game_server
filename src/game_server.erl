@@ -123,12 +123,12 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
--spec ensure_started(module()) -> ok.
-ensure_started(App) ->
-    case application:start(App) of
-        ok -> ok;
-        {error, {already_started, App}} -> ok
-    end.
+% -spec ensure_started(module()) -> ok.
+% ensure_started(App) ->
+%     case application:start(App) of
+%         ok -> ok;
+%         {error, {already_started, App}} -> ok
+%     end.
 
 send_msg_to_stop_deamon(Msg) ->
     {ok, Hostname} = inet:gethostname(),

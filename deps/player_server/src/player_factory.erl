@@ -45,7 +45,7 @@
 -define(TERMINATE, 2).
 
 
--include("include/player_macros.hrl").
+-include("player_macros.hrl").
 
 -record(state, {status, timer}).
 

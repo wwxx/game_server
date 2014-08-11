@@ -60,7 +60,7 @@
 -define(PERSIST_DURATION, 1800000). %% 30 minutes
 -define(EXPIRE_DURATION,  1800). %% 30 minutes
 
--include("include/player_macros.hrl").
+-include("player_macros.hrl").
 
 %%%===================================================================
 %%% API

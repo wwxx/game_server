@@ -45,7 +45,7 @@
          terminate/2,
          code_change/3]).
 
--include("include/chat_server_macros.hrl").
+-include("chat_server_macros.hrl").
 
 -record(state, {channel, maxCacheAmount}).
 
