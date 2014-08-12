@@ -51,7 +51,6 @@ start(_Type, _Args) ->
     end,
     ensure_started(db),
     db:init_pool(DB_Config),
-    ensure_started(record_mapper),
     ensure_started(game_numerical),
     ensure_started(player_server),
     ensure_started(leaderboard),

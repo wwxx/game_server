@@ -76,6 +76,12 @@ next_key(TableName, Key) ->
     config_data:next_key(TableName, Key).
 
 find_ets(TableName, Key) ->
+    case ets:lookup(TableName, Key) of
+        [Object] ->
+            Object;
+        [] ->
+            undefined
+    end.
 
 %%%===================================================================
 %%% gen_server callbacks
