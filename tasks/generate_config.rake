@@ -89,12 +89,12 @@ task :generate_config => :environment do
             elsif field_type == 'float'
               value = 0.0 if field_type == 'float' and value.blank?
             elsif field_type == 'string' or field_type == 'text'
-              Rail
-              if value.is_number?
+              # value = ActiveRecord::Base.sanitize(value)
+              value_class = value.class
+              if value_class == Fixnum or value_class == Float
                 value = value.to_i.to_s
-              else
-                value = "<<\"#{value}\">>"
               end
+              value = "<<\"#{value}\">>"
             end
           end
           row_values << value
@@ -151,7 +151,9 @@ find(Table, Key) ->
 first(Table) ->
     case get_tuple(Table) of
         [] -> undefined;
-        TupleList -> hd(TupleList)
+        TupleList -> 
+          {_Key, Value} = hd(TupleList),
+          Value
     end.
 
 all(Table) ->
@@ -172,7 +174,8 @@ next_key(TupleList, Index, Length, Key) ->
         CurrentKey =:= Key ->
             if
                 Index < Length ->
-                    lists:nth(Index + 1, TupleList);
+                    {NextKey, _} = lists:nth(Index + 1, TupleList),
+                    NextKey;
                 true ->
                     undefined
             end;

@@ -39,7 +39,8 @@
          first/1, 
          load_data/1,
          wrap/1,
-         next_key/2]).
+         next_key/2,
+         find_ets/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -73,6 +74,8 @@ wrap(Fun) ->
 
 next_key(TableName, Key) -> 
     config_data:next_key(TableName, Key).
+
+find_ets(TableName, Key) ->
 
 %%%===================================================================
 %%% gen_server callbacks
