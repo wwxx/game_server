@@ -238,8 +238,7 @@ encode_response(Response) ->
             api_encoder:encode(Protocol, {Msg});
         {Protocol, Msg} ->
             error_logger:info_msg("Response Msg type error: ~p", [Msg]),
-            erlang:error("Invalid Msg type!"),
-            api_encoder:encode(ok, {?OK})
+            erlang:error("Encode response error, Invalid Msg type!")
     end.
 
 %%--------------------------------------------------------------------
@@ -291,7 +290,13 @@ send_single_socket_data(Transport, Socket, RequestId, Data) ->
     send_socket_data(Transport, Socket, PureData).
 
 pack_response_data(RequestId, Data) ->
-    EncodedData = encode_response(Data),
+    EncodedData = try encode_response(Data) of
+                      EncodedResponse -> EncodedResponse
+                  catch
+                      Exception:Msg ->
+                          exception:notify(Exception, Msg),
+                          api_encoder:encode(fail, {0, <<"Server Internal Error!">>})
+                  end,
     list_to_binary([utils_protocol:encode_integer(RequestId), EncodedData]).
 
 send_socket_data(Transport, Socket, PureData) ->
