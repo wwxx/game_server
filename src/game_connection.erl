@@ -294,7 +294,7 @@ pack_response_data(RequestId, Data) ->
                       EncodedResponse -> EncodedResponse
                   catch
                       Exception:Msg ->
-                          exception:notify(Exception, Msg),
+                          exception:notify(Exception, Data, Msg),
                           api_encoder:encode(fail, {0, <<"Server Internal Error!">>})
                   end,
     list_to_binary([utils_protocol:encode_integer(RequestId), EncodedData]).
