@@ -40,7 +40,6 @@
          async_wrap/2,
          subscribe/2,
          unsubscribe/2,
-         publish/3,
          on_tcp_closed/1,
          register_tcp_closed_callback/4,
          cancel_tcp_closed_callback/2
@@ -137,8 +136,6 @@ subscribe(PlayerID, Channel) ->
     gen_server:cast(player_pid(PlayerID), {subscribe, Channel}).
 unsubscribe(PlayerID, Channel) ->
     gen_server:cast(player_pid(PlayerID), {unsubscribe, Channel}).
-publish(PlayerID, Channel, Msg) ->
-    gen_server:cast(player_pid(PlayerID), {publish, Channel, Msg}).
 
 on_tcp_closed(PlayerID) ->
     gen_server:cast(player_pid(PlayerID), {on_tcp_closed}).
@@ -221,9 +218,6 @@ handle_cast({unsubscribe, Channel}, State) ->
         false -> ok
     end,
     {noreply, State};
-handle_cast({publish, Channel, Msg}, State) ->
-    ?PUBLISH(Channel, {gproc_msg, Channel, Msg}),
-    {noreply, State};
 handle_cast({on_tcp_closed}, State) ->
     case get(tcp_closed_callback) of
         undefined -> ok;
@@ -276,8 +270,8 @@ handle_info(circulation_persist_data, State=#player_state{circulation_persist_ti
             NewTimer = erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
             {noreply, State#player_state{circulation_persist_timer=NewTimer}}
     end;
-handle_info({gproc_msg, Channel, Msg}, State=#player_state{playerID=PlayerID}) ->
-    player_subscribe:handle(Channel, PlayerID, Msg),
+handle_info({gproc_msg, MsgType, Msg}, State=#player_state{playerID=PlayerID}) ->
+    player_subscribe:handle(MsgType, PlayerID, Msg),
     {noreply, State};
 handle_info({'EXIT', _, Reason}, State) ->
     io:format("RECEIVED EXIT SINGAL! Reason:~p~n", [Reason]),

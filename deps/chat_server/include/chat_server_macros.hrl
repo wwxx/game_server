@@ -6,3 +6,7 @@
 -define(SUBSCRIBE(Channel), gproc:reg({p, l, Channel})).
 -define(UNSUBSCRIBE(Channel), gproc:unreg({p, l, Channel})).
 -define(PUBLISH(Channel, Msg), gproc:send({p, l, Channel}, Msg)).
+
+% Broadcast Channel Msg
+-define(BROADCAST(Channel, MsgType, Msg), ?PUBLISH(Channel, {gproc_msg, MsgType, Msg})).
+

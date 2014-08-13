@@ -33,7 +33,7 @@
 %% API
 -export([start_link/2,
          history/2,
-         broadcast/2,
+         broadcast/3,
          join/2,
          leave/2]).
 
@@ -67,8 +67,8 @@ leave(PlayerID, Channel) ->
 history(Channel, Amount) ->
     gen_server:call(channel_pid(Channel), {history, Amount}).
 
-broadcast(Channel, Msg) ->
-    gen_server:cast(channel_pid(Channel), {broadcast, Msg}).
+broadcast(Channel, MsgType, Msg) ->
+    gen_server:cast(channel_pid(Channel), {broadcast, MsgType, Msg}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -83,9 +83,9 @@ handle_call(_Request, _From, State) ->
     Reply = ok,
     {reply, Reply, State}.
 
-handle_cast({broadcast, Msg}, State=#state{channel=Channel, 
-                                           maxCacheAmount=MaxAmount}) ->
-    ?PUBLISH(Channel, {gproc_msg, Channel, Msg}),
+handle_cast({broadcast, MsgType, Msg}, State=#state{channel=Channel, 
+                                                    maxCacheAmount=MaxAmount}) ->
+    ?BROADCAST(Channel, MsgType, Msg),
     add_msg(Msg, MaxAmount),
     {noreply, State};
 handle_cast(_Msg, State) ->
