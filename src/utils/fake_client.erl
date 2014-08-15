@@ -83,10 +83,10 @@ request(Udid, Protocol, Params) ->
                                  [{active, false}, {packet, 2}]),
     send_request(login_params, Sock, {Udid}),
     _LoginResponse = recv_response(Sock),
-    error_logger:info_msg("LoginResponse: ~p~n", [Params]),
+    % error_logger:info_msg("LoginResponse: ~p~n", [Params]),
     send_request(Protocol, Sock, Params),
     Response = recv_response(Sock),
-    error_logger:info_msg("Response: ~p~n", [Response]),
+    % error_logger:info_msg("Response: ~p~n", [Response]),
     ok = gen_tcp:close(Sock),
     Response.
 
