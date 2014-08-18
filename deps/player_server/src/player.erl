@@ -56,8 +56,8 @@
 -record(player_state, {playerID,
                        circulation_persist_timer}).
 
--define(PERSIST_DURATION, 1800000). %% 30 minutes
--define(EXPIRE_DURATION,  1800). %% 30 minutes
+-define(PERSIST_DURATION, 1800000). %% 30 minutes, 单位(毫秒)
+-define(EXPIRE_DURATION,  1800). %% 30 minutes, 单位(秒)
 
 -include("player_macros.hrl").
 
