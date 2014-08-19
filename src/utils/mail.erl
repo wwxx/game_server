@@ -2,7 +2,7 @@
 
 -export([send/4, exception_notify/1]).
 
--define(DEVELOPER_EMAILS, ["mafei.198@gmail.com", "abtree@qq.com"]).
+-define(DEVELOPER_EMAILS, ["mafei.198@gmail.com", "abtree123@gmail.com"]).
 
 exception_notify(ExceptionMsg) ->
     {ok, From} = inet:gethostname(),
