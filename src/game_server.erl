@@ -80,6 +80,7 @@ force_stop() ->
     application:stop(emysql),
     application:stop(gproc),
     application:stop(crypto),
+    ibrowse:stop(),
     ok.
 
 %%%===================================================================

@@ -31,6 +31,7 @@
 -include("include/db_config.hrl").
 
 start(_Type, _Args) ->
+    ibrowse:start(),
     ensure_started(crypto),
     ensure_started(asn1),
     start_apn_application(),
