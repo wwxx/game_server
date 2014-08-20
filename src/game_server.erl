@@ -79,6 +79,10 @@ force_stop() ->
     application:stop(db),
     application:stop(emysql),
     application:stop(gproc),
+    application:stop(ssl),
+    application:stop(public_key),
+    application:stop(inets),
+    application:stop(asn1),
     application:stop(crypto),
     ibrowse:stop(),
     ok.
