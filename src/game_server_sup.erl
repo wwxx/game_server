@@ -53,7 +53,9 @@ init([]) ->
     ),
     GameServerSpec = ?CHILD(game_server, game_server, worker, []),
     RedisPoolSupSpec = ?CHILD(redis_pool_sup, redis_pool_sup, supervisor, []),
-    NameServerSupSpec = ?CHILD(name_server_sup, name_server, supervisor, []),
+    NameServerSupSpec = ?CHILD(name_server_sup, name_server_sup, supervisor, []),
+    IapServerSupSpec = ?CHILD(iap_server_sup, iap_server_sup, supervisor, []),
     Specs = [GameServerSpec, RanchSupSpec, ListenerSpec, 
-             ApiServerSpec, RedisPoolSupSpec, NameServerSupSpec],
+             ApiServerSpec, RedisPoolSupSpec, NameServerSupSpec,
+             IapServerSupSpec],
     {ok, {{one_for_one, 10, 10}, Specs}}.

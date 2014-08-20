@@ -1,29 +1,27 @@
 -module(http).
 
--define(HTTP_CLIENT_TIMEOUT, 10000).
--define(HTTP_CLIENT_OPTIONS, [{max_sessions, 100}, {max_pipeline_size, 10}]).
--define(JSON_CONTENT, {"Content-Type", "application/json"}).
+%% Connection pool size: 100, Each connection queue size: 100
+-define(HTTP_CLIENT_OPTIONS, [{max_sessions, 100}, {max_pipeline_size, 100}]).
 
+-define(HTTP_CLIENT_TIMEOUT, 10000).
+-define(JSON_CONTENT, {"Content-Type", "application/json"}).
  
--export([request/1,
-         post/2,
-         post_data/2,
-         get/1,
-         async_post/2
-         ]).
+-export([request/3,
+         async_request/3]).
  
-request(Url) ->
-    ibrowse:send_req(Url, [?JSON_CONTENT], get, [], ?HTTP_CLIENT_OPTIONS, ?HTTP_CLIENT_TIMEOUT).   
- 
-get(Url) ->
-    ibrowse:send_req(Url, [?JSON_CONTENT], get, [], ?HTTP_CLIENT_OPTIONS, ?HTTP_CLIENT_TIMEOUT).
- 
-post(Url, Body) ->
-    ibrowse:send_req(Url, [?JSON_CONTENT], post, Body, ?HTTP_CLIENT_OPTIONS, ?HTTP_CLIENT_TIMEOUT).
- 
-%% This Like  curl -d "uid=111&pw=111&stage=yes" "http://127.0.0.1/test.php"
-post_data(Url, Body) ->
-    ibrowse:send_req(Url, [{"Content-Type", "application/x-www-form-urlencoded"}], post, Body, ?HTTP_CLIENT_OPTIONS, ?HTTP_CLIENT_TIMEOUT).
- 
-async_post(Url, Body) ->
-    ibrowse:send_req(Url, [], post, Body, ?HTTP_CLIENT_OPTIONS ++ [{stream_to, self()}], ?HTTP_CLIENT_TIMEOUT).
+request(Url, Method, Params) ->
+    request(Url, Method, Params, false).
+
+async_request(Url, Method, Params) ->
+    request(Url, Method, Params, true).
+
+request(Url, Method, Params, IsAsync) ->
+    Options = case IsAsync of
+                  true -> ?HTTP_CLIENT_OPTIONS ++ [{stream_to, self()}];
+                  false -> ?HTTP_CLIENT_OPTIONS
+              end,
+    JsonString = case Params of
+                     [] -> Params;
+                     _  -> jsx:encode(Params)
+                 end,
+    ibrowse:send_req(Url, [?JSON_CONTENT], Method, JsonString, Options, ?HTTP_CLIENT_TIMEOUT).   

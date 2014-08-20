@@ -1,4 +1,4 @@
--module(name_server_sup).
+-module(iap_server_sup).
 
 -behaviour(supervisor).
 
@@ -24,4 +24,10 @@ start_link() ->
 %%%===================================================================
 
 init([]) ->
-    {ok, {{one_for_one, 5, 10}, [?CHILD(name_server, name_server, worker, [])]}}.
+    CpuAmount = erlang:system_info(schedulers_online),
+    PoolName = iap_verify_worker_pool,
+    PoolArgs = [{name, {local, PoolName}},
+                {worker_module, iap_server},
+                {size, CpuAmount}, {max_overflow, 2 * CpuAmount}],
+    PoolSpec = poolboy:child_spec(PoolName, PoolArgs, []),
+    {ok, {{one_for_one, 5, 10}, [PoolSpec]}}.

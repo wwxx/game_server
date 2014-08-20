@@ -106,7 +106,10 @@ save_data(PlayerID) ->
     gen_server:cast(player_pid(PlayerID), {save_data}).
 
 sync_save_data(PlayerID) ->
-    gen_server:call(player_pid(PlayerID), {save_data}).
+    case validate_ownership(PlayerID) of
+        true -> model:persist_all();
+        false -> gen_server:call(player_pid(PlayerID), {save_data})
+    end.
 
 proxy(PlayerID, Module, Fun, Args) ->
     case validate_ownership(PlayerID) of
