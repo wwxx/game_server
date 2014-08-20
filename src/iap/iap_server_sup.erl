@@ -24,6 +24,7 @@ start_link() ->
 %%%===================================================================
 
 init([]) ->
+    ets:new(iap_server, [ordered_set, public, named_table, {keypos, 1}]),
     CpuAmount = erlang:system_info(schedulers_online),
     PoolName = iap_verify_worker_pool,
     PoolArgs = [{name, {local, PoolName}},

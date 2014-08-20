@@ -12,12 +12,13 @@
 
 -export([verify_receipt/3]).
 
--define(SERVER, ?MODULE).
 -define(RESEND_RECEIPT_MILLISECONDS, 15000).
 -define(HTTP_CLIENT_TIMEOUT, 10000).
 
 -define(APP_SANDBOX_VERIFY_RECEIPT_URL, "https://sandbox.itunes.apple.com/verifyReceipt").
 -define(APP_VERIFY_RECEIPT_URL, "https://buy.itunes.apple.com/verifyReceipt").
+
+-define(TAB, ?MODULE).
 
 -record(state, {}).
 
@@ -45,33 +46,21 @@ handle_call(_Request, _From, State) ->
 
 %% 发校验
 handle_cast({verify_receipt, Id, Receipt, Callback}, State) ->
-    case get({verify_receipt, Id}) of
-        undefined ->
+    case ets:lookup(?TAB, {verify_receipt, Id}) of
+        [] ->
             do_verify_receipt(?APP_VERIFY_RECEIPT_URL, Id, Receipt, Callback);
         _ -> ok
     end,
     {noreply, State}.
 
-%% 重发机制
-handle_info({resend_receipt_data}, State) ->
-    try 
-        lib_verifying_store_receipts:resend_receipt_data()
-    catch _:R ->
-            error_logger:info_msg("resend_receipt_data Fail, Reason ~p, stacktrace  ~p~n", 
-                                  [R, erlang:get_stacktrace()]) 
-    after
-        erlang:send_after(?RESEND_RECEIPT_MILLISECONDS, self(), {resend_receipt_data})
-    end,
-    {noreply, State};
-
 handle_info({ibrowse_async_headers, _ReqId, _Code, _Headers}, State) ->
     {noreply, State};
 handle_info({ibrowse_async_response, ReqId, Response}, State) ->
-    Id = get({req_id, ReqId}),
-    {Receipt, Callback} = get({verify_receipt, Id}),
+    [{_, Id}] = ets:lookup(?TAB, {req_id, ReqId}),
+    [{_, {Receipt, Callback}}] = ets:lookup(?TAB, {verify_receipt, Id}),
     handle_pay_info(Id, Receipt, Callback, Response),
-    erase({req_id, ReqId}),
-    erase({verify_receipt, Id}),
+    ets:delete(?TAB, {req_id, ReqId}),
+    ets:delete(?TAB, {verify_receipt, Id}),
     {noreply, State};
 handle_info({ibrowse_async_response_end, _ReqId}, State) ->
     {noreply, State};
@@ -91,16 +80,15 @@ code_change(_OldVsn, State, _Extra) ->
 
 do_verify_receipt(Url, Id, Receipt, Callback) ->
     {ibrowse_req_id, ReqId} = http:async_request(Url, post, [{<<"receipt-data">>, Receipt}]),
-    put({verify_receipt, Id}, {Receipt, Callback}),
-    put({req_id, ReqId}, Id).
+    ets:insert(?TAB, {{verify_receipt, Id}, {Receipt, Callback}}),
+    ets:insert(?TAB, {{req_id, ReqId}, Id}).
 
 handle_pay_info(Id, Receipt, Callback, Response) ->
     ReceiptDataList = re:replace(Response, "[\n\t ]", "", [global,caseless,{return, list}]),
     JsonObject = jsx:decode(list_to_binary(ReceiptDataList)),
-    error_logger:info_msg("JsonObject: ~p~n", [JsonObject]),
+    % error_logger:info_msg("JsonObject: ~p~n", [JsonObject]),
     case lists:keyfind(<<"status">>, 1, JsonObject) of
         {<<"status">>, 0} ->
-            error_logger:info_msg("status:0~n"),
             case lists:keyfind(<<"receipt">>, 1, JsonObject) of
                 {<<"receipt">>, ProductData} ->                                        
                     case lists:keyfind(<<"product_id">>, 1, ProductData) of
