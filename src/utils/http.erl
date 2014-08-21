@@ -90,7 +90,7 @@ handle_info(resend_all_requests, State) ->
 handle_info({resend_requst, Uuid}, State) ->
     case mnesia:dirty_read(request, Uuid) of
         [] -> ok;
-        Request -> do_send_request(Request)
+        [Request] -> do_send_request(Request)
     end,
     {noreply, State};
 handle_info({ibrowse_async_headers, ReqId, Code, _Headers}, State) ->
@@ -107,7 +107,7 @@ handle_info({ibrowse_async_response, ReqId, _Response}, State) ->
         true ->
             case mnesia:dirty_read(request, Uuid) of
                 [] -> ok;
-                Request -> 
+                [Request] -> 
                     NewRequest = Request#request{retry = Request#request.retry},
                     Retry = NewRequest#request.retry,
                     if
