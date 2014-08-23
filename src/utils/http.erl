@@ -61,6 +61,7 @@ init([]) ->
     mnesia:create_table(request, [{disc_copies, [node()]},
                                   {type, set},
                                   {attributes, record_info(fields, request)}]),
+    mnesia:wait_for_tables([request], 10000),
     erlang:send_after(?RESEND_AFTER_DELAY, self(), resend_all_requests),
     {ok, #state{}}.
 
