@@ -86,7 +86,7 @@ handle_info(resend_all_requests, State) ->
             [] -> ok;
             [Request] -> do_send_request(Request)
         end
-    end, mnesia:all_keys(request)),
+    end, mnesia:dirty_all_keys(request)),
     {noreply, State};
 handle_info({resend_requst, Uuid}, State) ->
     case mnesia:dirty_read(request, Uuid) of
