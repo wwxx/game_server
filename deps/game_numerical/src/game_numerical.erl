@@ -40,8 +40,7 @@
          load_data/1,
          wrap/1,
          next_key/2,
-         find_ets/2,
-         find_ets_all/1]).
+         find_ets/2]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -82,12 +81,6 @@ find_ets(TableName, Key) ->
             Object;
         [] ->
             undefined
-    end.
-
-find_ets_all(TableName) ->
-    case ets:all(TableName) of
-        [] -> undefined;
-        Object -> Object
     end.
 
 %%%===================================================================
