@@ -115,15 +115,16 @@ handle_info({start_timertask}, State) ->
     {noreply, State};
 handle_info({timertask, Key, MFA}, State) ->
     try dispatch_to_worker(MFA) of
-        _ -> ok
+        _ -> 
+            erase(current_timer),
+            cancel_timer(Key),
+            try_restart_timer()
     catch
         Type:Msg ->
+            erase(current_timer),
             cancel_timer(Key),
             throw({Type, Msg})
     end,
-    {noreply, State};
-handle_info(Info, State) ->
-    error_logger:info_msg("Info: ~p~n", [Info]),
     {noreply, State}.
 
 terminate(_Reason, _State) ->
@@ -138,7 +139,6 @@ code_change(_OldVsn, State, _Extra) ->
 add_timer(Key, RunAt, MFA) ->
     transaction(fun() ->
         redis_cmd(["zadd", ?KEY, RunAt, Key]),
-        error_logger:info_msg("Key: ~p, MFA: ~p~n", [mfa_key(Key), encode(MFA)]),
         redis_cmd(["set", mfa_key(Key), encode(MFA)])
     end),
     try_restart_timer().
@@ -196,7 +196,7 @@ try_restart_timer() ->
             case element(2, FirstTimer) < element(2, CurrentTimer) of
                 false -> ok;
                 true -> 
-                    erlang:cancel_timer(element(2, CurrentTimer)),
+                    erlang:cancel_timer(element(3, CurrentTimer)),
                     start_timer(FirstTimer)
             end;
         true ->
