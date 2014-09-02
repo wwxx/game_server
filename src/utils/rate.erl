@@ -1,8 +1,13 @@
 -module(rate).
 -export([happen/1, choose/1, range/1]).
+-on_load(init/0).
+
+init() ->
+    mtwist:seed(time_utils:now()),
+    ok.
 
 happen(Rate) ->
-    RandomValue = random:uniform(10000),
+    RandomValue = mtwist:uniform(10000),
     compare(RandomValue, Rate).
 
 %% Rates = [{RateA, ValueA}, {RateB, ValueB}, {default, DefaultValue}],
@@ -11,7 +16,7 @@ choose(Rates) ->
     Value = lists:foldl(fun({Rate, _}, Result) ->
                             Result + Rate
                         end, 0, Rates),
-    RandomValue = random:uniform(Value),
+    RandomValue = mtwist:uniform(Value),
     choose(Rates, RandomValue, 0).
 
 choose([{Rate, Value}|Rates], RandomValue, Offset) ->
@@ -23,7 +28,7 @@ choose([{Rate, Value}|Rates], RandomValue, Offset) ->
 %% Range = [{RateA, ValueA}, {RateB, ValueB}, {default, DefaultValue}],
 %% select the happened Rate 
 range(Range) ->
-    select(random:uniform(10000), Range).
+    select(mtwist:uniform(10000), Range).
 
 select(RandomValue, [{Rate, Value}|_Range]) when RandomValue =< Rate -> Value;
 select(_RandomValue, [{default, Value}]) -> Value;
