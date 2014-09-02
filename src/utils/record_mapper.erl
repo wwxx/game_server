@@ -7,9 +7,11 @@
 
 -include("config_data_names.hrl").
 -include("db_table_names.hrl").
+-include("../app/include/custom_record.hrl").
 
 -export_records(?DB_TABLE_NAMES).
 -export_records(?CONFIG_DATA_NAMES).
+-export_records(?CUSTOM_RECORD_NAMES).
 
 -export([get_mapping/1, 
          get_field/2, 
