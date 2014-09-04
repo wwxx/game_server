@@ -254,14 +254,14 @@ persist_all() ->
 
 do_persist_all() ->
     Tables = all_loaded_tables(),
-    error_logger:info_msg("Tables: ~p~n", [Tables]),
+    % error_logger:info_msg("Tables: ~p~n", [Tables]),
     Sqls = lists:foldl(fun(Table, Result) ->
                            case generate_persist_sql(Table) of
                                <<>> -> Result;
                                Sql -> [Sql|Result]
                            end
                        end, [], Tables),
-    error_logger:info_msg("Sqls: ~p~n", [Sqls]),
+    % error_logger:info_msg("Sqls: ~p~n", [Sqls]),
     case binary_string:join(Sqls, <<";">>) of
         <<>> -> do_nothing;
         JoinedSql ->
@@ -428,12 +428,11 @@ sqls(Table, IdList) ->
             if
                 Status =:= ?MODEL_ORIGIN ->
                     Result;
-                true ->
-                    case get({Table, Id}) of
-                        undefined -> Result;
-                        Rec ->
-                            [sql(Rec, Status)|Result]
-                    end
+                Status =:= ?MODEL_CREATE orelse Status =:= ?MODEL_UPDATE ->
+                    Rec = get({Table, Id}),
+                    [sql(Rec, Status)|Result];
+                Status =:= ?MODEL_DELETE ->
+                    [sql({Table, Id}, Status)|Result]
             end
     end, [], IdList).
 
@@ -446,9 +445,7 @@ sql(Rec, ?MODEL_UPDATE) ->
     Uuid = hd(Values),
     db_fmt:format("UPDATE `~s` SET ~s WHERE `uuid` = ~s", 
                   [Table, db_fmt:map(Fields, Values), db_fmt:encode(Uuid)]);
-sql(Rec, ?MODEL_DELETE) ->
-    {Table, _Fields, Values} = rec_info(Rec),
-    Uuid = hd(Values),
+sql({Table, Uuid}, ?MODEL_DELETE) ->
     db_fmt:format("DELETE FROM `~s` WHERE `uuid` = ~s", 
                   [Table, db_fmt:encode(Uuid)]).
 
