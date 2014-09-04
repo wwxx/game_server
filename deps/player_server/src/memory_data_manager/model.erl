@@ -254,14 +254,14 @@ persist_all() ->
 
 do_persist_all() ->
     Tables = all_loaded_tables(),
-    % error_logger:info_msg("Tables: ~p~n", [Tables]),
+    error_logger:info_msg("Tables: ~p~n", [Tables]),
     Sqls = lists:foldl(fun(Table, Result) ->
                            case generate_persist_sql(Table) of
                                <<>> -> Result;
                                Sql -> [Sql|Result]
                            end
                        end, [], Tables),
-    % error_logger:info_msg("Sqls: ~p~n", [Sqls]),
+    error_logger:info_msg("Sqls: ~p~n", [Sqls]),
     case binary_string:join(Sqls, <<";">>) of
         <<>> -> do_nothing;
         JoinedSql ->
