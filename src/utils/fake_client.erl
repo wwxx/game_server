@@ -39,7 +39,7 @@
 connect() ->
     SomeHostInNet = "localhost", % to make it runnable on one machine
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
-                                 [{active, false}, {packet, 4}]),
+                                 [{active, false}, {packet, 2}]),
     put(sock, Sock).
 
 login_req() ->
@@ -80,7 +80,7 @@ login() ->
 request(Udid, Protocol, Params) ->
     SomeHostInNet = "localhost", % to make it runnable on one machine
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
-                                 [{active, false}, {packet, 4}]),
+                                 [{active, false}, {packet, 2}]),
     send_request(login_params, Sock, {Udid}),
     _LoginResponse = recv_response(Sock),
     % error_logger:info_msg("LoginResponse: ~p~n", [Params]),
