@@ -315,7 +315,7 @@ send_socket_data(Transport, Socket, PureData) ->
 
 print_all(<<>>) -> ok;
 print_all(<<Binary:200/binary, Data/binary>>) ->
-    error_logger:info_msg("~p", Binary),
+    error_logger:info_msg("~p", [Binary]),
     case byte_size(Data) < 200 of
         true -> error_logger:info_msg("~p", [Data]);
         false ->
