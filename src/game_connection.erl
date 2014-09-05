@@ -148,7 +148,7 @@ handle_cast({send_multi_data, MultiData},
     error_logger:info_msg("PlayerID: ~p, Multi: ~p~n", [PlayerID, length(MultiData)]),
     lists:foreach(fun(Data) ->
         error_logger:info_msg("PlayerID: ~p, SendMultiData: ~p~n", [PlayerID, Data])
-    end),
+    end, MultiData),
     error_logger:info_msg("-------------------Stop  SendMultiData-------------------"),
     PackedData = [pack_response_data(RequestId, Data) || {RequestId, Data} <- MultiData],
     send_socket_data(Transport, Socket, list_to_binary(PackedData)),
