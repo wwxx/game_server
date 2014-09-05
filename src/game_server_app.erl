@@ -41,7 +41,8 @@ start(_Type, _Args) ->
     case application:get_env(game_server, server_environment) of
         {ok, test} -> ok;
         {ok, development} -> ok;
-        {ok, production} -> lager:start()
+        % {ok, production} -> lager:start()
+        {ok, production} -> ok
     end,
     mnesia:create_schema([node()]),
     mnesia:start(),
