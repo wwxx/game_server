@@ -166,7 +166,7 @@ handle_cast({send_multi_data, MultiData},
 %%--------------------------------------------------------------------
 handle_info(timeout, State=#protocol{transport = Transport, socket = Socket}) ->
     ok = ranch:accept_ack(State#protocol.ref),
-    ok = Transport:setopts(Socket, [{active, once}, {packet, 2}]),
+    ok = Transport:setopts(Socket, [{active, once}, {packet, 4}]),
     {noreply, State};
 handle_info({tcp, Socket, CipherData}, 
             State=#protocol{transport = Transport, playerID = PlayerID}) ->
