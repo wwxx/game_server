@@ -307,4 +307,5 @@ pack_response_data(RequestId, Data) ->
 send_socket_data(Transport, Socket, PureData) ->
     CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, PureData),
     error_logger:info_msg("Socket Data Length: ~p~n", [erlang:byte_size(CipherData)]),
+    error_logger:info_msg("Socket Data: ~p~n", [CipherData]),
     Transport:send(Socket, CipherData).
