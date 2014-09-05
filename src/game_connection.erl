@@ -144,7 +144,12 @@ handle_cast({send_data, Data},
     {noreply, State};
 handle_cast({send_multi_data, MultiData}, 
             State=#protocol{transport = Transport, socket = Socket, playerID = PlayerID}) ->
-    error_logger:info_msg("PlayerID: ~p, Multi: ~p, SendMultiData: ~p~n", [PlayerID, length(MultiData), MultiData]),
+    error_logger:info_msg("-------------------Start SendMultiData-------------------"),
+    error_logger:info_msg("PlayerID: ~p, Multi: ~p~n", [PlayerID, length(MultiData)]),
+    lists:foreach(fun(Data) ->
+        error_logger:info_msg("PlayerID: ~p, SendMultiData: ~p~n", [PlayerID, Data])
+    end),
+    error_logger:info_msg("-------------------Stop  SendMultiData-------------------"),
     PackedData = [pack_response_data(RequestId, Data) || {RequestId, Data} <- MultiData],
     send_socket_data(Transport, Socket, list_to_binary(PackedData)),
     {noreply, State}.
