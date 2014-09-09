@@ -149,7 +149,7 @@ handle_cast({send_multi_data, MultiData},
     lists:foreach(fun(Data) ->
         error_logger:info_msg("PlayerID: ~p, SendMultiData: ~p~n", [PlayerID, Data])
     end, MultiData),
-    error_logger:info_msg("-------------------Stop  SendMultiData-------------------"),
+    error_logger:info_msg("-------------------Stop  SendMultiData-------------------~n"),
     PackedData = [pack_response_data(RequestId, Data) || {RequestId, Data} <- MultiData],
     send_socket_data(Transport, Socket, list_to_binary(PackedData)),
     {noreply, State}.
@@ -306,6 +306,6 @@ pack_response_data(RequestId, Data) ->
 
 send_socket_data(Transport, Socket, PureData) ->
     CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, PureData),
-    error_logger:info_msg("Socket Data Length: ~p~n", [erlang:byte_size(CipherData)]),
-    error_logger:info_msg("Socket Data: ~p~n", [CipherData]),
+    % error_logger:info_msg("Socket Data Length: ~p~n", [erlang:byte_size(CipherData)]),
+    % error_logger:info_msg("Socket Data: ~p~n", [CipherData]),
     Transport:send(Socket, CipherData).
