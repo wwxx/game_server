@@ -219,7 +219,7 @@ handle_request({Path, Params, RequestId}, State=#protocol{playerID = PlayerID}) 
     end.
 
 encode_response(Response) ->
-    {Protocol, Msg} = Response,
+    % {Protocol, Msg} = Response,
     case Response of
         {fail, ErrorAtom} ->
             ErrorString = atom_to_binary(ErrorAtom, utf8),
