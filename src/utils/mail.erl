@@ -7,7 +7,7 @@
 exception_notify(ExceptionMsg) ->
     From = try get_ip() of
                IP ->
-                   io_lib:format("[~B.~B.~B.~B]", tuple_to_list(IP))
+                   io_lib:format("~B.~B.~B.~B", tuple_to_list(IP))
            catch
                _:_ ->
                    {ok, Hostname} = inet:gethostname(),
