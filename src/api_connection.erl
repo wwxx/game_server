@@ -79,11 +79,14 @@ handle_info(timeout, State=#protocol{transport = Transport, socket = Socket}) ->
             {stop, normal, State}
     end;
 handle_info({tcp, Socket, Data}, State=#protocol{transport = Transport}) ->
+    error_logger:info_msg("Received Data: ~p~n", [Data]),
     ok = Transport:setopts(Socket, [{active, once}]),
     Params = jsx:decode(Data),
-    Path = proplists:get_value(<<"path">>, Params),
+    Path = proplists:get_value(<<"_path">>, Params),
     Response = apis_controller:handle(Path, Params),
-    Transport:send(Socket, jsx:encode(Response)),
+    error_logger:info_msg("Response: ~p~n", [Response]),
+    ResJson = jsx:encode(Response),
+    Transport:send(Socket, list_to_binary([ResJson, <<"\n">>])),
     {noreply, State};
 handle_info({tcp_closed, _Socket}, State) ->
     error_logger:info_msg("DISCONNECT: tcp_closed~n"),
