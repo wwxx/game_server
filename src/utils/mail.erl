@@ -6,7 +6,8 @@
 
 exception_notify(ExceptionMsg) ->
     From = try get_ip() of
-               IP -> IP
+               IP ->
+                   io_lib:format("[~B.~B.~B.~B]", tuple_to_list(IP))
            catch
                _:_ ->
                    {ok, Hostname} = inet:gethostname(),
@@ -24,7 +25,7 @@ send(From, Receivers, Subject, Body) ->
                          end
                          
                      end, "", Receivers),
-    Content = io_lib:format("Subject: ~s \r\nFrom: ~p \r\nTo: ~s \r\n\r\n~s", 
+    Content = io_lib:format("Subject: ~s \r\nFrom: ~s \r\nTo: ~s \r\n\r\n~s", 
                             [Subject, From, To, Body]), 
     gen_smtp_client:send({From, Receivers, Content}, [{relay, "localhost"}, {port, 25}]).
 
