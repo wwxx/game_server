@@ -188,13 +188,14 @@ handle_cast({request, {Controller, Action}, Params, RequestId},
     begin_request(),
     try Controller:Action(PlayerID, Params) of
         Response -> 
-            CachedData = [{RequestId ,Response}|get_pending_responses()],
+            CachedData = [{RequestId, Response}|get_pending_responses()],
             del_pending_responses(),
             send_multi_data(PlayerID, lists:reverse(CachedData))
     catch
         Type:Msg ->
             exception:notify(Type, Msg, Controller, Action, 
-                             [{playerID, PlayerID}|Params])
+                             [{playerID, PlayerID}|Params]),
+            send_multi_data(PlayerID, [{RequestId, {fail, error_internal_error}}])
     end,
     finish_request(),
     {noreply, State};
