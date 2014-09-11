@@ -24,7 +24,7 @@ send(From, Receivers, Subject, Body) ->
                          end
                          
                      end, "", Receivers),
-    Content = io_lib:format("Subject: ~s \r\nFrom: ~s \r\nTo: ~s \r\n\r\n~s", 
+    Content = io_lib:format("Subject: ~s \r\nFrom: ~p \r\nTo: ~s \r\n\r\n~s", 
                             [Subject, From, To, Body]), 
     gen_smtp_client:send({From, Receivers, Content}, [{relay, "localhost"}, {port, 25}]).
 
