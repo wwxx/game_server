@@ -23,7 +23,17 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
+SNAME=game_server
+
+while getopts ":n:" o; do
+  case "${o}" in
+    n)
+      SNAME=${OPTARG}
+      ;;
+  esac
+done
+
 host=`hostname -s`
 
-echo "Stop node: game_server@$host"
-./tools/stop "game_server@$host"
+echo "Stop node: $SNAME@$host"
+./tools/stop "$SNAME@$host"

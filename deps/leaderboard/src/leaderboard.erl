@@ -143,9 +143,9 @@ ranked_in_list(Name, MemberIds) ->
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
-init([LeaderboardName]) ->
+init([LeaderboardName, Host, Port, DB]) ->
     gproc:reg({n, l, {leaderboard, LeaderboardName}}),
-    {ok, Redis} = eredis:start_link(),
+    {ok, Redis} = eredis:start_link(Host, Port, DB),
     {ok, #state{redis = Redis, 
                 name = LeaderboardName,
                 reverse = false}}.

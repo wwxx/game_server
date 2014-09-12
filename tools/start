@@ -23,22 +23,36 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
-server_env=development
+cd ..
+CWD=`basename "$PWD"`
+cd game_server
 
-while getopts e: opt; do
-  case $opt in
-  e)
-      server_env=$OPTARG
+SERVER_ENV=development
+
+while getopts ":n:c:e:" o; do
+  case "${o}" in
+    e)
+      SERVER_ENV=${OPTARG}
       ;;
   esac
 done
 
 echo ""
 echo "====================================="
-echo "Start daemon server! ENV: $server_env"
+echo "Start daemon server!"
+echo "SERVER_ENV: $SERVER_ENV"
 echo "====================================="
 echo ""
 
-erl -pa ebin deps/*/ebin \
-    -config game_server.config \
-    -s game_server start $server_env
+SERVER_CONFIG="../$CWD.server.config"
+
+if [ -f $SERVER_CONFIG ]; then
+  erl -pa ebin deps/*/ebin \
+      -config game_server.config \
+      -config $SERVER_CONFIG \
+      -s game_server start $SERVER_ENV
+else
+  erl -pa ebin deps/*/ebin \
+      -config game_server.config \
+      -s game_server start $SERVER_ENV
+fi

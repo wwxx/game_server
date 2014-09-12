@@ -43,13 +43,22 @@ start_link() ->
 %% supervisor.
 
 init([]) ->
+    GamePort = case application:get_env(game_server, game_port) of
+                   undefined -> 5555;
+                   {ok, GPort} -> GPort
+               end,
+    APIPort = case application:get_env(game_server, api_port) of
+                  undefined -> 6666;
+                  {ok, APort} -> APort
+              end,
+    error_logger:info_msg("GamePort: ~p, APIPort: ~p~n", [GamePort, APIPort]),
     RanchSupSpec = ?CHILD(ranch_sup, ranch_sup, supervisor, []),
     ListenerSpec = ranch:child_spec(ranch_tcp_listener, 8,
-        ranch_tcp, [{port, 5555}, {max_connections, infinity}],
+        ranch_tcp, [{port, GamePort}, {max_connections, infinity}],
         game_connection, []
     ),
     ApiServerSpec = ranch:child_spec(api_tcp_listener, 1,
-        ranch_tcp, [{port, 6666}], api_connection, []
+        ranch_tcp, [{port, APIPort}], api_connection, []
     ),
     GameServerSpec = ?CHILD(game_server, game_server, worker, []),
     RedisPoolSupSpec = ?CHILD(redis_pool_sup, redis_pool_sup, supervisor, []),
