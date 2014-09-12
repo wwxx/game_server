@@ -3,7 +3,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/1]).
+-export([start_link/4]).
 
 -export([delete_leaderboard/1,
          rank_member/3,
@@ -47,8 +47,8 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
-start_link(LeaderboardName) ->
-    gen_server:start_link(?MODULE, [LeaderboardName], []).
+start_link(LeaderboardName, Host, Port, DB) ->
+    gen_server:start_link(?MODULE, [LeaderboardName, Host, Port, DB], []).
 
 delete_leaderboard(Name) ->
     gen_server:cast(leaderboard_pid(Name), {delete_leaderboard}).
