@@ -23,13 +23,13 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
-SHELL_NAME=$1
 host=`hostname -s`
 
 SNAME=game_server
 COOKIE=server_local_cookie
+SHELL_NAME=console
 
-while getopts ":n:c:" o; do
+while getopts ":n:c:s:" o; do
   case "${o}" in
     n)
       SNAME=${OPTARG}
@@ -37,11 +37,10 @@ while getopts ":n:c:" o; do
     c)
       COOKIE=${OPTARG}
       ;;
+    s)
+      SHELL_NAME=${OPTARG}
+      ;;
   esac
 done
 
-if [ $SHELL_NAME ]; then
-  erl -sname $SHELL_NAME -remsh "$SNAME@$host" -setcookie $COOKIE
-else
-  erl -sname console -remsh "$SNAME@$host" -setcookie $COOKIE
-fi
+erl -sname $SHELL_NAME -remsh "$SNAME@$host" -setcookie $COOKIE
