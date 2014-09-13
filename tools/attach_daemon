@@ -25,8 +25,23 @@
 
 SHELL_NAME=$1
 host=`hostname -s`
+
+SNAME=game_server
+COOKIE=server_local_cookie
+
+while getopts ":n:c:" o; do
+  case "${o}" in
+    n)
+      SNAME=${OPTARG}
+      ;;
+    c)
+      COOKIE=${OPTARG}
+      ;;
+  esac
+done
+
 if [ $SHELL_NAME ]; then
-  erl -sname $SHELL_NAME -remsh "game_server@$host" -setcookie server_local_cookie
+  erl -sname $SHELL_NAME -remsh "$SNAME@$host" -setcookie $COOKIE
 else
-  erl -sname console -remsh "game_server@$host" -setcookie server_local_cookie
+  erl -sname console -remsh "$SNAME@$host" -setcookie $COOKIE
 fi

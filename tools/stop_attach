@@ -23,7 +23,17 @@
 ## OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 ## SOFTWARE.
 
-ATTACH_PID=$(ps aux | grep '[r]emsh' | awk '{print $2}')
+SNAME=game_server
+
+while getopts ":n:" o; do
+  case "${o}" in
+    n)
+      SNAME=${OPTARG}
+      ;;
+  esac
+done
+
+ATTACH_PID=$(ps aux | grep "[r]emsh $SNAME" | awk '{print $2}')
 
 if [ $ATTACH_PID ]; then
   kill $ATTACH_PID
