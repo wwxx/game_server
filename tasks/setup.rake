@@ -31,6 +31,10 @@ task :setup => :environment do
   Rake::Task['db:migrate'].execute
   puts ""
 
+  puts ">>>>>>>>> Generate Translate"
+  Rake::Task['generate_translate'].execute
+  puts ""
+
   puts ">>>>>>>>> Generate Configs"
   Rake::Task['generate_config'].execute
   puts ""

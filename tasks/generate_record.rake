@@ -31,6 +31,7 @@ task :generate_record => :environment do
   record_content = ""
   record_content << header
 
+  record_content << %Q{-include("include/translate_data_records.hrl").\n}
   record_content << %Q{-include("include/config_data_records.hrl").\n}
 
   Rails.application.eager_load!
