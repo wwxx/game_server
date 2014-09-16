@@ -5,14 +5,12 @@
 
 -include("db_schema.hrl").
 
--include("translate_data_names.hrl").
 -include("config_data_names.hrl").
 -include("db_table_names.hrl").
 
 -include("../app/include/custom_record.hrl").
 
 -export_records(?DB_TABLE_NAMES).
--export_records(?TRANSLATE_DATA_NAMES).
 -export_records(?CONFIG_DATA_NAMES).
 -export_records(?CUSTOM_RECORD_NAMES).
 
