@@ -163,11 +163,24 @@ init([PlayerID]) ->
 
 handle_call({proxy, Module, Fun, Args}, _From, State) ->
     track_active(),
-    Result = erlang:apply(Module, Fun, Args),
-    {reply, Result, State};
+    try erlang:apply(Module, Fun, Args) of
+        Result -> 
+            {reply, Result, State}
+    catch
+        Type:Msg ->
+            exception:notify(Type, {Module, Fun, Args}, Msg),
+            {reply, exception, State}
+    end;
 handle_call({wrap, Fun}, _From, State) ->
     track_active(),
-    {reply, Fun(), State};
+    Reply = try Fun() of
+                Result -> Result
+            catch
+                Type:Msg ->
+                    exception:notify(Type, undefined, Msg),
+                    exception
+            end,
+    {reply, Reply, State};
 handle_call({save_data}, _From, State) ->
     model:persist_all(),
     {reply, ok, State};
@@ -177,11 +190,21 @@ handle_call(_Request, _From, State) ->
 
 handle_cast({proxy, Module, Fun, Args}, State) ->
     track_active(),
-    erlang:apply(Module, Fun, Args),
+    try erlang:apply(Module, Fun, Args) of
+        _ -> ok
+    catch
+        Type:Msg ->
+            exception:notify(Type, {Module, Fun, Args}, Msg)
+    end,
     {noreply, State};
 handle_cast({wrap, Fun}, State) ->
     track_active(),
-    Fun(),
+    try Fun() of
+        _ -> ok
+    catch
+        Type:Msg -> 
+            exception:notify(Type, undefined, Msg)
+    end,
     {noreply, State};
 handle_cast({request, {Controller, Action}, Params, RequestId},
             State=#player_state{playerID=PlayerID}) ->
