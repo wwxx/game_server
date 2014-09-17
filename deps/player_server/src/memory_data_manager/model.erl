@@ -246,7 +246,10 @@ generate_persist_sql(Table) ->
 
 persist_all() ->
     try do_persist_all() of
-        Result -> Result
+        Result -> 
+            Tables = all_loaded_tables(),
+            reset_tables_status(Tables),
+            Result
     catch
         Type:Msg ->
             exception:notify(Type, Msg)
@@ -264,9 +267,7 @@ do_persist_all() ->
     % error_logger:info_msg("Sqls: ~p~n", [Sqls]),
     case binary_string:join(Sqls, <<";">>) of
         <<>> -> do_nothing;
-        JoinedSql ->
-            execute_with_procedure(JoinedSql),
-            reset_tables_status(Tables)
+        JoinedSql -> execute_with_procedure(JoinedSql)
     end.
 
 reset_tables_status(Tables) ->
