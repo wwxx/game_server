@@ -141,6 +141,7 @@ unsubscribe(PlayerID, Channel) ->
     gen_server:cast(player_pid(PlayerID), {unsubscribe, Channel}).
 
 on_tcp_closed(PlayerID) ->
+    del_pending_responses(),
     gen_server:cast(player_pid(PlayerID), {on_tcp_closed}).
 
 register_tcp_closed_callback(PlayerID, Key, Type, Fun) ->
@@ -195,7 +196,9 @@ handle_cast({request, {Controller, Action}, Params, RequestId},
         Type:Msg ->
             exception:notify(Type, Msg, Controller, Action, 
                              [{playerID, PlayerID}|Params]),
-            send_multi_data(PlayerID, [{RequestId, {fail, error_internal_error}}])
+            CachedData = [{RequestId, {fail, error_internal_error}}|get_pending_responses()],
+            del_pending_responses(),
+            send_multi_data(PlayerID, lists:reverse(CachedData))
     end,
     finish_request(),
     {noreply, State};
