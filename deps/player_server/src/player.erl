@@ -303,8 +303,8 @@ handle_info(circulation_persist_data, State=#player_state{circulation_persist_ti
 handle_info({gproc_msg, MsgType, Msg}, State=#player_state{playerID=PlayerID}) ->
     player_subscribe:handle(MsgType, PlayerID, Msg),
     {noreply, State};
-handle_info({'EXIT', _, Reason}, State) ->
-    error_logger:info_msg("RECEIVED EXIT SINGAL! Reason:~p~n", [Reason]),
+handle_info({'EXIT', Info, Reason}, State) ->
+    error_logger:info_msg("RECEIVED EXIT SINGAL! Info: ~p Reason:~p~n", [Info, Reason]),
     {stop, shutdown, State};
 handle_info({shutdown, From}, State) ->
     model:persist_all(),
