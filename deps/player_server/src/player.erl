@@ -303,18 +303,19 @@ handle_info(circulation_persist_data, State=#player_state{circulation_persist_ti
 handle_info({gproc_msg, MsgType, Msg}, State=#player_state{playerID=PlayerID}) ->
     player_subscribe:handle(MsgType, PlayerID, Msg),
     {noreply, State};
-handle_info({'EXIT', From, Reason}, State) ->
-    case is_pid(From) of
-        true -> error_logger:info_msg("process_info: ~p~n", [erlang:process_info(From)]);
-        false -> ok
-    end,
-    error_logger:info_msg("RECEIVED EXIT SINGAL! From: ~p Reason:~p~n", [From, Reason]),
-    {stop, shutdown, State};
+% handle_info({'EXIT', From, Reason}, State) ->
+%     case is_pid(From) of
+%         true -> error_logger:info_msg("process_info: ~p~n", [erlang:process_info(From)]);
+%         false -> ok
+%     end,
+%     error_logger:info_msg("RECEIVED EXIT SINGAL! From: ~p Reason:~p~n", [From, Reason]),
+%     {stop, shutdown, State};
 handle_info({shutdown, From}, State) ->
     model:persist_all(),
     From ! {finished_shutdown, self()},
     {stop, {shutdown, data_persisted}, State};
-handle_info(_Info, State) ->
+handle_info(Info, State) ->
+    error_logger:info_msg("Player handle_info: ~p~n", [Info]),
     {noreply, State}.
 
 terminate(Reason, _State=#player_state{playerID=PlayerID, circulation_persist_timer=Timer}) ->
