@@ -58,9 +58,9 @@ handle_info({ibrowse_async_headers, _ReqId, _Code, _Headers}, State) ->
 handle_info({ibrowse_async_response, ReqId, Response}, State) ->
     [{_, Id}] = ets:lookup(?TAB, {req_id, ReqId}),
     [{_, {Receipt, Callback}}] = ets:lookup(?TAB, {verify_receipt, Id}),
-    handle_pay_info(Id, Receipt, Callback, Response),
     ets:delete(?TAB, {req_id, ReqId}),
     ets:delete(?TAB, {verify_receipt, Id}),
+    handle_pay_info(Id, Receipt, Callback, Response),
     {noreply, State};
 handle_info({ibrowse_async_response_end, _ReqId}, State) ->
     {noreply, State};
