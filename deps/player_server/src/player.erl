@@ -313,10 +313,10 @@ handle_info({gproc_msg, MsgType, Msg}, State=#player_state{playerID=PlayerID}) -
 handle_info({shutdown, From}, State) ->
     model:persist_all(),
     From ! {finished_shutdown, self()},
-    {stop, {shutdown, data_persisted}, State}.
-% handle_info(Info, State) ->
-%     error_logger:info_msg("Player handle_info: ~p~n", [Info]),
-%     {noreply, State}.
+    {stop, {shutdown, data_persisted}, State};
+handle_info(Info, State) ->
+    error_logger:info_msg("Player dropped handle_info: ~p~n", [Info]),
+    {noreply, State}.
 
 terminate(Reason, _State=#player_state{playerID=PlayerID, circulation_persist_timer=Timer}) ->
     error_logger:info_msg("Player: ~p, Terminate With Reason: ~p~n", [PlayerID, Reason]),
