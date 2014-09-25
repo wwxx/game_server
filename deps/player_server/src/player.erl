@@ -304,7 +304,7 @@ handle_info({gproc_msg, MsgType, Msg}, State=#player_state{playerID=PlayerID}) -
     player_subscribe:handle(MsgType, PlayerID, Msg),
     {noreply, State};
 handle_info({'EXIT', _, Reason}, State) ->
-    io:format("RECEIVED EXIT SINGAL! Reason:~p~n", [Reason]),
+    error_logger:info_msg("RECEIVED EXIT SINGAL! Reason:~p~n", [Reason]),
     {stop, shutdown, State};
 handle_info({shutdown, From}, State) ->
     model:persist_all(),
@@ -313,7 +313,8 @@ handle_info({shutdown, From}, State) ->
 handle_info(_Info, State) ->
     {noreply, State}.
 
-terminate(Reason, _State=#player_state{circulation_persist_timer=Timer}) ->
+terminate(Reason, _State=#player_state{playerID=PlayerID, circulation_persist_timer=Timer}) ->
+    error_logger:info_msg("Player: ~p, Terminate With Reason: ~p~n", [PlayerID, Reason]),
     case Reason of
         {shutdown, data_persisted} -> ok;
         _ -> model:persist_all()
