@@ -44,13 +44,13 @@ connect() ->
 
 login_req() ->
     Sock = get(sock),
-    send_request(login_params, Sock, {<<"test_udid">>}),
+    send_request(login_params, Sock, {<<"test_udid">>, 0}),
     _Response = recv_response(Sock).
 
 login(Udid) ->
     connect(),
     Sock = get(sock),
-    send_request(login_params, Sock, {list_to_binary(Udid)}),
+    send_request(login_params, Sock, {list_to_binary(Udid), 0}),
     Response = recv_response(Sock),
     ok = gen_tcp:close(Sock),
     Response.
@@ -58,7 +58,7 @@ login(Udid) ->
 login() ->
     connect(),
     Sock = get(sock),
-    send_request(login_params, Sock, {<<"test_udid">>}),
+    send_request(login_params, Sock, {<<"test_udid">>, 0}),
     Response = recv_response(Sock),
     ok = gen_tcp:close(Sock),
     Response.
@@ -81,7 +81,7 @@ request(Udid, Protocol, Params) ->
     SomeHostInNet = "localhost", % to make it runnable on one machine
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
                                  [{active, false}, {packet, 2}]),
-    send_request(login_params, Sock, {Udid}),
+    send_request(login_params, Sock, {Udid, 0}),
     _LoginResponse = recv_response(Sock),
     % error_logger:info_msg("LoginResponse: ~p~n", [Params]),
     send_request(Protocol, Sock, Params),
