@@ -141,7 +141,7 @@ task :generate_config => :environment do
     end
     io.puts %Q{
 -module(config_data).
--export([find/2, all/1, first/1, next_key/2]).
+-export([find/2, all/1, first/1, last/1, next_key/2]).
 
 -define(MAP, [#{content.join(",")}]).
 
@@ -161,8 +161,16 @@ first(Table) ->
     case get_tuple(Table) of
         [] -> undefined;
         TupleList -> 
-          {_Key, Value} = hd(TupleList),
-          Value
+            {_Key, Value} = hd(TupleList),
+            Value
+    end.
+
+last(Table) ->
+    case get_tuple(Table) of
+        [] -> undefined;
+        TupleList -> 
+            {_Key, Value} = lists:nth(length(TupleList), TupleList),
+            Value
     end.
 
 all(Table) ->
