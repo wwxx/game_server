@@ -40,7 +40,8 @@
          load_data/1,
          wrap/1,
          next_key/2,
-         find_ets/2]).
+         find_ets/2,
+         last/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -62,6 +63,9 @@ all(TableName) ->
 
 first(TableName) ->
     config_data:first(TableName).
+
+last(TableName) ->
+    config_data:last(TableName).
 
 find(TableName, Key) ->
     config_data:find(TableName, Key).
