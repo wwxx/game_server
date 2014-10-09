@@ -28,6 +28,8 @@ free(_) ->
 rand(_) ->
     exit(nif_library_not_loaded).
 rand(State, N) when is_integer(N) ->
-    trunc(N * rand(State)).
+    V = trunc(N * rand(State)),
+    error_logger:info_msg("RandWithState: ~p~n", [V]),
+    V.
 rand(State, Min, Max) when is_integer(Min) andalso is_integer(Max) andalso Max > Min ->
     trunc(Min + rand(State, Max - Min)).
