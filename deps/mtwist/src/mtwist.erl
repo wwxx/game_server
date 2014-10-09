@@ -1,6 +1,6 @@
 -module(mtwist).
 -export([seed/1, uniform/0, uniform/1,
-         new/1, free/1, rand/1, rand/2]).
+         new/1, free/1, rand/1, rand/2, rand/3]).
 -on_load(init/0).
 
 init() ->
@@ -29,3 +29,5 @@ rand(_) ->
     exit(nif_library_not_loaded).
 rand(State, N) when is_integer(N) ->
     trunc(N * rand(State)).
+rand(State, Min, Max) when is_integer(Min) andalso is_integer(Max) andalso Max > Min ->
+    trunc(Min + rand(State, Max - Min)).
