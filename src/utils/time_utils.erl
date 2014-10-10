@@ -29,6 +29,7 @@
          current_time/0,
          remain_seconds_to_tomorrow/0,
          end_of_today/0,
+         datetime_to_timestamp/2,
          current_time_to_now/1,
          time_to_seconds/3,
          datetime/0,
@@ -54,6 +55,9 @@ remain_seconds_to_tomorrow() ->
 
 end_of_today() ->
     calendar:datetime_to_gregorian_seconds({date(),{24,0,0}}) - ?ORI_SECONDS.
+
+datetime_to_timestamp(Date, Time) ->
+    calendar:datetime_to_gregorian_seconds({Date, Time}) - ?ORI_SECONDS.
 
 current_time_to_now(CurrentTime) ->
     MegaSecs = CurrentTime div 1000000,
