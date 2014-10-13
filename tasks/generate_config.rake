@@ -64,7 +64,7 @@ task :generate_config => :environment do
           name, type = field.split(":")
           field_indexes[index] = type
           table_map[table_name][:field_names] << name
-          unless ['string', 'text', 'integer', 'float', 'boolean'].include?(type)
+          unless ['string', 'text', 'integer', 'float', 'boolean', 'integer-array'].include?(type)
             raise "TYPE ERROR: #{type} didn't defined."
           end
         rescue => e
@@ -86,10 +86,11 @@ task :generate_config => :environment do
               else
                 value = value.to_i
               end
+            elsif field_type == 'integer-array'
+              value = "[#{value}]"
             elsif field_type == 'float'
               value = 0.0 if field_type == 'float' and value.blank?
             elsif field_type == 'string' or field_type == 'text'
-              # value = ActiveRecord::Base.sanitize(value)
               value_class = value.class
               if value_class == Fixnum or value_class == Float
                 value = value.to_i.to_s
