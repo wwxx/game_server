@@ -75,6 +75,7 @@ handle_info(timeout, State=#protocol{transport = Transport, socket = Socket}) ->
             ok = Transport:setopts(Socket, [{active, once}, {packet, 0}]),
             {noreply, State};
         false ->
+            error_logger:info_msg("Client has no permission!"),
             ranch_tcp:close(Socket),
             {stop, normal, State}
     end;
