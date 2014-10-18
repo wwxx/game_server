@@ -77,7 +77,10 @@ decode_short(<<Short:?SHORT/signed, Data/binary>>) ->
 encode_integer(Integer) when Integer =:= undefined ->
     <<0:?INTEGER>>;
 encode_integer(Integer) when is_integer(Integer) ->
-    <<Integer:?INTEGER>>.
+    <<Integer:?INTEGER>>;
+encode_integer(Integer) when is_float(Integer) ->
+    Int = trunc(Integer),
+    <<Int:?INTEGER>>.
 decode_integer(<<Integer:?INTEGER/signed, Data/binary>>) ->
     {Integer, Data}.
 

@@ -45,7 +45,6 @@ start(_Type, _Args) ->
     end,
     mnesia:create_schema([node()]),
     mnesia:start(),
-    ensure_started(timertask),
     game_counter:start(),
     ensure_started(gproc),
     DB_Config = case application:get_env(game_server, server_environment) of
@@ -60,6 +59,7 @@ start(_Type, _Args) ->
     ensure_started(leaderboard),
     ensure_started(chat_server),
     ensure_started(sync),
+    ensure_started(timertask),
 
     life_cycle:before_start(),
     R = game_server_sup:start_link(),
