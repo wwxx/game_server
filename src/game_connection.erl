@@ -219,7 +219,6 @@ handle_request({Path, Params, RequestId}, State=#protocol{playerID = PlayerID}) 
     end.
 
 encode_response(Response) ->
-    % {Protocol, Msg} = Response,
     case Response of
         {fail, ErrorAtom} ->
             ErrorString = atom_to_binary(ErrorAtom, utf8),
@@ -241,7 +240,7 @@ encode_response(Response) ->
             api_encoder:encode(Protocol, Msg);
         {Protocol, Msg} when is_list(Msg) ->
             api_encoder:encode(Protocol, {Msg});
-        {Protocol, Msg} ->
+        {_Protocol, Msg} ->
             error_logger:info_msg("Response Msg type error: ~p", [Msg]),
             erlang:error("Encode response error, Invalid Msg type!")
     end.
