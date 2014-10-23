@@ -57,7 +57,7 @@ echo ""
 SERVER_CONFIG="../$CWD.server.config"
 
 if [ -f $SERVER_CONFIG ]; then
-  erl +K true -pa ebin deps/*/ebin \
+  erl -pa ebin deps/*/ebin \
       -config game_server.config \
       -config $SERVER_CONFIG \
       -s game_server start $SERVER_ENV \
@@ -65,7 +65,7 @@ if [ -f $SERVER_CONFIG ]; then
       -setcookie $COOKIE \
       -detached
 else
-  erl +K true -pa ebin deps/*/ebin \
+  erl -pa ebin deps/*/ebin \
       -config game_server.config \
       -s game_server start $SERVER_ENV \
       -sname $SNAME \
