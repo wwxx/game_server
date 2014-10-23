@@ -47,12 +47,12 @@ echo ""
 SERVER_CONFIG="../$CWD.server.config"
 
 if [ -f $SERVER_CONFIG ]; then
-  erl -pa ebin deps/*/ebin \
+  erl +K true -pa ebin deps/*/ebin \
       -config game_server.config \
       -config $SERVER_CONFIG \
       -s game_server start $SERVER_ENV
 else
-  erl -pa ebin deps/*/ebin \
+  erl +K true -pa ebin deps/*/ebin \
       -config game_server.config \
       -s game_server start $SERVER_ENV
 fi
