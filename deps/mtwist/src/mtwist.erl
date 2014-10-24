@@ -30,7 +30,7 @@ rand(_) ->
 rand(State, N) when is_integer(N) ->
     Ratio = rand(State),
     V = trunc(N * Ratio),
-    error_logger:info_msg("RandWithState, N: ~p, Ratio: ~p, V:~p~n", [N, Ratio, V]),
+    % error_logger:info_msg("RandWithState, N: ~p, Ratio: ~p, V:~p~n", [N, Ratio, V]),
     V.
 rand(State, Min, Max) when is_integer(Min) andalso is_integer(Max) andalso Max > Min ->
     trunc(Min + rand(State, Max - Min)).
