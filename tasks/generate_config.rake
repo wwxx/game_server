@@ -64,7 +64,7 @@ task :generate_config => :environment do
           name, type = field.split(":")
           field_indexes[index] = type
           table_map[table_name][:field_names] << name
-          unless ['string', 'text', 'integer', 'float', 'boolean', 'integer-array'].include?(type)
+          unless ['string', 'text', 'integer', 'int', 'float', 'boolean', 'integer-array', 'float-array'].include?(type)
             raise "TYPE ERROR: #{type} didn't defined."
           end
         rescue => e
@@ -80,14 +80,18 @@ task :generate_config => :environment do
             value = 'undefined' if value == 'NULL'
           else
             field_type = field_indexes[index]
-            if field_type == 'integer'
+            if field_type == 'integer' or field_type == 'int'
               if value.blank?
                 value = 0 
               else
                 value = value.to_i
               end
-            elsif field_type == 'integer-array'
-              value = "[#{value}]"
+            elsif field_type == 'integer-array' or field_type == 'int-array' or field_type == 'float-array'
+              if value.nil?
+                value = "[]"
+              else
+                value = "[#{value.gsub(";", ",")}]"
+              end
             elsif field_type == 'float'
               value = 0.0 if field_type == 'float' and value.blank?
             elsif field_type == 'string' or field_type == 'text'
