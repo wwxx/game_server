@@ -58,7 +58,7 @@ start(_Type, _Args) ->
     ensure_started(player_server),
     ensure_started(leaderboard),
     ensure_started(chat_server),
-    ensure_started(sync),
+    % ensure_started(sync),
     ensure_started(timertask),
 
     life_cycle:before_start(),

@@ -25,7 +25,10 @@
 desc "Generate Error Code"
 
 task :generate_error_code => :environment do
-  controller_dir = File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/controllers")
+  search_dirs = []
+  search_dirs << File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/controllers")
+  search_dirs << File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/helpers")
+  search_dirs << File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/models")
 
   error_code_file = File.expand_path("#{FRAMEWORK_ROOT_DIR}/app/config_data/gameconfig/error_code.xlsx")
   s = Roo::Excelx.new(error_code_file)
@@ -42,13 +45,15 @@ task :generate_error_code => :environment do
   end
 
   new_error_atoms = []
-  Dir.foreach(controller_dir) do |file_path|
-    if File.extname(file_path) != '.erl' 
-      next
-    end
-    File.open(controller_dir + "/" + file_path, "r") do |io|
-      atoms = io.read.scan(/{fail, error.*\w}/)
-      new_error_atoms += atoms
+  search_dirs.each do |dir|
+    Dir.foreach(dir) do |file_path|
+      if File.extname(file_path) != '.erl' 
+        next
+      end
+      File.open(dir + "/" + file_path, "r") do |io|
+        atoms = io.read.scan(/{fail, error.*\w}/)
+        new_error_atoms += atoms
+      end
     end
   end
   

@@ -38,7 +38,8 @@
          date_number/0,
          time_string_to_timestamp/1,
          datetime_to_timestamp/1,
-         day_diff/2]).
+         day_diff/2,
+         timestamp_to_datetime/1]).
 
 -define(ORI_SECONDS, 62167219200).
 
@@ -87,6 +88,9 @@ time_string_to_timestamp(TimeString) ->
     Hour = binary_to_integer(HourStr),
     Minutes = binary_to_integer(MinutesStr),
     calendar:datetime_to_gregorian_seconds({date(),{Hour, Minutes,0}}) - ?ORI_SECONDS.
+
+timestamp_to_datetime(TimeStamp) ->
+    calendar:now_to_datetime(time_utils:current_time_to_now(TimeStamp)).
 
 datetime_to_timestamp(Datetime) ->
     calendar:datetime_to_gregorian_seconds(Datetime) - ?ORI_SECONDS.
