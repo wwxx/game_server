@@ -47,6 +47,10 @@
 -include("include/protocol.hrl").
 
 %%单字节整数
+encode_char(Char) when Char =:= true ->
+    <<1:?CHAR>>;
+encode_char(Char) when Char =:= false ->
+    <<0:?CHAR>>;
 encode_char(Char) when Char =:= undefined ->
     <<0:?CHAR>>;
 encode_char(Char) when is_integer(Char) ->
