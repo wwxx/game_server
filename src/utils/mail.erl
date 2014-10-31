@@ -5,7 +5,7 @@
 -define(DEVELOPER_EMAILS, ["mafei.198@gmail.com", "abtree123@gmail.com"]).
 
 exception_notify(ExceptionMsg) ->
-    send(os_utils:get_ip(), ?DEVELOPER_EMAILS, "Server_Exception", ExceptionMsg).
+    send(os_utils:get_ip_string(), ?DEVELOPER_EMAILS, "Server_Exception", ExceptionMsg).
 
 send(From, Receivers, Subject, Body) ->
     To = lists:foldl(fun(Receiver, Acc) ->
