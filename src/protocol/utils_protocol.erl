@@ -68,8 +68,13 @@ decode_boolean(<<BOOLEAN:?BOOLEAN, Data/binary>>) ->
     end.
 
 %%短整数
+encode_short(Short) when Short =:= undefined ->
+    <<0:?SHORT>>;
 encode_short(Short) when is_integer(Short) ->
-    <<Short:?SHORT>>.
+    <<Short:?SHORT>>;
+encode_short(Short) when is_float(Short) ->
+    Sh = trunc(Short),
+    <<Sh:?SHORT>>.
 decode_short(<<Short:?SHORT/signed, Data/binary>>) ->
     {Short, Data}.
 
@@ -95,11 +100,15 @@ encode_string(undefined) ->
     String = <<"">>,
     Length = byte_size(String),
     list_to_binary([<<Length:?STRING>>, String]);
-encode_string(Atom) when is_atom(Atom) ->
-    String = atom_to_binary(Atom, utf8),
+encode_string(String) when is_binary(String) ->
     Length = byte_size(String),
     list_to_binary([<<Length:?STRING>>, String]);
-encode_string(String) when is_binary(String) ->
+encode_string(List) when is_list(List) ->
+    String = list_to_binary(List),
+    Length = byte_size(String),
+    list_to_binary([<<Length:?STRING>>, String]);
+encode_string(Atom) when is_atom(Atom) ->
+    String = atom_to_binary(Atom, utf8),
     Length = byte_size(String),
     list_to_binary([<<Length:?STRING>>, String]).
 decode_string(<<Length:?STRING/unsigned-big-integer, Data/binary>>) ->
