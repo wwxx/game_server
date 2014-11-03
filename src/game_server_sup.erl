@@ -54,7 +54,11 @@ init([]) ->
     error_logger:info_msg("GamePort: ~p, APIPort: ~p~n", [GamePort, APIPort]),
     RanchSupSpec = ?CHILD(ranch_sup, ranch_sup, supervisor, []),
     ListenerSpec = ranch:child_spec(ranch_tcp_listener, 8,
-        ranch_tcp, [{port, GamePort}, {max_connections, infinity}],
+        ranch_tcp, [{port, GamePort}, 
+                    {max_connections, infinity},
+                    {keepalive, true},
+                    {send_timeout, 3000}
+                   ],
         game_connection, []
     ),
     ApiServerSpec = ranch:child_spec(api_tcp_listener, 1,

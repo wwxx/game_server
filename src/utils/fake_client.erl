@@ -29,7 +29,8 @@
          % bench/1,
          request/3,
          send_request/3,
-         recv_response/1]).
+         recv_response/2,
+         repeat_login/1]).
 
 -include("../app/include/secure.hrl").
 
@@ -37,29 +38,46 @@
 
 
 connect() ->
-    SomeHostInNet = "localhost", % to make it runnable on one machine
-    {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
+    connect("localhost").
+
+connect(IP) ->
+    {ok, Sock} = gen_tcp:connect(IP, 5555,
                                  [{active, false}, {packet, 2}]),
     put(sock, Sock).
 
 login_req() ->
     Sock = get(sock),
     send_request(login_params, Sock, {<<"test_udid">>, 0, <<"en">>, 1}),
-    _Response = recv_response(Sock).
+    _Response = recv_response(Sock, ?FAKE_REQUEST_ID).
 
 login(Udid) ->
     connect(),
     Sock = get(sock),
     send_request(login_params, Sock, {list_to_binary(Udid), 0, <<"en">>, 1}),
-    Response = recv_response(Sock),
+    Response = recv_response(Sock, ?FAKE_REQUEST_ID),
     ok = gen_tcp:close(Sock),
     Response.
+
+repeat_login(IP) ->
+    connect(IP),
+    do_repeat_login(1).
+
+do_repeat_login(N) ->
+    error_logger:info_msg("Start Request: ~p~n", [N]),
+    Sock = get(sock),
+    Data = api_encoder:encode(login_params, {<<"fake_request_udid">>, 0, <<"en">>, 1}),
+    NewData = list_to_binary([utils_protocol:encode_integer(N), Data]),
+    CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, NewData),
+    gen_tcp:send(Sock, CipherData),
+    Response = recv_response(Sock, N),
+    error_logger:info_msg("Response: ~p~n", [Response]),
+    do_repeat_login(N + 1).
 
 login() ->
     connect(),
     Sock = get(sock),
     send_request(login_params, Sock, {<<"test_udid">>, 0, <<"en">>, 1}),
-    Response = recv_response(Sock),
+    Response = recv_response(Sock, ?FAKE_REQUEST_ID),
     ok = gen_tcp:close(Sock),
     Response.
 
@@ -82,10 +100,10 @@ request(Udid, Protocol, Params) ->
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
                                  [{active, false}, {packet, 2}]),
     send_request(login_params, Sock, {Udid, 0, <<"en">>, 1}),
-    _LoginResponse = recv_response(Sock),
+    _LoginResponse = recv_response(Sock, ?FAKE_REQUEST_ID),
     % error_logger:info_msg("LoginResponse: ~p~n", [Params]),
     send_request(Protocol, Sock, Params),
-    Response = recv_response(Sock),
+    Response = recv_response(Sock, ?FAKE_REQUEST_ID),
     % error_logger:info_msg("Response: ~p~n", [Response]),
     ok = gen_tcp:close(Sock),
     Response.
@@ -96,28 +114,28 @@ send_request(Path, Sock, Value) ->
     CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, NewData),
     gen_tcp:send(Sock, CipherData).
 
-recv_response(Sock) ->
+recv_response(Sock, RID) ->
     case gen_tcp:recv(Sock, 0) of
         {ok, Packet} ->
             Data = secure:decrypt(?AES_KEY, ?AES_IVEC, Packet),
-            case decode_multi_response(Data) of
-                {?FAKE_REQUEST_ID, Response} ->
+            case decode_multi_response(Data, RID) of
+                {RID, Response} ->
                     Response;
                 _ ->
-                    recv_response(Sock)
+                    recv_response(Sock, RID)
             end;
         Error -> error_logger:info_msg("Error Response: ~p~n", [Error])
     end.
 
-decode_multi_response(Data) ->
+decode_multi_response(Data, RID) ->
     {RequestId, RequestContent} = utils_protocol:decode_integer(Data),
     {Response, LeftData} = api_decoder:decode(RequestContent),
     if 
-        RequestId =:= ?FAKE_REQUEST_ID ->
+        RequestId =:= RID->
             {RequestId, Response};
         LeftData =:= <<>> ->
             {Response, Response};
         true ->
-            decode_multi_response(LeftData)
+            decode_multi_response(LeftData, RID)
     end.
 
