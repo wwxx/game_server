@@ -127,7 +127,13 @@ wrap(PlayerID, Fun) ->
     end.
 
 async_wrap(PlayerID, Fun) ->
-    gen_server:cast(player_pid(PlayerID), {wrap, Fun}).
+    case validate_ownership(PlayerID) of
+        true ->
+            track_active(),
+            Fun();
+        false ->
+            gen_server:cast(player_pid(PlayerID), {wrap, Fun})
+    end.
 
 subscribe(PlayerID, Channel) ->
     gen_server:cast(player_pid(PlayerID), {subscribe, Channel}).
