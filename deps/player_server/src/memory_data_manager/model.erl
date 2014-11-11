@@ -233,15 +233,14 @@ create(Record, load) ->
     put({Table, Id}, Record).
 
 generate_persist_sql(Table) ->
-    case id_status_list(Table) of
-        [] -> <<>>;
-        IdList ->
-            DeleteIdList = delete_status_list(Table),
-            case sqls(Table, DeleteIdList ++ IdList) of
+    StatusIdList = id_status_list(Table),
+    DeleteIdList = delete_status_list(Table),
+    if
+        StatusIdList =:= [] andalso DeleteIdList =:= [] -> <<>>;
+        true ->
+            case sqls(Table, StatusIdList ++ DeleteIdList) of
                 [] -> <<>>;
-                Sqls ->
-                    Sql = binary_string:join(Sqls, <<";">>),
-                    Sql
+                Sqls -> binary_string:join(Sqls, <<";">>)
             end
     end.
 
