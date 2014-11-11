@@ -50,12 +50,6 @@ start() ->
     start([development]).
 
 start([Mode]) ->
-    if
-        Mode =:= production -> ok;
-        Mode =:= test -> ok;
-        % Mode =:= development -> ensure_started(sync)
-        Mode =:= development -> ok
-    end,
     error_logger:info_msg("Game Server Starting~n"),
     error_logger:info_msg("env: ~p~n", [application:get_all_env()]),
     application:set_env(game_server, server_environment, Mode),
@@ -68,6 +62,7 @@ stop() ->
     end.
 
 force_stop() ->
+    application:stop(sync),
     application:stop(chat_server),
     application:stop(timertask),
     application:stop(leaderboard),

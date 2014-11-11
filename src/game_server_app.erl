@@ -58,7 +58,10 @@ start(_Type, _Args) ->
     ensure_started(player_server),
     ensure_started(leaderboard),
     ensure_started(chat_server),
-    % ensure_started(sync),
+    case application:get_env(game_server, enable_hot_code_reload) of
+        {ok, true} -> ensure_started(sync);
+        _ -> ok
+    end,
     ensure_started(timertask),
 
     life_cycle:before_start(),
