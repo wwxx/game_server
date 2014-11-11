@@ -266,9 +266,7 @@ do_persist_all() ->
                        end, [], Tables),
     case binary_string:join(Sqls, <<";">>) of
         <<>> -> do_nothing;
-        JoinedSql -> 
-            error_logger:info_msg("PERSIST FOR [~p] Sqls: ~p~n", [JoinedSql]),
-            execute_with_procedure(JoinedSql)
+        JoinedSql -> execute_with_procedure(JoinedSql)
     end.
 
 reset_tables_status(Tables) ->
@@ -288,6 +286,7 @@ reset_status(Table) ->
 
 execute_with_procedure(Sql) ->
     ProcedureName = db:procedure_name(<<"player">>, get(player_id)),
+    % error_logger:info_msg("PERSIST FOR [~p] Sql: ~p~n", [get(player_id), Sql]),
     db:execute_with_procedure(ProcedureName, Sql).
 
 %% Private Methods

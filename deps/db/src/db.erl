@@ -158,15 +158,18 @@ execute_with_procedure(ProcedureName, Sql) ->
                                       <<" COMMIT; ">>,
                                       <<" END ">>]),
     ExecuteProcedure = list_to_binary([<<"CALL ">>, ProcedureName, <<"();">>]),
-    error_logger:info_msg("EXECUTE PROCEDURE: ~p~n", [CreateProcedure]),
+    error_logger:info_msg("EXECUTE PROCEDURE FOR [~p]: ~p~n", 
+                          [get(player_id), CreateProcedure]),
     %% clean old procedure
     db:execute(DropProcedure),
     %% create procedure for palyer's current state
     db:execute(CreateProcedure),
     %% call procedure
-    db:execute(ExecuteProcedure),
+    Result = db:execute(ExecuteProcedure),
     %% clean procedure
-    db:execute(DropProcedure).
+    db:execute(DropProcedure),
+    error_logger:info_msg("EXECUTE PROCEDURE RESULT: ~p~n", [Result]),
+    Result.
 
 %%--------------------------------------------------------------------
 %% @doc:    Execute SQL and return Result
