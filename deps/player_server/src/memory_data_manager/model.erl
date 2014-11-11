@@ -264,10 +264,11 @@ do_persist_all() ->
                                Sql -> [Sql|Result]
                            end
                        end, [], Tables),
-    % error_logger:info_msg("Sqls: ~p~n", [Sqls]),
     case binary_string:join(Sqls, <<";">>) of
         <<>> -> do_nothing;
-        JoinedSql -> execute_with_procedure(JoinedSql)
+        JoinedSql -> 
+            error_logger:info_msg("PERSIST FOR [~p] Sqls: ~p~n", [JoinedSql]),
+            execute_with_procedure(JoinedSql)
     end.
 
 reset_tables_status(Tables) ->

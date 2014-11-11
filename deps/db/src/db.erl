@@ -158,7 +158,7 @@ execute_with_procedure(ProcedureName, Sql) ->
                                       <<" COMMIT; ">>,
                                       <<" END ">>]),
     ExecuteProcedure = list_to_binary([<<"CALL ">>, ProcedureName, <<"();">>]),
-    %error_logger:info_msg("Create: ~p~n", [CreateProcedure]),
+    error_logger:info_msg("EXECUTE PROCEDURE: ~p~n", [CreateProcedure]),
     %% clean old procedure
     db:execute(DropProcedure),
     %% create procedure for palyer's current state
