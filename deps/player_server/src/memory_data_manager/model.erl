@@ -36,6 +36,7 @@
          create/2,
          count/1,
          sql/2,
+         get_persist_all_sql/0,
          persist_all/0]).
 
 -define(MODEL_ORIGIN, 1).
@@ -256,6 +257,12 @@ persist_all() ->
     end.
 
 do_persist_all() ->
+    case get_persist_all_sql() of
+        <<>> -> do_nothing;
+        JoinedSql -> execute_with_procedure(JoinedSql)
+    end.
+
+get_persist_all_sql() ->
     Tables = all_loaded_tables(),
     % error_logger:info_msg("Tables: ~p~n", [Tables]),
     Sqls = lists:foldl(fun(Table, Result) ->
@@ -264,10 +271,7 @@ do_persist_all() ->
                                Sql -> [Sql|Result]
                            end
                        end, [], Tables),
-    case binary_string:join(Sqls, <<";">>) of
-        <<>> -> do_nothing;
-        JoinedSql -> execute_with_procedure(JoinedSql)
-    end.
+    binary_string:join(Sqls, <<";">>).
 
 reset_tables_status(Tables) ->
     lists:foreach(fun reset_status/1, Tables).
