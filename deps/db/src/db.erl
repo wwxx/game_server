@@ -176,7 +176,7 @@ execute_with_procedure(ProcedureName, Sql) ->
 %% @spec:    execute(SQL::binary()) -> list().
 %% @end
 %%--------------------------------------------------------------------
--spec(execute(binary()) -> list() ).
+-spec(execute(binary()) -> tuple() ).
 execute(SQL) ->
     % error_logger:info_msg("SQL: ~p~n", [SQL]),
     Result = emysql:execute(?DB_POOL, SQL),
