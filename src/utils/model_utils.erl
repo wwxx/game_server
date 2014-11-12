@@ -31,7 +31,7 @@
 
 -export([info/1, infos/1, info/2]).
 
--spec(info(record()) -> tuple()).
+-spec(info([tuple()]) -> tuple()).
 infos(Records) ->
     [info(Record) || Record <- Records].
 
@@ -39,7 +39,7 @@ info(Record) ->
     [_Name|Values] = tuple_to_list(Record),
     list_to_tuple(Values).
 
--spec(info(record(), list()) -> tuple()).
+-spec(info(tuple(), list()) -> tuple()).
 info(Record, ExtraValueList) ->
     [_Name|Values] = tuple_to_list(Record),
     L = lists:append(Values, ExtraValueList),

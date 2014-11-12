@@ -39,7 +39,7 @@
 %% @end
 %%--------------------------------------------------------------------
 
--spec(makepat(record()) -> tuple() ).
+-spec(makepat(tuple()) -> tuple() ).
 makepat(Record) ->
     makepat(tuple_to_list(Record), []).
 
@@ -56,7 +56,7 @@ makepat([Value|ValueList], Result) ->
 %% @end
 %%--------------------------------------------------------------------
 
--spec(make_element_spec(record()) -> [tuple(), ...]).
+-spec(make_element_spec(tuple()) -> [tuple(), ...]).
 make_element_spec(ModifierRecord) ->
     [_Name|ValueList] = tuple_to_list(ModifierRecord),
     make_element_spec(ValueList, 2, []).

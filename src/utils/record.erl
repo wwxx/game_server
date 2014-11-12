@@ -27,11 +27,11 @@
 -export([to_json/1, attributes/1, attributes/2, map_attributes/1, map_attributes/2]).
 
 %%% RecordValue can't be atom
--spec(to_json(record()) -> JSONString::binary()).
+-spec(to_json(tuple()) -> JSONString::binary()).
 to_json(Record) ->
     json:encode(attributes(Record)).
 
--spec(attributes(record()) -> [{}]|[{Key::any(), Value::any()}, ...]).
+-spec(attributes(tuple()) -> [{}]|[{Key::any(), Value::any()}, ...]).
 attributes(Record) when Record =:= undefined ->
     [{}];
 attributes(Record) ->
@@ -40,7 +40,7 @@ attributes(Record) ->
     Fields = record_mapper:get_mapping(Name),
     attributes(Fields, Values, []).
 
--spec(attributes(Record::record(), ExceptKeys::[atom()]) ->
+-spec(attributes(Record::tuple(), ExceptKeys::[atom()]) ->
       [{}]|[{Key::any(), Value::any()}, ...]).
 attributes(Record, _ExceptKeys) when Record =:= undefined ->
     [{}];
@@ -57,7 +57,7 @@ attributes(Record, ExceptKeys) ->
     end.
 
 
--spec(map_attributes([record()]) -> []|[[{Key::any(), Value::any()}, ...]]).
+-spec(map_attributes([tuple()]) -> []|[[{Key::any(), Value::any()}, ...]]).
 map_attributes(Records) when Records =:= [] orelse Records =:= undefined ->
     [];
 map_attributes(Records) ->
