@@ -29,7 +29,6 @@
          all/1,
          all/2,
          id_status_list/1,
-         last_id_of_list/1,
          count_all/1,
          where/1,
          delete/1,
@@ -418,13 +417,6 @@ id_status_list(Table) ->
         undefined -> [];
         [] -> [];
         IdList -> IdList
-    end.
-
-last_id_of_list(Table) ->
-    case get({Table, idList}) of
-        undefined -> undefined;
-        [] -> undefined;
-        IdList -> lists:last(IdList)
     end.
 
 delete_status_list(Table) ->
