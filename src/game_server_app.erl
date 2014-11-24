@@ -87,18 +87,16 @@ ensure_started(App) ->
 start_apn_application() ->
     PRO_APN_GATEAY = "gateway.push.apple.com",
     PRO_APN_FEEDBACK = "feedback.push.apple.com",
-    % DEV_APN_GATEAY = "gateway.sandbox.push.apple.com",
-    % DEV_APN_FEEDBACK = "feedback.sandbox.push.apple.com",
-    case application:get_env(game_server, server_environment) of
-        {ok, test} -> ok;
-        {ok, development} -> ok;
-        % {ok, development} ->
-        %     Path = filename:absname("../app/certificates/apns_development.pem"),
-        %     case filelib:is_file(Path) of
-        %         true -> setup_apns(DEV_APN_GATEAY, DEV_APN_FEEDBACK, Path);
-        %         false -> ok
-        %     end;
-        {ok, production} -> 
+    DEV_APN_GATEAY = "gateway.sandbox.push.apple.com",
+    DEV_APN_FEEDBACK = "feedback.sandbox.push.apple.com",
+    case application:get_env(game_server, use_dev_push_gateway) of
+        {ok, true} ->
+            Path = filename:absname("../app/certificates/apns_development.pem"),
+            case filelib:is_file(Path) of
+                true -> setup_apns(DEV_APN_GATEAY, DEV_APN_FEEDBACK, Path);
+                false -> ok
+            end;
+        _ ->
             Path = filename:absname("../app/certificates/apns_production.pem"),
             case filelib:is_file(Path) of
                 true -> setup_apns(PRO_APN_GATEAY, PRO_APN_FEEDBACK, Path);
