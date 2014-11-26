@@ -263,13 +263,16 @@ do_persist_all() ->
 
 get_persist_all_sql() ->
     Tables = all_loaded_tables(),
-    % error_logger:info_msg("Tables: ~p~n", [Tables]),
+    PlayerID = get(player_id),
+    logger:info("PERSIST FOR: ~p~n", [PlayerID]),
     Sqls = lists:foldl(fun(Table, Result) ->
-                           case generate_persist_sql(Table) of
-                               <<>> -> Result;
-                               Sql -> [Sql|Result]
-                           end
-                       end, [], Tables),
+        case generate_persist_sql(Table) of
+            <<>> -> Result;
+            Sql -> 
+                logger:info("[~p] SQL: ~p~n", [PlayerID, Sql]),
+                [Sql|Result]
+        end
+    end, [], Tables),
     binary_string:join(Sqls, <<";">>).
 
 reset_tables_status(Tables) ->
@@ -289,7 +292,7 @@ reset_status(Table) ->
 
 execute_with_procedure(Sql) ->
     ProcedureName = db:procedure_name(<<"player">>, get(player_id)),
-    % error_logger:info_msg("PERSIST FOR [~p] Sql: ~p~n", [get(player_id), Sql]),
+    % logger:info("PERSIST FOR [~p] Sql: ~p~n", [get(player_id), Sql]),
     db:execute_with_procedure(ProcedureName, Sql).
 
 %% Private Methods
