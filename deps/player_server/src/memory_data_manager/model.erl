@@ -269,7 +269,7 @@ get_persist_all_sql() ->
         case generate_persist_sql(Table) of
             <<>> -> Result;
             Sql -> 
-                logger:info("[~p] SQL: ~p~n", [PlayerID, Sql]),
+                logger:info("[~p] Table: ~p SQL: ~p~n", [PlayerID, Table, Sql]),
                 [Sql|Result]
         end
     end, [], Tables),
