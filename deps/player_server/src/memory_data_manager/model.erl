@@ -403,7 +403,7 @@ record_loaded_table(Table) ->
         undefined ->
             put({loaded, tables}, [Table]);
         Tables ->
-            case lists:keyfind(Table, 1, Tables) of
+            case lists:member(Table, Tables) of
                 true -> ok;
                 false -> put({loaded, tables}, [Table|Tables])
             end
@@ -418,14 +418,12 @@ all_loaded_tables() ->
 id_status_list(Table) ->
     case get({Table, idList}) of
         undefined -> [];
-        [] -> [];
         IdList -> IdList
     end.
 
 delete_status_list(Table) ->
     case get({Table, deleteIdList}) of
         undefined -> [];
-        [] -> [];
         IdList -> IdList
     end.
 
@@ -465,12 +463,11 @@ rec_info(Rec) ->
     {Table, Fields, SerializedValues}.
 
 add_to_delete_list(Table, Id) ->
-    case get({Table, deleteIdList}) of
-        undefined ->
+    List = get({Table, deleteIdList}),
+    if
+        List =:= undefined orelse List =:= [] ->
             put({Table, deleteIdList}, [{Id, ?MODEL_DELETE}]);
-        [] ->
-            put({Table, deleteIdList}, [{Id, ?MODEL_DELETE}]);
-        List ->
+        true ->
             put({Table, deleteIdList}, [{Id, ?MODEL_DELETE}|List])
     end.
 
@@ -488,11 +485,10 @@ update_record([_RecordValue|RecordValues], [ModifierValue|ModifierValues], Resul
     update_record(RecordValues, ModifierValues, [ModifierValue|Result]).
 
 insert_recs(Recs, Module) ->
-    Rule = proplists:get_value(serialize, Module:module_info(attributes)),
-    case Rule of
-        undefined -> 
+    case lists:keyfind(serialize, 1, Module:module_info(attributes)) of
+        false ->
             lists:foreach(fun(Rec) -> create(Rec, load) end, Recs);
-        Rule ->
+        {serialize, Rule} ->
             Fields = record_mapper:get_mapping(hd(tuple_to_list(hd(Recs)))),
             lists:foreach(fun(Rec) -> 
                 NewRec = deserialize(Rec, Fields, Rule),
