@@ -47,13 +47,13 @@ connect(IP) ->
 
 login_req() ->
     Sock = get(sock),
-    send_request(login_params, Sock, {<<"test_udid">>, 0, <<"en">>, 1}),
+    send_request(login_params, Sock, {<<"test_udid">>, 0, <<"en">>, 1, undefined}),
     _Response = recv_response(Sock, ?FAKE_REQUEST_ID).
 
 login(Udid) ->
     connect(),
     Sock = get(sock),
-    send_request(login_params, Sock, {list_to_binary(Udid), 0, <<"en">>, 1}),
+    send_request(login_params, Sock, {list_to_binary(Udid), 0, <<"en">>, 1, undefined}),
     Response = recv_response(Sock, ?FAKE_REQUEST_ID),
     ok = gen_tcp:close(Sock),
     Response.
@@ -65,7 +65,7 @@ repeat_login(IP) ->
 do_repeat_login(N) ->
     error_logger:info_msg("Start Request: ~p~n", [N]),
     Sock = get(sock),
-    Data = api_encoder:encode(login_params, {<<"fake_request_udid">>, 0, <<"en">>, 1}),
+    Data = api_encoder:encode(login_params, {<<"fake_request_udid">>, 0, <<"en">>, 1, undefined}),
     NewData = list_to_binary([utils_protocol:encode_integer(N), Data]),
     CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, NewData),
     gen_tcp:send(Sock, CipherData),
@@ -76,7 +76,7 @@ do_repeat_login(N) ->
 login() ->
     connect(),
     Sock = get(sock),
-    send_request(login_params, Sock, {<<"test_udid">>, 0, <<"en">>, 1}),
+    send_request(login_params, Sock, {<<"test_udid">>, 0, <<"en">>, 1, undefined}),
     Response = recv_response(Sock, ?FAKE_REQUEST_ID),
     ok = gen_tcp:close(Sock),
     Response.
@@ -99,7 +99,7 @@ request(Udid, Protocol, Params) ->
     SomeHostInNet = "localhost", % to make it runnable on one machine
     {ok, Sock} = gen_tcp:connect(SomeHostInNet, 5555,
                                  [{active, false}, {packet, 2}]),
-    send_request(login_params, Sock, {Udid, 0, <<"en">>, 1}),
+    send_request(login_params, Sock, {Udid, 0, <<"en">>, 1, undefined}),
     _LoginResponse = recv_response(Sock, ?FAKE_REQUEST_ID),
     % error_logger:info_msg("LoginResponse: ~p~n", [Params]),
     send_request(Protocol, Sock, Params),
