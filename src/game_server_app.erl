@@ -37,12 +37,11 @@ start(_Type, _Args) ->
     ensure_started(inets),
     ensure_started(public_key),
     ensure_started(ssl),
+    % start_apn_application(),
     case application:get_env(game_server, server_environment) of
         {ok, test} -> ok;
         {ok, development} -> ok;
-        {ok, production} -> 
-            start_apn_application(),
-            lager:start()
+        {ok, production} -> lager:start()
     end,
     mnesia:create_schema([node()]),
     mnesia:start(),
