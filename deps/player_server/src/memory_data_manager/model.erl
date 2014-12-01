@@ -390,18 +390,18 @@ ensure_load_data(Table) ->
             PlayerID = get(player_id),
             case player_data:ensure_load_data(PlayerID, Table) of
                 true -> true;
-                false ->
+                Recs ->
                     Module = list_to_atom(atom_to_list(Table) ++ "_model"),
                     case Module:load_data(PlayerID) of
                         {ok, []} -> undefined;
                         {ok, Recs} -> insert_recs(Recs, Module)
                     end,
-                    record_loaded_table(Table),
                     case erlang:function_exported(Module, after_load_data, 1) of
                         true -> Module:after_load_data(PlayerID);
                         false -> ok
                     end
-            end
+            end,
+            record_loaded_table(Table)
     end.
 
 is_table_loaded(Table) ->
