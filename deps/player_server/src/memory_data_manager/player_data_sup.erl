@@ -67,4 +67,7 @@ create_ets_tables() ->
     end, ?DB_TABLE_NAMES),
     %% Record data status for players
     ets:new(player_ets_data_status, [bag, public, named_table, {keypos, 1}, 
+                                     {read_concurrency, true, write_concurrency, true}]),
+    %% Record data Loaded
+    ets:new(player_ets_data_loaded, [set, public, named_table, {keypos, 1}, 
                                      {read_concurrency, true, write_concurrency, true}]).

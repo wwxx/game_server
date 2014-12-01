@@ -39,10 +39,7 @@
          get_persist_all_sql/0,
          persist_all/0]).
 
--define(MODEL_ORIGIN, 1).
--define(MODEL_UPDATE, 2).
--define(MODEL_DELETE, 3).
--define(MODEL_CREATE, 4).
+-include("include/common_const.hrl").
 
 find(Selector) ->
     [Table|Values] = tuple_to_list(Selector),
@@ -137,6 +134,7 @@ update(Record) ->
         _ ->
             update_status(Table, Id, ?MODEL_UPDATE),
             put({Table, Id}, Record),
+            player_data:update_rec(Table, Record),
             Record
     end.
 
@@ -155,6 +153,7 @@ update_by_key(Table, Id, Modifier) ->
             update_status(Table, Id, ?MODEL_UPDATE),
             NewRec = update_record(Rec, Modifier),
             put({Table, Id}, NewRec),
+            player_data:update_rec(Table, NewRec),
             NewRec
     end.
 
@@ -190,6 +189,7 @@ delete(Selector) ->
             match_delete(Table, FieldsAndValues);
         Id ->
             update_status(Table, Id, ?MODEL_DELETE),
+            player_data:delete_rec(Table, Id),
             erase({Table, Id})
     end.
 
@@ -203,6 +203,7 @@ match_delete(Table, FieldsAndValues) ->
                     case match(Rec, FieldsAndValues) of
                         true  ->
                             update_status(Table, Id, ?MODEL_DELETE),
+                            player_data:delete_rec(Table, Id),
                             erase({Table, Id});
                         false -> undefined
                     end
@@ -224,6 +225,7 @@ create(Record) ->
     ensure_load_data(Table),
     update_status(Table, Id, ?MODEL_CREATE),
     put({Table, Id}, RecWithId),
+    player_data:create_rec(Table, RecWithId),
     RecWithId.
 
 %% Load data from databse.
@@ -316,17 +318,20 @@ selectOne(Table, [{Id, _}|IdList], FieldsAndValues) ->
 
 update_status(Table, Id, Status) ->
     IdList = id_status_list(Table),
+    PlayerID = get(player_id),
     case lists:keyfind(Id, 1, IdList) of
         false ->
             if 
                 Status =:= ?MODEL_ORIGIN orelse
                 Status =:= ?MODEL_CREATE ->
+                    player_data:update_rec_status(PlayerID, Table, Id, Status),
                     put({Table, idList}, [{Id, Status}|IdList])
             end;
         {Id, ?MODEL_CREATE} ->
             if 
                 Status =:= ?MODEL_UPDATE -> ok;
                 Status =:= ?MODEL_DELETE ->
+                    player_data:delete_rec_status(PlayerID, Table, Id, ?MODEL_CREATE),
                     NewIdList = lists:delete({Id, ?MODEL_CREATE}, IdList),
                     put({Table, idList}, NewIdList)
             end;
@@ -334,6 +339,8 @@ update_status(Table, Id, Status) ->
             if 
                 Status =:= ?MODEL_UPDATE -> ok;
                 Status =:= ?MODEL_DELETE ->
+                    player_data:delete_rec_status(PlayerID, Table, Id, ?MODEL_UPDATE),
+                    player_data:update_rec_status(PlayerID, Table, Id, ?MODEL_DELETE),
                     NewIdList = lists:delete({Id, ?MODEL_UPDATE}, IdList),
                     put({Table, idList}, NewIdList),
                     add_to_delete_list(Table, Id)
@@ -344,6 +351,8 @@ update_status(Table, Id, Status) ->
                     NewIdList = lists:delete({Id, ?MODEL_ORIGIN}, IdList),
                     put({Table, idList}, [{Id, Status}|NewIdList]);
                 Status =:= ?MODEL_DELETE ->
+                    player_data:delete_rec_status(PlayerID, Table, Id, ?MODEL_ORIGIN),
+                    player_data:update_rec_status(PlayerID, Table, Id, ?MODEL_DELETE),
                     NewIdList = lists:delete({Id, ?MODEL_ORIGIN}, IdList),
                     put({Table, idList}, NewIdList),
                     add_to_delete_list(Table, Id)
@@ -379,15 +388,19 @@ ensure_load_data(Table) ->
         true  -> true;
         false ->
             PlayerID = get(player_id),
-            Module = list_to_atom(atom_to_list(Table) ++ "_model"),
-            case Module:load_data(PlayerID) of
-                {ok, []} -> undefined;
-                {ok, Recs} -> insert_recs(Recs, Module)
-            end,
-            record_loaded_table(Table),
-            case erlang:function_exported(Module, after_load_data, 1) of
-                true -> Module:after_load_data(PlayerID);
-                false -> ok
+            case player_data:ensure_load_data(PlayerID, Table) of
+                true -> true;
+                false ->
+                    Module = list_to_atom(atom_to_list(Table) ++ "_model"),
+                    case Module:load_data(PlayerID) of
+                        {ok, []} -> undefined;
+                        {ok, Recs} -> insert_recs(Recs, Module)
+                    end,
+                    record_loaded_table(Table),
+                    case erlang:function_exported(Module, after_load_data, 1) of
+                        true -> Module:after_load_data(PlayerID);
+                        false -> ok
+                    end
             end
     end.
 
