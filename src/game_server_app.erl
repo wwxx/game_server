@@ -55,7 +55,6 @@ start(_Type, _Args) ->
     ensure_started(db),
     db:init_pool(DB_Config),
     ensure_started(game_numerical),
-    ensure_started(player_server),
     ensure_started(leaderboard),
     ensure_started(chat_server),
     case application:get_env(game_server, enable_hot_code_reload) of

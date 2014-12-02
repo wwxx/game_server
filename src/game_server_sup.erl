@@ -65,11 +65,12 @@ init([]) ->
         ranch_tcp, [{port, APIPort}], api_connection, []
     ),
     GameServerSpec = ?CHILD(game_server, game_server, worker, []),
+    PlayerBaseSupSpec = ?CHILD(player_base_sup, player_base_sup, supervisor, []),
     RedisPoolSupSpec = ?CHILD(redis_pool_sup, redis_pool_sup, supervisor, []),
     NameServerSupSpec = ?CHILD(name_server_sup, name_server_sup, supervisor, []),
     IapServerSupSpec = ?CHILD(iap_server_sup, iap_server_sup, supervisor, []),
     HttpWorkerSpec = ?CHILD(http, http, worker, []),
-    Specs = [GameServerSpec, RanchSupSpec, ListenerSpec, 
+    Specs = [GameServerSpec, PlayerBaseSupSpec, RanchSupSpec, ListenerSpec, 
              ApiServerSpec, RedisPoolSupSpec, NameServerSupSpec,
              IapServerSupSpec, HttpWorkerSpec],
     {ok, {{one_for_one, 10, 10}, Specs}}.
