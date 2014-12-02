@@ -34,8 +34,6 @@
 		 after_stop/0
 		 ]).
 
-% -include("include/config_names.hrl").
-
 %%%===================================================================
 %%% Framework Callbacks
 %%%===================================================================
@@ -55,17 +53,9 @@ after_start() ->
 
 before_stop() ->
     error_logger:info_msg("Game Server Life Cycle Callback: before_stop!~n"),
-    %% shutdown tcp server
-    supervisor:terminate_child(game_server_sup, {ranch_listener_sup, ranch_tcp_listener}),
-    supervisor:terminate_child(game_server_sup, ranch_sup),
     ok.
 
 after_stop() ->
     error_logger:info_msg("Game Server Life Cycle Callback: after_stop!~n"),
     %% add your custom stopping at here
 	ok.
-
-%%%===================================================================
-%%% Private Custom initialize functions
-%%%===================================================================
-

@@ -98,8 +98,16 @@ handle_cast(stop, State) ->
     case State#state.status of
         ?GS_RUNNING ->
             error_logger:info_msg("==========PREPARING SHUTDOWN APPLICATION===========~n"),
-            player_factory:shutdown_players(),
+            error_logger:info_msg("================CLOSE TCP LISTENER=================~n"),
+            supervisor:terminate_child(game_server_sup, ranch_sup),
+            error_logger:info_msg("================CLOSE TCP CONNECTIONS==============~n"),
+            supervisor:terminate_child(game_server_sup, {ranch_listener_sup, ranch_tcp_listener}),
+            error_logger:info_msg("================SHUTDOWN IAP SERVER================~n"),
+            supervisor:terminate_child(game_server_sup, iap_server_sup),
+            error_logger:info_msg("================SHUTDOWN TIMERTASK================~n"),
+            application:stop(timertask),
             error_logger:info_msg("================SHUTDOWNING PLAYERS================~n"),
+            player_factory:shutdown_players(),
             {noreply, State#state{status = ?GS_STOPPING}};
         ?GS_STOPPING ->
             send_msg_to_stop_deamon(is_stopping)
