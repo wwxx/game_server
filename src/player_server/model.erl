@@ -223,7 +223,7 @@ create(Record) ->
     ensure_load_data(Table),
     update_status(Table, Id, ?MODEL_CREATE),
     put({Table, Id}, RecWithId),
-    player_data:create_rec(Table, RecWithId),
+    player_data:create_rec(get(player_id), Table, RecWithId),
     RecWithId.
 
 %% Load data from databse.

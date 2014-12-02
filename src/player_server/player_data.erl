@@ -50,7 +50,7 @@
          delete_rec_status/4,
          update_rec/2,
          delete_rec/3,
-         create_rec/2
+         create_rec/3
         ]).
 
 %% gen_server callbacks
@@ -189,12 +189,17 @@ ensure_load_data(PlayerID, Table) ->
     end.
 
 get_all_recs(PlayerID, Table) ->
+    ensure_load_data(PlayerID, Table),
     Key = {PlayerID, Table},
     Tab = ets_tab_name(Table),
-    lists:foldl(fun({_Key, Id}, Result) ->
-        case ets:lookup(Tab, Id) of
-            [] -> Result;
-            [Rec] -> [Rec|Result]
+    lists:foldl(fun({_Key, {Id, Status}}, Result) ->
+        if
+            Status =:= ?MODEL_DELETE -> Result;
+            true ->
+                case ets:lookup(Tab, Id) of
+                    [] -> Result;
+                    [Rec] -> [Rec|Result]
+                end
         end
     end, [], ets:lookup(?DATA_STATUS, Key)).
 
@@ -218,11 +223,11 @@ update_rec(Table, Rec) ->
 
 delete_rec(PlayerID, Table, Id) ->
     EtsTab = ets_tab_name(Table),
-    ets:insert(?DATA_STATUS, {{PlayerID, Table}, Id}),
-    ets:insert(EtsTab, Id).
+    ets:delete(EtsTab, Id).
 
-create_rec(Table, Rec) ->
-    update_rec(Table, Rec).
+create_rec(PlayerID, Table, Rec) ->
+    EtsTab = ets_tab_name(Table),
+    insert_rec(PlayerID, Rec, EtsTab).
 
 %%%===================================================================
 %%% Internal functions
@@ -233,10 +238,8 @@ validate_ownership(PlayerID) ->
 get_loaded(PlayerID, ModelName) ->
     Key = {PlayerID, ModelName, loaded},
     case ets:lookup(?DATA_LOADED, Key) of
-        [{Key, Value}] ->
-            Value;
-        _ ->
-            undefined
+        [_] -> true;
+        [] -> false
     end.
 
 set_loaded(PlayerID, ModelName, Loaded) ->
@@ -267,7 +270,6 @@ insert_recs(PlayerID, Recs, Module, EtsTab) ->
 insert_rec(PlayerID, Rec, EtsTab) ->
     ets:insert(EtsTab, Rec),
     [Table, Id|_] = tuple_to_list(Rec),
-    ets:insert(?DATA_STATUS, {{PlayerID, Table}, Id}),
     update_rec_status(PlayerID, Table, Id, ?MODEL_ORIGIN).
 
 deserialize(Rec, Fields, Rule) ->
@@ -313,6 +315,7 @@ do_persist_for_player(PlayerID) ->
 
 get_persist_all_sql(PlayerID) ->
     logger:info("PERSIST FOR: ~p~n", [PlayerID]),
+    logger:info("loaded tables: ~p~n", [get_loaded_tables(PlayerID)]),
     Sqls = lists:foldl(fun({_, Table}, Result) ->
         case generate_persist_sql(PlayerID, Table) of
             <<>> -> Result;
@@ -325,7 +328,8 @@ get_persist_all_sql(PlayerID) ->
 
 generate_persist_sql(PlayerID, Table) ->
     Tab = ets_tab_name(Table),
-    lists:foldl(fun({_, {Id, Status}}, Result) ->
+    logger:info("table: ~p, rec status: ~p~n", [Table, get_rec_status(PlayerID, Table)]),
+    Sqls = lists:foldl(fun({_, {Id, Status}}, Result) ->
         if
             Status =:= ?MODEL_ORIGIN ->
                 Result;
@@ -335,7 +339,11 @@ generate_persist_sql(PlayerID, Table) ->
             Status =:= ?MODEL_DELETE ->
                 [sql({Table, Id}, Status)|Result]
         end
-    end, [], get_rec_status(PlayerID, Table)).
+    end, [], get_rec_status(PlayerID, Table)),
+    case Sqls of
+        [] -> <<>>;
+        _ -> binary_string:join(Sqls, <<";">>)
+    end.
 
 sql(Rec, ?MODEL_CREATE) ->
     {Table, Fields, Values} = rec_info(Rec),
