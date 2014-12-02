@@ -189,7 +189,7 @@ delete(Selector) ->
             match_delete(Table, FieldsAndValues);
         Id ->
             update_status(Table, Id, ?MODEL_DELETE),
-            player_data:delete_rec(Table, Id),
+            player_data:delete_rec(get(player_id), Table, Id),
             erase({Table, Id})
     end.
 
@@ -203,7 +203,7 @@ match_delete(Table, FieldsAndValues) ->
                     case match(Rec, FieldsAndValues) of
                         true  ->
                             update_status(Table, Id, ?MODEL_DELETE),
-                            player_data:delete_rec(Table, Id),
+                            player_data:delete_rec(get(player_id), Table, Id),
                             erase({Table, Id});
                         false -> undefined
                     end
@@ -388,18 +388,12 @@ ensure_load_data(Table) ->
         true  -> true;
         false ->
             PlayerID = get(player_id),
-            case player_data:ensure_load_data(PlayerID, Table) of
-                true -> true;
-                Recs ->
-                    Module = list_to_atom(atom_to_list(Table) ++ "_model"),
-                    case Module:load_data(PlayerID) of
-                        {ok, []} -> undefined;
-                        {ok, Recs} -> insert_recs(Recs, Module)
-                    end,
-                    case erlang:function_exported(Module, after_load_data, 1) of
-                        true -> Module:after_load_data(PlayerID);
-                        false -> ok
-                    end
+            Recs = player_data:get_all_recs(PlayerID, Table),
+            lists:foreach(fun(Rec) -> create(Rec, load) end, Recs),
+            Module = list_to_atom(atom_to_list(Table) ++ "_model"),
+            case erlang:function_exported(Module, after_load_data, 1) of
+                true -> Module:after_load_data(PlayerID);
+                false -> ok
             end,
             record_loaded_table(Table)
     end.
@@ -496,38 +490,6 @@ update_record([RecordValue|RecordValues], [ModifierValue|ModifierValues], Result
     update_record(RecordValues, ModifierValues, [RecordValue|Result]);
 update_record([_RecordValue|RecordValues], [ModifierValue|ModifierValues], Result)->
     update_record(RecordValues, ModifierValues, [ModifierValue|Result]).
-
-insert_recs(Recs, Module) ->
-    case lists:keyfind(serialize, 1, Module:module_info(attributes)) of
-        false ->
-            lists:foreach(fun(Rec) -> create(Rec, load) end, Recs);
-        {serialize, Rule} ->
-            Fields = record_mapper:get_mapping(hd(tuple_to_list(hd(Recs)))),
-            lists:foreach(fun(Rec) -> 
-                NewRec = deserialize(Rec, Fields, Rule),
-                create(NewRec, load) 
-            end, Recs)
-    end.
-
-deserialize(Rec, Fields, Rule) ->
-    [RecName|Values] = tuple_to_list(Rec),
-    TermValues = deserialize(Values, Fields, Rule, []),
-    list_to_tuple([RecName|TermValues]).
-
-deserialize([], [], _Rule, Result) -> 
-    lists:reverse(Result);
-deserialize([Value|Values], [Field|Fields], Rule, Result) ->
-    case lists:member(Field, Rule) of
-        true when Value =/= undefined -> 
-            TermValue = case base64:decode(Value) of
-                <<>> -> undefined;
-                Data -> binary_to_term(Data)
-            end,
-            deserialize(Values, Fields, Rule, [TermValue|Result]);
-        _ ->
-            deserialize(Values, Fields, Rule, [Value|Result])
-    end.
-
 
 serialize(Values, _Fields, undefined) -> Values;
 serialize(Values, Fields, Rule) ->

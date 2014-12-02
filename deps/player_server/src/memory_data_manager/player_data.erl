@@ -40,11 +40,12 @@
          count/2,
          count_all/2,
 
+         get_all_recs/2,
          ensure_load_data/2,
          update_rec_status/4,
          delete_rec_status/4,
          update_rec/2,
-         delete_rec/2,
+         delete_rec/3,
          create_rec/2
         ]).
 
@@ -141,12 +142,18 @@ ensure_load_data(PlayerID, Table) ->
                 {ok, []} -> undefined;
                 {ok, Recs} -> insert_recs(PlayerID, Recs, Module, EtsTab)
             end,
-            set_loaded(PlayerID, Table, true),
-            case erlang:function_exported(Module, after_load_data, 1) of
-                true -> Module:after_load_data(PlayerID);
-                false -> ok
-            end
+            set_loaded(PlayerID, Table, true)
     end.
+
+get_all_recs(PlayerID, Table) ->
+    Key = {PlayerID, Table},
+    Tab = ets_tab_name(Table),
+    lists:foldl(fun({_Key, Id}, Result) ->
+        case ets:lookup(Tab, Id) of
+            [] -> Result;
+            [Rec] -> [Rec|Result]
+        end
+    end, [], ets:lookup(?DATA_STATUS, Key)).
 
 update_rec_status(PlayerID, Table, Id, Status) ->
     ets:insert(?DATA_STATUS, {PlayerID, {Table, Id, Status}}).
@@ -158,8 +165,9 @@ update_rec(Table, Rec) ->
     EtsTab = ets_tab_name(Table),
     ets:insert(EtsTab, Rec).
 
-delete_rec(Table, Id) ->
+delete_rec(PlayerID, Table, Id) ->
     EtsTab = ets_tab_name(Table),
+    ets:insert(?DATA_STATUS, {{PlayerID, Table}, Id}),
     ets:insert(EtsTab, Id).
 
 create_rec(Table, Rec) ->
@@ -204,6 +212,7 @@ insert_recs(PlayerID, Recs, Module, EtsTab) ->
 insert_rec(PlayerID, Rec, EtsTab) ->
     ets:insert(EtsTab, Rec),
     [Table, Id|_] = tuple_to_list(Rec),
+    ets:insert(?DATA_STATUS, {{PlayerID, Table}, Id}),
     update_rec_status(PlayerID, Table, Id, ?MODEL_ORIGIN).
 
 deserialize(Rec, Fields, Rule) ->
