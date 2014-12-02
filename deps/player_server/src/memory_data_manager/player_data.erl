@@ -40,6 +40,7 @@
          count/2,
          count_all/2,
 
+         persist_for_player/1,
          get_all_recs/2,
          get_loaded_tables/1,
          ensure_load_data/2,
@@ -246,19 +247,9 @@ ets_tab_name(Table) ->
     list_to_atom(atom_to_list(Table) ++ "_ets_table").
 
 persist_for_player(PlayerID) ->
-    lists:foldl(fun({_, Table}, Result) ->
-        RecStatus = get_rec_status(PlayerID, Table),
-        case sqls(Table, RecStatus) of
-            [] -> <<>>;
-            Sqls -> binary_string:join(Sqls, <<";">>)
-        end
-    end, [], get_loaded_tables(PlayerID)).
-
-persist_for_player(PlayerID) ->
     try do_persist_for_player(PlayerID) of
         Result -> 
-            Tables = all_loaded_tables(),
-            reset_tables_status(Tables),
+            % reset_tables_status(PlayerID),
             Result
     catch
         Type:Msg ->
@@ -266,22 +257,23 @@ persist_for_player(PlayerID) ->
     end.
 
 do_persist_for_player(PlayerID) ->
-    case get_persist_all_sql() of
+    case get_persist_all_sql(PlayerID) of
         <<>> -> do_nothing;
-        JoinedSql -> execute_with_procedure(JoinedSql)
+        JoinedSql -> 
+            ProcedureName = db:procedure_name(<<"player">>, PlayerID),
+            db:execute_with_procedure(ProcedureName, JoinedSql)
     end.
 
-get_persist_all_sql() ->
-    PlayerID = get(player_id),
+get_persist_all_sql(PlayerID) ->
     logger:info("PERSIST FOR: ~p~n", [PlayerID]),
     Sqls = lists:foldl(fun({_, Table}, Result) ->
-        case generate_persist_sql(Table) of
+        case generate_persist_sql(PlayerID, Table) of
             <<>> -> Result;
             Sql -> 
                 logger:info("[~p] Table: ~p SQL: ~p~n", [PlayerID, Table, Sql]),
                 [Sql|Result]
         end
-    end, [], player_data:get_loaded_tables(PlayerID)),
+    end, [], get_loaded_tables(PlayerID)),
     binary_string:join(Sqls, <<";">>).
 
 generate_persist_sql(Table) ->
@@ -361,3 +353,4 @@ join_values([], Result) ->
     binary_string:join(lists:reverse(Result), <<", ">>);
 join_values([Value|Values], Result) -> 
     join_values(Values, [db_fmt:encode(Value)|Result]).
+
