@@ -221,7 +221,7 @@ update_rec(Table, Rec) ->
     EtsTab = ets_tab_name(Table),
     ets:insert(EtsTab, Rec).
 
-delete_rec(PlayerID, Table, Id) ->
+delete_rec(_PlayerID, Table, Id) ->
     EtsTab = ets_tab_name(Table),
     ets:delete(EtsTab, Id).
 
