@@ -44,7 +44,6 @@
 
          persist_for_player/1,
          get_all_recs/2,
-         get_loaded_tables/1,
          ensure_load_data/2,
          update_rec_status/4,
          delete_rec_status/4,
@@ -209,9 +208,16 @@ update_rec_status(PlayerID, Table, Id, Status) ->
 delete_rec_status(PlayerID, Table, Id, Status) ->
     ets:delete_object(?DATA_STATUS, {{PlayerID, Table}, {Id, Status}}).
 
-clean_rec_status(PlayerID) ->
+reset_rec_status(PlayerID) ->
     lists:foreach(fun({_, Table}) ->
-        ets:delete(?DATA_STATUS, {PlayerID, Table})
+        Status = lists:foldl(fun({_, {Id, Status}}, Result) ->
+            case Status of
+                ?MODEL_DELETE -> Result;
+                _ -> [{{PlayerID, Table}, {Id, ?MODEL_ORIGIN}}|Result]
+            end
+        end, [], get_rec_status(PlayerID, Table)),
+        ets:delete(?DATA_STATUS, {PlayerID, Table}),
+        ets:insert(?DATA_STATUS, Status)
     end, get_loaded_tables(PlayerID)).
 
 get_rec_status(PlayerID, Table) ->
@@ -297,7 +303,7 @@ ets_tab_name(Table) ->
 persist_for_player(PlayerID) ->
     try do_persist_for_player(PlayerID) of
         _Result -> 
-            clean_rec_status(PlayerID),
+            reset_rec_status(PlayerID),
             true
     catch
         Type:Msg ->
@@ -315,7 +321,6 @@ do_persist_for_player(PlayerID) ->
 
 get_persist_all_sql(PlayerID) ->
     logger:info("PERSIST FOR: ~p~n", [PlayerID]),
-    logger:info("loaded tables: ~p~n", [get_loaded_tables(PlayerID)]),
     Sqls = lists:foldl(fun({_, Table}, Result) ->
         case generate_persist_sql(PlayerID, Table) of
             <<>> -> Result;
@@ -328,7 +333,6 @@ get_persist_all_sql(PlayerID) ->
 
 generate_persist_sql(PlayerID, Table) ->
     Tab = ets_tab_name(Table),
-    logger:info("table: ~p, rec status: ~p~n", [Table, get_rec_status(PlayerID, Table)]),
     Sqls = lists:foldl(fun({_, {Id, Status}}, Result) ->
         if
             Status =:= ?MODEL_ORIGIN ->
