@@ -72,7 +72,7 @@ handle_info(timeout, State=#protocol{transport = Transport, socket = Socket}) ->
     case lists:member(Address, ?API_IPS) of
         true ->
             ok = ranch:accept_ack(State#protocol.ref),
-            ok = Transport:setopts(Socket, [{active, once}, {packet, 0}]),
+            ok = Transport:setopts(Socket, [{active, once}, {packet, 4}]),
             {noreply, State};
         false ->
             error_logger:info_msg("Client has no permission!"),
