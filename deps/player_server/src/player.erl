@@ -274,7 +274,7 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info(circulation_persist_data, State=#player_state{circulation_persist_timer=Timer}) ->
-    ProcessInfo = player:player_pid(get(player_id)),
+    ProcessInfo = erlang:process_info(player:player_pid(get(player_id))),
     PersistSql = model:persist_all(),
     IsExpired = time_utils:current_time() - get_last_active() >= ?EXPIRE_DURATION,
     case IsExpired and check_persist(ProcessInfo, PersistSql) =:= true of
