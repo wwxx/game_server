@@ -407,9 +407,9 @@ check_persist(ProcessInfo, PersistSql) ->
                 true -> ok;
                 _ ->
                     put(has_checked_persist, true),
+                    put(persist_failed_process_info, ProcessInfo),
+                    put(persist_failed_sql, PersistSql),
                     spawn(fun() -> 
-                        put(persist_failed_process_info, ProcessInfo),
-                        put(persist_failed_sql, PersistSql),
                         Msg = io_lib:format("PlayerID: ~p~n", [PlayerID]),
                         {ok, Path} = file:get_cwd(),
                         BinMsg = list_to_binary(Msg),
