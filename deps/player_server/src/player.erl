@@ -408,8 +408,9 @@ check_persist(ProcessInfo, PersistSql) ->
                 _ ->
                     put(has_checked_persist, true),
                     spawn(fun() -> 
-                        Msg = io_lib:format("PlayerID: ~p~n, ProcessInfo: ~p~n, PersistSql: ~p~n", 
-                                            [PlayerID, ProcessInfo, PersistSql]),
+                        put(persist_failed_process_info, ProcessInfo),
+                        put(persist_failed_sql, PersistSql),
+                        Msg = io_lib:format("PlayerID: ~p~n", [PlayerID]),
                         {ok, Path} = file:get_cwd(),
                         BinMsg = list_to_binary(Msg),
                         exception:notify(<<"Data Persist Failed!">>, list_to_binary(Path), BinMsg) 
