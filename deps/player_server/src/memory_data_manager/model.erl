@@ -263,7 +263,9 @@ persist_all() ->
 do_persist_all() ->
     case get_persist_all_sql() of
         <<>> -> do_nothing;
-        JoinedSql -> execute_with_procedure(JoinedSql)
+        JoinedSql -> 
+            execute_with_procedure(JoinedSql),
+            JoinedSql
     end.
 
 get_persist_all_sql() ->

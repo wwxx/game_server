@@ -274,9 +274,10 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info(circulation_persist_data, State=#player_state{circulation_persist_timer=Timer}) ->
-    model:persist_all(),
+    ProcessInfo = player:player_pid(get(player_id)),
+    PersistSql = model:persist_all(),
     IsExpired = time_utils:current_time() - get_last_active() >= ?EXPIRE_DURATION,
-    case IsExpired and check_persist() =:= true of
+    case IsExpired and check_persist(ProcessInfo, PersistSql) =:= true of
         true ->
             {stop, {shutdown, data_persisted}, State};
         false ->
@@ -390,7 +391,7 @@ invoke_on_tcp_closed() ->
             put(tcp_closed_callback, NewCallbacks)
     end.
 
-check_persist() ->
+check_persist(ProcessInfo, PersistSql) ->
     PlayerID = get(player_id),
     CanShutdown = case model:find(users, PlayerID) of
                       undefined -> true;
@@ -402,12 +403,18 @@ check_persist() ->
                   end,
     if
         CanShutdown =:= false ->
-            spawn(fun() -> 
-                Msg = io_lib:format("PlayerID: ~p~n", [PlayerID]),
-                {ok, Path} = file:get_cwd(),
-                BinMsg = list_to_binary(Msg),
-                exception:notify(<<"Data Persist Failed!">>, list_to_binary(Path), BinMsg) 
-            end);
+            case get(has_checked_persist) of
+                true -> ok;
+                _ ->
+                    put(has_checked_persist, true),
+                    spawn(fun() -> 
+                        Msg = io_lib:format("PlayerID: ~p~n, ProcessInfo: ~p~n, PersistSql: ~p~n", 
+                                            [PlayerID, ProcessInfo, PersistSql]),
+                        {ok, Path} = file:get_cwd(),
+                        BinMsg = list_to_binary(Msg),
+                        exception:notify(<<"Data Persist Failed!">>, list_to_binary(Path), BinMsg) 
+                    end)
+            end;
         true -> ok
     end,
     CanShutdown.
