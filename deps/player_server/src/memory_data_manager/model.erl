@@ -25,6 +25,7 @@
 -export([update/2,
          update/1,
          find/1,
+         find/2,
          find_or_create/1,
          all/1,
          all/2,
@@ -51,6 +52,10 @@ find(Selector) ->
         undefined -> selectOne(Table, Values);
         Id -> get({Table, Id})
     end.
+
+find(Table, Id) ->
+    ensure_load_data(Table),
+    get({Table, Id}).
 
 find_or_create(Selector) ->
     case find(Selector) of

@@ -239,7 +239,7 @@ encode_response(Response) ->
             end;
         {Protocol, Msg} when is_tuple(Msg) ->
             api_encoder:encode(Protocol, Msg);
-        {Protocol, Msg} when is_list(Msg) ->
+        {Protocol, Msg} when is_list(Msg) orelse is_binary(Msg) ->
             api_encoder:encode(Protocol, {Msg});
         {_Protocol, Msg} ->
             error_logger:info_msg("Response Msg type error: ~p", [Msg]),

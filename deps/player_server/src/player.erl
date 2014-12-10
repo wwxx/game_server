@@ -274,12 +274,12 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info(circulation_persist_data, State=#player_state{circulation_persist_timer=Timer}) ->
-    case time_utils:current_time() - get_last_active() >= ?EXPIRE_DURATION of
+    model:persist_all(),
+    IsExpired = time_utils:current_time() - get_last_active() >= ?EXPIRE_DURATION,
+    case IsExpired and check_persist() =:= true of
         true ->
-            model:persist_all(),
             {stop, {shutdown, data_persisted}, State};
         false ->
-            model:persist_all(),
             erlang:cancel_timer(Timer),
             NewTimer = erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
             {noreply, State#player_state{circulation_persist_timer=NewTimer}}
@@ -389,3 +389,25 @@ invoke_on_tcp_closed() ->
             end, [], Callbacks),
             put(tcp_closed_callback, NewCallbacks)
     end.
+
+check_persist() ->
+    PlayerID = get(player_id),
+    CanShutdown = case model:find(users, PlayerID) of
+                      undefined -> true;
+                      _ ->
+                          case db:find_by(users, uuid, PlayerID) of
+                              {ok, []} -> false;
+                              _ -> true
+                          end
+                  end,
+    if
+        CanShutdown =:= false ->
+            spawn(fun() -> 
+                Msg = io_lib:format("PlayerID: ~p~n", [PlayerID]),
+                {ok, Path} = file:get_cwd(),
+                BinMsg = list_to_binary(Msg),
+                exception:notify(<<"Data Persist Failed!">>, list_to_binary(Path), BinMsg) 
+            end);
+        true -> ok
+    end,
+    CanShutdown.
