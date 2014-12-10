@@ -249,23 +249,7 @@ handle_cast({unsubscribe, Channel}, State) ->
     end,
     {noreply, State};
 handle_cast({on_tcp_closed}, State) ->
-    case get(tcp_closed_callback) of
-        undefined -> ok;
-        Callbacks ->
-            NewCallbacks = lists:foldl(fun({Key, Type, Fun}, Result) ->
-                try Fun() of
-                    _Response -> ok
-                catch
-                    Exception:Msg ->
-                        exception:notify(Exception, Msg)
-                end,
-                case Type of
-                    callback_once -> Result;
-                    callback_ever -> [{Key, Type, Fun}|Result]
-                end
-            end, [], Callbacks),
-            put(tcp_closed_callback, NewCallbacks)
-    end,
+    invoke_on_tcp_closed(),
     {noreply, State};
 handle_cast({register_tcp_closed_callback, Key, Type, Fun}, State) ->
     case get(tcp_closed_callback) of
@@ -312,6 +296,7 @@ handle_info(Info, State) ->
     {noreply, State}.
 
 terminate(Reason, _State=#player_state{playerID=PlayerID, circulation_persist_timer=Timer}) ->
+    invoke_on_tcp_closed(),
     error_logger:info_msg("Player: ~p, Terminate With Reason: ~p~n", [PlayerID, Reason]),
     case Reason of
         {shutdown, data_persisted} -> ok;
@@ -385,3 +370,22 @@ begin_request() ->
 
 finish_request() ->
     erase({status, is_requesting}).
+
+invoke_on_tcp_closed() ->
+    case get(tcp_closed_callback) of
+        undefined -> ok;
+        Callbacks ->
+            NewCallbacks = lists:foldl(fun({Key, Type, Fun}, Result) ->
+                try Fun() of
+                    _Response -> ok
+                catch
+                    Exception:Msg ->
+                        exception:notify(Exception, Msg)
+                end,
+                case Type of
+                    callback_once -> Result;
+                    callback_ever -> [{Key, Type, Fun}|Result]
+                end
+            end, [], Callbacks),
+            put(tcp_closed_callback, NewCallbacks)
+    end.
