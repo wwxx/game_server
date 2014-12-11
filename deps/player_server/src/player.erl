@@ -389,7 +389,7 @@ invoke_on_tcp_closed() ->
             put(tcp_closed_callback, NewCallbacks)
     end.
 
-check_persist(ProcessInfo, PersistSql) ->
+check_persist() ->
     PlayerID = get(player_id),
     CanShutdown = case model:find(users, PlayerID) of
                       undefined -> true;
