@@ -39,7 +39,8 @@
          time_string_to_timestamp/1,
          datetime_to_timestamp/1,
          day_diff/2,
-         timestamp_to_datetime/1]).
+         timestamp_to_datetime/1,
+         to_timestamp/1]).
 
 -define(ORI_SECONDS, 62167219200).
 
@@ -101,3 +102,11 @@ day_diff(T1, T2) ->
     {DT1, _} = calendar:now_to_datetime(N1),
     {DT2, _} = calendar:now_to_datetime(N2),
     calendar:date_to_gregorian_days(DT2) - calendar:date_to_gregorian_days(DT1).
+
+to_timestamp(String) ->
+    case io_lib:fread("~d-~d-~d ~d:~d:~d", String) of
+        {ok, [Year, Month, Day, Hour, Minute, Second], _} ->
+            {datetime, {{Year, Month, Day}, {Hour, Minute, Second}}};
+        {error, _} -> String;
+        _ -> exit({error, datetime})
+    end.

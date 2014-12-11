@@ -46,9 +46,7 @@
           all/1,
           update_all/1,
           execute/1,
-          procedure_name/2,
-          execute_with_procedure/2,
-          clean_all_procedures/0
+          procedure_name/2
          ]).
 
 
@@ -129,47 +127,65 @@ all(Table) ->
     request(Table, Sql).
 
 request(TableName, Sql) ->
-    Res = execute(Sql),
     Fields = record_mapper:get_mapping(TableName),
-    {ok, emysql_util:as_record(Res, TableName, Fields)}.
+    R = case execute(Sql) of
+        {data, {mysql_result, _FieldDefines, [], _, _}} -> {ok, []};
+        {data, {mysql_result, FieldDefines, Values, _, _}} ->
+            Recs = lists:foldl(fun(Value, Result) ->
+                [as_record(TableName, Fields, FieldDefines, Value)|Result]
+            end, [], Values),
+            case Recs of
+                [] -> {ok, []};
+                _ ->  {ok, lists:reverse(Recs)}
+            end
+    end,
+    logger:info("DB REQUEST: ~p~n", [R]),
+    R.
 
-clean_all_procedures() ->
-    execute(<<"DELETE FROM mysql.proc;">>).
+as_record(TableName, Fields, FieldDefines, Values) ->
+    VS = lists:zipwith(fun({_, Field, _, _}, Value) ->
+        {list_to_atom(Field), Value}
+    end, FieldDefines, Values),
+    R = lists:foldl(fun(Field, Result) ->
+        case lists:keyfind(Field, 1, VS) of
+            false -> [undefined|Result];
+            {_Field, Value} -> [Value|Result]
+        end
+    end, [TableName], Fields),
+    list_to_tuple(lists:reverse(R)).
+
+cast_rows(FieldDefines, Rows) ->
+    NewRows = lists:foldl(fun(Values, Result) ->
+        [cast_row(FieldDefines, Values)|Result]
+    end, [], Rows),
+    lists:reverse(NewRows).
+
+cast_row(FieldDefines, Values) ->
+    lists:zipwith(fun({_, _, _, Type}, Value) ->
+        cast_field_value(Type, Value)
+    end, FieldDefines, Values).
+
+cast_field_value(_Type, null) -> undefined;
+cast_field_value(Type, Value) ->
+        if
+            Type =:= 'VAR_STRING' orelse Type =:= 'BLOB' ->
+                list_to_binary(Value);
+            Type =:= 'LONG' orelse Type =:= 'TINY' ->
+                list_to_integer(Value);
+            Type =:= 'FLOAT' ->
+                case string:to_float(Value) of
+                    {error, no_float} -> 
+                        list_to_integer(Value);
+                    Res -> Res
+                end;
+            Type =:= 'DATETIME' ->
+                time_utils:to_timestamp(Value);
+            true ->
+                error(list_to_binary(io_lib:format("UNPARSED TYPE: ~p, Value: ~p", [Type, Value])))
+        end.
 
 procedure_name(Name, Suffix) ->
     list_to_binary([Name, <<"_">>, Suffix]).
-
-execute_with_procedure(ProcedureName, Sql) ->
-    DropProcedure = list_to_binary([<<"DROP PROCEDURE IF EXISTS ">>, ProcedureName]),
-    CreateProcedure = list_to_binary([<<"CREATE PROCEDURE ">>, ProcedureName, <<"()">>,
-                                      <<" BEGIN ">>,
-                                      <<" DECLARE exit handler for sqlexception ">>,
-                                      <<" BEGIN ">>,
-                                      <<" ROLLBACK; ">>,
-                                      <<" RESIGNAL; ">>,
-                                      <<" END; ">>,
-                                      <<" DECLARE exit handler for sqlwarning ">>,
-                                      <<" BEGIN ">>,
-                                      <<" ROLLBACK; ">>,
-                                      <<" RESIGNAL; ">>,
-                                      <<" END; ">>,
-                                      <<" START TRANSACTION; ">>,
-                                      Sql, <<";">>,
-                                      <<" COMMIT; ">>,
-                                      <<" END ">>]),
-    ExecuteProcedure = list_to_binary([<<"CALL ">>, ProcedureName, <<"();">>]),
-    % error_logger:info_msg("EXECUTE PROCEDURE FOR [~p]: ~p~n", 
-    %                       [get(player_id), CreateProcedure]),
-    %% clean old procedure
-    db:execute(DropProcedure),
-    %% create procedure for palyer's current state
-    db:execute(CreateProcedure),
-    %% call procedure
-    Result = db:execute(ExecuteProcedure),
-    %% clean procedure
-    db:execute(DropProcedure),
-    % error_logger:info_msg("EXECUTE PROCEDURE RESULT: ~p~n", [Result]),
-    Result.
 
 %%--------------------------------------------------------------------
 %% @doc:    Execute SQL and return Result
@@ -187,7 +203,15 @@ execute(SQL) ->
                 [error_packet|_] ->
                     erlang:error(Result);
                 _ ->
-                    Result
+                    logger:info("Result: ~p~n", [Result]),
+                    case Result of
+                        {updated, V} -> {updated, V};
+                        {data, {mysql_result, FieldDefines, [], A, B}} -> 
+                            {data, {mysql_result, FieldDefines, [], A, B}};
+                        {data, {mysql_result, FieldDefines, Values, A, B}} ->
+                            CastedValues = cast_rows(FieldDefines, Values),
+                            {data, {mysql_result, FieldDefines, CastedValues, A, B}}
+                    end
             end;
         false ->
             Result
@@ -205,12 +229,11 @@ init_pool(Config) ->
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
-init([Config]) ->
+init([_Config]) ->
     {ok, #state{}}.
 
 handle_call({init_pool, Config}, _From, State) ->
     Pool = do_init_pool(Config),
-    clean_all_procedures(),
     {reply, Pool, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -223,7 +246,6 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, _State) ->
-    % remove_pool(),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
@@ -236,19 +258,8 @@ do_init_pool(L) ->
     Database = atom_to_list(proplists:get_value(database, L)),
     Username = atom_to_list(proplists:get_value(username, L)),
     Password = atom_to_list(proplists:get_value(password, L)),
-    % Encoding = proplists:get_value(encoding, L),
     PoolSize = proplists:get_value(pool,L),
     supervisor:start_child(db_sup, [?DB_POOL, "localhost", Username, Password, Database]),
     lists:foreach(fun(_) ->
         mysql:connect(?DB_POOL, "localhost", 3306, Username, Password, Database, true)
     end, lists:duplicate(PoolSize, 1)).
-
-% map(Fields, Values) ->
-%     map(Fields, Values, []).
-
-% map([], [], Result) ->
-%     Result;
-% map([_Field|Fields], [Value|Values], Result) when Value =:= undefined ->
-%     map(Fields, Values, Result);
-% map([Field|Fields], [Value|Values], Result) ->
-%     map(Fields, Values, [{Field, Value}|Result]).

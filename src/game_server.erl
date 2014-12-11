@@ -71,7 +71,6 @@ force_stop() ->
     application:stop(game_numerical),
     application:stop(record_mapper),
     application:stop(mnesia),
-    application:stop(db),
     application:stop(emysql),
     application:stop(gproc),
     application:stop(ssl),

@@ -37,7 +37,6 @@
          create/2,
          count/1,
          sql/2,
-         get_persist_all_sql/0,
          persist_all/0]).
 
 -define(MODEL_ORIGIN, 1).
@@ -237,62 +236,6 @@ create(Record, load) ->
     update_status(Table, Id, ?MODEL_ORIGIN),
     put({Table, Id}, Record).
 
-generate_persist_sql(Table) ->
-    StatusIdList = id_status_list(Table),
-    DeleteIdList = delete_status_list(Table),
-    if
-        StatusIdList =:= [] andalso DeleteIdList =:= [] -> [];
-        true -> sqls(Table, StatusIdList ++ DeleteIdList)
-    end.
-
-persist_all() ->
-    try do_persist_all() of
-        Result -> 
-            Tables = all_loaded_tables(),
-            reset_tables_status(Tables),
-            Result
-    catch
-        Type:Msg ->
-            exception:notify(Type, Msg)
-    end.
-
-do_persist_all() ->
-    case get_persist_all_sql() of
-        [] -> do_nothing;
-        Sqls -> 
-            execute_with_procedure(JoinedSql),
-            JoinedSql
-    end.
-
-get_persist_all_sql() ->
-    Tables = all_loaded_tables(),
-    PlayerID = get(player_id),
-    logger:info("PERSIST FOR: ~p~n", [PlayerID]),
-    Sqls = lists:foldl(fun(Table, Result) ->
-        [generate_persist_sql(Table)|Result]
-    end, [], Tables),
-    lists:flatten(Sqls).
-
-reset_tables_status(Tables) ->
-    lists:foreach(fun reset_status/1, Tables).
-
-reset_status(Table) ->
-    put({Table, deleteIdList}, []),
-    case id_status_list(Table) of
-        [] -> [];
-        IdList ->
-            NewIdList = lists:foldl(fun
-                            ({Id, _}, Result) ->
-                                [{Id, ?MODEL_ORIGIN}|Result]
-                        end, [], IdList),
-            put({Table, idList}, NewIdList)
-    end.
-
-execute_with_procedure(Sql) ->
-    ProcedureName = db:procedure_name(<<"player">>, get(player_id)),
-    % logger:info("PERSIST FOR [~p] Sql: ~p~n", [get(player_id), Sql]),
-    db:execute_with_procedure(ProcedureName, Sql).
-
 %% Private Methods
 selectOne(Table, Values) ->
     Fields = record_mapper:get_mapping(Table),
@@ -348,13 +291,17 @@ update_status(Table, Id, Status) ->
             end
     end.
 
-reset_status(Table, Id) ->
+reset_status(Table, Id, ?MODEL_DELETE) ->
+    IdList = get({Table, deleteIdList}),
+    case lists:keydelete(Id, 1, IdList) of
+        IdList -> ok;
+        NewIdList -> put({Table, deleteIdList}, NewIdList)
+    end;
+reset_status(Table, Id, _CurrentStatus) ->
     IdList = id_status_list(Table),
-    case lists:keyfind(Id, 1, IdList) of
-        false -> ok;
-        {Id, Status} ->
-            NewIdList = lists:delete({Id, Status}, IdList),
-            put({Table, idList}, [{Id, Status}|NewIdList])
+    case lists:keyreplace(Id, 1, IdList, {Id, ?MODEL_ORIGIN}) of
+        IdList -> ok;
+        NewIdList -> put({Table, idList}, NewIdList)
     end.
 
 makepat(Fields, Values) ->
@@ -434,26 +381,45 @@ delete_status_list(Table) ->
         IdList -> IdList
     end.
 
-sqls(Table, IdList) ->
-    lists:foldl(fun
-        ({Id, Status}, Result) ->
-            if
-                Status =:= ?MODEL_ORIGIN ->
-                    Result;
-                Status =:= ?MODEL_CREATE orelse Status =:= ?MODEL_UPDATE ->
-                    Rec = get({Table, Id}),
-                    Sql = sql(Rec, Status),
-                    db:execute(Sql),
-                    reset_status(Table, Id);
-                Status =:= ?MODEL_DELETE ->
-                    [sql({Table, Id}, Status)|Result]
-            end
-    end, [], IdList).
+persist_all() ->
+    try do_persist_all() of
+        Result -> Result
+    catch
+        Type:Msg -> exception:notify(Type, Msg)
+    end.
+
+do_persist_all() ->
+    logger:info("PERSIST FOR: ~p~n", [get(player_id)]),
+    lists:foreach(fun(Table) -> persist_table(Table) end, all_loaded_tables()).
+
+persist_table(Table) ->
+    StatusIdList = id_status_list(Table),
+    DeleteIdList = delete_status_list(Table),
+    if
+        StatusIdList =:= [] andalso DeleteIdList =:= [] -> [];
+        true -> do_persist_table(Table, StatusIdList ++ DeleteIdList)
+    end.
+
+do_persist_table(Table, IdList) ->
+    lists:foreach(fun({Id, Status}) ->
+        if
+            Status =:= ?MODEL_ORIGIN -> ok;
+            Status =:= ?MODEL_CREATE orelse Status =:= ?MODEL_UPDATE ->
+                Rec = get({Table, Id}),
+                Sql = sql(Rec, Status),
+                db:execute(Sql),
+                reset_status(Table, Id, Status);
+            Status =:= ?MODEL_DELETE ->
+                Sql = sql({Table, Id}, Status),
+                db:execute(Sql),
+                reset_status(Table, Id, Status)
+        end
+    end, IdList).
 
 sql(Rec, ?MODEL_CREATE) ->
     {Table, Fields, Values} = rec_info(Rec),
-    Sql = db_fmt:format("INSERT INTO `~s` (~s) VALUES (~s)", 
-                        [Table, join_fields(Fields), join_values(Values)]);
+    db_fmt:format("INSERT INTO `~s` (~s) VALUES (~s)", 
+                  [Table, join_fields(Fields), join_values(Values)]);
 sql(Rec, ?MODEL_UPDATE) ->
     {Table, Fields, Values} = rec_info(Rec),
     Uuid = hd(Values),
