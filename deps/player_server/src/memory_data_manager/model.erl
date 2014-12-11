@@ -241,12 +241,8 @@ generate_persist_sql(Table) ->
     StatusIdList = id_status_list(Table),
     DeleteIdList = delete_status_list(Table),
     if
-        StatusIdList =:= [] andalso DeleteIdList =:= [] -> <<>>;
-        true ->
-            case sqls(Table, StatusIdList ++ DeleteIdList) of
-                [] -> <<>>;
-                Sqls -> binary_string:join(Sqls, <<";">>)
-            end
+        StatusIdList =:= [] andalso DeleteIdList =:= [] -> [];
+        true -> sqls(Table, StatusIdList ++ DeleteIdList)
     end.
 
 persist_all() ->
@@ -262,8 +258,8 @@ persist_all() ->
 
 do_persist_all() ->
     case get_persist_all_sql() of
-        <<>> -> do_nothing;
-        JoinedSql -> 
+        [] -> do_nothing;
+        Sqls -> 
             execute_with_procedure(JoinedSql),
             JoinedSql
     end.
@@ -273,14 +269,9 @@ get_persist_all_sql() ->
     PlayerID = get(player_id),
     logger:info("PERSIST FOR: ~p~n", [PlayerID]),
     Sqls = lists:foldl(fun(Table, Result) ->
-        case generate_persist_sql(Table) of
-            <<>> -> Result;
-            Sql -> 
-                logger:info("[~p] Table: ~p SQL: ~p~n", [PlayerID, Table, Sql]),
-                [Sql|Result]
-        end
+        [generate_persist_sql(Table)|Result]
     end, [], Tables),
-    binary_string:join(Sqls, <<";">>).
+    lists:flatten(Sqls).
 
 reset_tables_status(Tables) ->
     lists:foreach(fun reset_status/1, Tables).
@@ -355,6 +346,15 @@ update_status(Table, Id, Status) ->
                     put({Table, idList}, NewIdList),
                     add_to_delete_list(Table, Id)
             end
+    end.
+
+reset_status(Table, Id) ->
+    IdList = id_status_list(Table),
+    case lists:keyfind(Id, 1, IdList) of
+        false -> ok;
+        {Id, Status} ->
+            NewIdList = lists:delete({Id, Status}, IdList),
+            put({Table, idList}, [{Id, Status}|NewIdList])
     end.
 
 makepat(Fields, Values) ->
@@ -442,7 +442,9 @@ sqls(Table, IdList) ->
                     Result;
                 Status =:= ?MODEL_CREATE orelse Status =:= ?MODEL_UPDATE ->
                     Rec = get({Table, Id}),
-                    [sql(Rec, Status)|Result];
+                    Sql = sql(Rec, Status),
+                    db:execute(Sql),
+                    reset_status(Table, Id);
                 Status =:= ?MODEL_DELETE ->
                     [sql({Table, Id}, Status)|Result]
             end
@@ -450,8 +452,8 @@ sqls(Table, IdList) ->
 
 sql(Rec, ?MODEL_CREATE) ->
     {Table, Fields, Values} = rec_info(Rec),
-    db_fmt:format("INSERT INTO `~s` (~s) VALUES (~s)", 
-                  [Table, join_fields(Fields), join_values(Values)]);
+    Sql = db_fmt:format("INSERT INTO `~s` (~s) VALUES (~s)", 
+                        [Table, join_fields(Fields), join_values(Values)]);
 sql(Rec, ?MODEL_UPDATE) ->
     {Table, Fields, Values} = rec_info(Rec),
     Uuid = hd(Values),

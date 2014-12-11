@@ -43,6 +43,7 @@ start_link() ->
 %% supervisor.
 
 init([]) ->
+    DBSupSpec = ?CHILD(db_sup, db_sup, supervisor, []),
     GamePort = case application:get_env(game_server, game_port) of
                    undefined -> 5555;
                    {ok, GPort} -> GPort
@@ -69,7 +70,7 @@ init([]) ->
     NameServerSupSpec = ?CHILD(name_server_sup, name_server_sup, supervisor, []),
     IapServerSupSpec = ?CHILD(iap_server_sup, iap_server_sup, supervisor, []),
     HttpWorkerSpec = ?CHILD(http, http, worker, []),
-    Specs = [GameServerSpec, RanchSupSpec, ListenerSpec, 
+    Specs = [DBSupSpec, GameServerSpec, RanchSupSpec, ListenerSpec, 
              ApiServerSpec, RedisPoolSupSpec, NameServerSupSpec,
              IapServerSupSpec, HttpWorkerSpec],
     {ok, {{one_for_one, 10, 10}, Specs}}.

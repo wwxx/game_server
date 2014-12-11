@@ -52,8 +52,7 @@ start(_Type, _Args) ->
         {ok, development} -> ?DB_DEVELOPMENT;
         {ok, test} -> ?DB_TEST
     end,
-    ensure_started(db),
-    db:init_pool(DB_Config),
+    % db:init_pool(DB_Config),
     ensure_started(game_numerical),
     ensure_started(player_server),
     ensure_started(leaderboard),
@@ -67,6 +66,7 @@ start(_Type, _Args) ->
     life_cycle:before_start(),
     R = game_server_sup:start_link(),
     life_cycle:after_start(),
+    db:init_pool(DB_Config),
     R.
 
 prep_stop(State) ->

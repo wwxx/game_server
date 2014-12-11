@@ -33,7 +33,7 @@
 -behaviour(gen_server).
 
 %% API
--export ([start_link/0,
+-export ([start_link/1,
           init_pool/1,
           create/1,
           delete_by/3,
@@ -179,7 +179,7 @@ execute_with_procedure(ProcedureName, Sql) ->
 -spec(execute(binary()) -> tuple() ).
 execute(SQL) ->
     % error_logger:info_msg("SQL: ~p~n", [SQL]),
-    Result = emysql:execute(?DB_POOL, SQL),
+    Result = mysql:fetch(?DB_POOL, binary_to_list(SQL)),
     % error_logger:info_msg("SQL EXECUTE RESULT: ~p~n", [Result]),
     case is_tuple(Result) of
         true ->
@@ -196,8 +196,8 @@ execute(SQL) ->
 %%%===================================================================
 %%% gen_server API
 %%%===================================================================
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(Config) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [Config], []).
 
 init_pool(Config) ->
     gen_server:call(?SERVER, {init_pool, Config}).
@@ -205,7 +205,7 @@ init_pool(Config) ->
 %%%===================================================================
 %%% gen_server callbacks
 %%%===================================================================
-init([]) ->
+init([Config]) ->
     {ok, #state{}}.
 
 handle_call({init_pool, Config}, _From, State) ->
@@ -223,7 +223,7 @@ handle_info(_Info, State) ->
     {noreply, State}.
 
 terminate(_Reason, _State) ->
-    remove_pool(),
+    % remove_pool(),
     ok.
 
 code_change(_OldVsn, State, _Extra) ->
@@ -233,22 +233,15 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %%%===================================================================
 do_init_pool(L) ->
-    % L = case application:get_env(game_server, server_environment) of
-    %         {ok, production} -> ?DB_PRODUCTION;
-    %         {ok, development} -> ?DB_DEVELOPMENT;
-    %         {ok, test} -> ?DB_TEST
-    %     end,
     Database = atom_to_list(proplists:get_value(database, L)),
     Username = atom_to_list(proplists:get_value(username, L)),
     Password = atom_to_list(proplists:get_value(password, L)),
-    Encoding = proplists:get_value(encoding, L),
+    % Encoding = proplists:get_value(encoding, L),
     PoolSize = proplists:get_value(pool,L),
-    ok = emysql:add_pool(?DB_POOL, PoolSize, Username, Password,
-                         "localhost", 3306, Database, Encoding).
-
-remove_pool() ->
-    ok = emysql:remove_pool(?DB_POOL).
-
+    supervisor:start_child(db_sup, [?DB_POOL, "localhost", Username, Password, Database]),
+    lists:foreach(fun(_) ->
+        mysql:connect(?DB_POOL, "localhost", 3306, Username, Password, Database, true)
+    end, lists:duplicate(PoolSize, 1)).
 
 % map(Fields, Values) ->
 %     map(Fields, Values, []).

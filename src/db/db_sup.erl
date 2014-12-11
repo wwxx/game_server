@@ -32,6 +32,8 @@
 %% Supervisor callbacks
 -export([init/1]).
 
+-include("include/db_config.hrl").
+
 -define(CHILD(Id, Mod, Type, Args), {Id, {Mod, start_link, Args},
                                      permanent, 5000, Type, [Mod]}).
 
@@ -67,9 +69,18 @@ start_link() ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-    DB = ?CHILD(db, db, worker, []),
     UuidFactory = ?CHILD(uuid_factory, uuid_factory, worker, []),
-    {ok, {{one_for_one, 5, 10}, [DB, UuidFactory]}}.
+    L = case application:get_env(game_server, server_environment) of
+        {ok, production} -> ?DB_PRODUCTION;
+        {ok, development} -> ?DB_DEVELOPMENT;
+        {ok, test} -> ?DB_TEST
+    end,
+    Database = atom_to_list(proplists:get_value(database, L)),
+    Username = atom_to_list(proplists:get_value(username, L)),
+    Password = atom_to_list(proplists:get_value(password, L)),
+    MysqlPool = ?CHILD(mysql, mysql, worker, [database_pool, "localhost", Username, Password, Database]),
+    DB = ?CHILD(db, db, worker, [L]),
+    {ok, {{one_for_one, 5, 10}, [UuidFactory, MysqlPool, DB]}}.
 
 %%%===================================================================
 %%% Internal functions
