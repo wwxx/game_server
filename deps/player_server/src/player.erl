@@ -274,10 +274,8 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info(circulation_persist_data, State=#player_state{circulation_persist_timer=Timer}) ->
-    ProcessInfo = erlang:process_info(player:player_pid(get(player_id))),
-    PersistSql = model:persist_all(),
     IsExpired = time_utils:current_time() - get_last_active() >= ?EXPIRE_DURATION,
-    case IsExpired and check_persist(ProcessInfo, PersistSql) =:= true of
+    case IsExpired and check_persist() =:= true of
         true ->
             {stop, {shutdown, data_persisted}, State};
         false ->
@@ -407,8 +405,6 @@ check_persist(ProcessInfo, PersistSql) ->
                 true -> ok;
                 _ ->
                     put(has_checked_persist, true),
-                    put(persist_failed_process_info, ProcessInfo),
-                    put(persist_failed_sql, PersistSql),
                     spawn(fun() -> 
                         Msg = io_lib:format("PlayerID: ~p~n", [PlayerID]),
                         {ok, Path} = file:get_cwd(),
