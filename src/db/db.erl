@@ -45,8 +45,7 @@
           request/2,
           all/1,
           update_all/1,
-          execute/1,
-          procedure_name/2
+          execute/1
          ]).
 
 
@@ -174,18 +173,15 @@ cast_field_value(Type, Value) ->
                 list_to_integer(Value);
             Type =:= 'FLOAT' ->
                 case string:to_float(Value) of
-                    {error, no_float} -> 
-                        list_to_integer(Value);
+                    {error, no_float} -> list_to_integer(Value);
                     Res -> Res
                 end;
             Type =:= 'DATETIME' ->
                 time_utils:to_timestamp(Value);
             true ->
-                error(list_to_binary(io_lib:format("UNPARSED TYPE: ~p, Value: ~p", [Type, Value])))
+                Msg = io_lib:format("UNPARSED TYPE: ~p, Value: ~p", [Type, Value]),
+                error(list_to_binary(Msg))
         end.
-
-procedure_name(Name, Suffix) ->
-    list_to_binary([Name, <<"_">>, Suffix]).
 
 %%--------------------------------------------------------------------
 %% @doc:    Execute SQL and return Result
@@ -197,24 +193,16 @@ execute(SQL) ->
     % error_logger:info_msg("SQL: ~p~n", [SQL]),
     Result = mysql:fetch(?DB_POOL, binary_to_list(SQL)),
     % error_logger:info_msg("SQL EXECUTE RESULT: ~p~n", [Result]),
-    case is_tuple(Result) of
-        true ->
-            case tuple_to_list(Result) of
-                [error_packet|_] ->
-                    erlang:error(Result);
-                _ ->
-                    logger:info("Result: ~p~n", [Result]),
-                    case Result of
-                        {updated, V} -> {updated, V};
-                        {data, {mysql_result, FieldDefines, [], A, B}} -> 
-                            {data, {mysql_result, FieldDefines, [], A, B}};
-                        {data, {mysql_result, FieldDefines, Values, A, B}} ->
-                            CastedValues = cast_rows(FieldDefines, Values),
-                            {data, {mysql_result, FieldDefines, CastedValues, A, B}}
-                    end
-            end;
-        false ->
-            Result
+    case Result of
+        {error, V} -> 
+            error({error, V});
+        {updated, V} -> 
+            {updated, V};
+        {data, {mysql_result, FieldDefines, [], A, B}} -> 
+            {data, {mysql_result, FieldDefines, [], A, B}};
+        {data, {mysql_result, FieldDefines, Values, A, B}} ->
+            CastedValues = cast_rows(FieldDefines, Values),
+            {data, {mysql_result, FieldDefines, CastedValues, A, B}}
     end.
 
 %%%===================================================================
