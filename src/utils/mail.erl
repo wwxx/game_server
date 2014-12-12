@@ -3,7 +3,7 @@
 -export([send/4, exception_notify/1]).
 
 exception_notify(ExceptionMsg) ->
-    case application:get_env(game_server, server_environment) of
+    case application:get_env(game_server, exception_mail_receivers) of
         undefined -> ok;
         {ok, Receivers} ->
             send(os_utils:get_ip_string(), Receivers, "Server_Exception", ExceptionMsg)
