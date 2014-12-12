@@ -2,10 +2,12 @@
 
 -export([send/4, exception_notify/1]).
 
--define(DEVELOPER_EMAILS, ["mafei.198@gmail.com", "abtree123@gmail.com"]).
-
 exception_notify(ExceptionMsg) ->
-    send(os_utils:get_ip_string(), ?DEVELOPER_EMAILS, "Server_Exception", ExceptionMsg).
+    case application:get_env(game_server, server_environment) of
+        undefined -> ok;
+        {ok, Receivers} ->
+            send(os_utils:get_ip_string(), Receivers, "Server_Exception", ExceptionMsg)
+    end.
 
 send(From, Receivers, Subject, Body) ->
     To = lists:foldl(fun(Receiver, Acc) ->
