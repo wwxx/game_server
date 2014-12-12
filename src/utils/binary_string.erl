@@ -28,7 +28,7 @@
 
 -module(binary_string).
 
--export([split/2, join/2]).
+-export([split/2, join/2, is_valid_for_mysql/1, clean_for_mysql/1]).
 
 split(BinaryString, Separator) ->
     split(BinaryString, Separator, []).
@@ -52,3 +52,15 @@ join([BinaryString|BinaryStringList], Separator, <<>>) ->
 join([BinaryString|BinaryStringList], Separator, Result) ->
     join(BinaryStringList, Separator, <<Result/binary, Separator/binary, BinaryString/binary>>).
 
+
+-define(INVALID_MYSQL_UTF8_RE, "[\x{010000}-\x{10FFFF}]").
+
+is_valid_for_mysql(BinString) ->
+    case re:run(unicode:characters_to_list(BinString), ?INVALID_MYSQL_UTF8_RE, [unicode]) of
+        nomatch -> true;
+        _ -> false
+    end.
+
+clean_for_mysql(BinString) ->
+    Res = re:replace(unicode:characters_to_list(BinString), ?INVALID_MYSQL_UTF8_RE, "", [unicode]),
+    list_to_binary(Res).
