@@ -161,7 +161,7 @@ cast_rows(FieldDefines, Rows) ->
 
 cast_row(FieldDefines, Values) ->
     lists:zipwith(fun({_, _, _, Type}, Value) ->
-        cast_field_value(Type, Value)
+        mysql_type_cast:cast(Type, Value)
     end, FieldDefines, Values).
 
 cast_field_value(_Type, null) -> undefined;
