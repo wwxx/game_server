@@ -286,7 +286,12 @@ handle_info(circulation_persist_data, State=#player_state{circulation_persist_ti
             {noreply, State#player_state{circulation_persist_timer=NewTimer}}
     end;
 handle_info({gproc_msg, MsgType, Msg}, State=#player_state{playerID=PlayerID}) ->
-    player_subscribe:handle(MsgType, PlayerID, Msg),
+    try player_subscribe:handle(MsgType, PlayerID, Msg) of
+        _Response -> ok
+    catch 
+        Exception:Msg ->
+            exception:notify(Exception, Msg)
+    end,
     {noreply, State};
 handle_info({shutdown, From}, State) ->
     model:persist_all(),
