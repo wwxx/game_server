@@ -66,7 +66,8 @@ clean_for_mysql(BinString) ->
     list_to_binary(Res).
 
 %% Usage:
-%% format(<<"hello [name], are you [age] years old?">>, [{name, <<"savin">>}, {age, 26}]).
+%% binary_string:format(<<"hello [name], are you [age] years old?">>, 
+%%                      [{name, <<"savin">>}, {age, 26}]).
 format(String, List) ->
     case re:run(String, "\[[a-z]+\]", [global]) of
         {match, Matches} ->
