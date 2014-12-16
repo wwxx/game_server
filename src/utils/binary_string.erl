@@ -28,7 +28,7 @@
 
 -module(binary_string).
 
--export([split/2, join/2, is_valid_for_mysql/1, clean_for_mysql/1]).
+-export([split/2, join/2, is_valid_for_mysql/1, clean_for_mysql/1, format/2]).
 
 split(BinaryString, Separator) ->
     split(BinaryString, Separator, []).
@@ -64,3 +64,33 @@ is_valid_for_mysql(BinString) ->
 clean_for_mysql(BinString) ->
     Res = re:replace(unicode:characters_to_list(BinString), ?INVALID_MYSQL_UTF8_RE, "", [unicode]),
     list_to_binary(Res).
+
+%% Usage:
+%% format(<<"hello [name], are you [age] years old?">>, [{name, <<"savin">>}, {age, 26}]).
+format(String, List) ->
+    case re:run(String, "\[[a-z]+\]", [global]) of
+        {match, Matches} ->
+            Values = lists:foldl(fun([{Pos, Len}], Result) ->
+                Key = binary:part(String, Pos + 1, Len - 2),
+                {_, Value} = lists:keyfind(binary_to_atom(Key, utf8), 1, List),
+                [convert_value_to_binary(Value)|Result]
+            end, [], Matches),
+            RValues = lists:reverse(Values),
+            RvalueLen = length(RValues),
+            {Formated, _} = lists:foldl(fun(Chunk, {Result, Idx}) ->
+                if
+                    Idx =< RvalueLen ->
+                        {[lists:nth(Idx, RValues)|[Chunk|Result]], Idx + 1};
+                    true ->
+                        {[Chunk|Result], Idx + 1}
+                end
+            end, {[], 1}, re:split(String, "\[[a-z]+\]")),
+            list_to_binary(lists:reverse(Formated));
+        nomatch -> String
+    end.
+
+convert_value_to_binary(Value) when is_binary(Value) -> Value;
+convert_value_to_binary(Value) when is_list(Value) -> list_to_binary(Value);
+convert_value_to_binary(Value) when is_integer(Value) -> integer_to_binary(Value);
+convert_value_to_binary(Value) when is_float(Value) -> float_to_binary(Value);
+convert_value_to_binary(Value) when is_atom(Value) -> atom_to_binary(Value, utf8).
