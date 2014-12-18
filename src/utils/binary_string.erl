@@ -69,10 +69,12 @@ clean_for_mysql(BinString) ->
 %% binary_string:format(<<"hello [name], are you [age] years old?">>, 
 %%                      [{name, <<"savin">>}, {age, 26}]).
 format(String, List) ->
-    case re:run(String, "\[[a-z]+\]", [global]) of
+    %% error_logger:info_msg("formatlist:~p", [List]),
+    case re:run(String, "\[[a-z0-9_]+\]", [global]) of
         {match, Matches} ->
             Values = lists:foldl(fun([{Pos, Len}], Result) ->
                 Key = binary:part(String, Pos + 1, Len - 2),
+                %% error_logger:info_msg("formatkey:~p", [Key]),
                 {_, Value} = lists:keyfind(binary_to_atom(Key, utf8), 1, List),
                 [convert_value_to_binary(Value)|Result]
             end, [], Matches),
@@ -85,7 +87,7 @@ format(String, List) ->
                     true ->
                         {[Chunk|Result], Idx + 1}
                 end
-            end, {[], 1}, re:split(String, "\[[a-z]+\]")),
+            end, {[], 1}, re:split(String, "\[[a-z0-9_]+\]")),
             list_to_binary(lists:reverse(Formated));
         nomatch -> String
     end.
