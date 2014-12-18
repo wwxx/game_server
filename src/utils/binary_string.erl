@@ -69,7 +69,7 @@ clean_for_mysql(BinString) ->
 %% binary_string:format(<<"hello [name], are you [age] years old?">>, 
 %%                      [{name, <<"savin">>}, {age, 26}]).
 format(String, List) ->
-    case re:run(String, "\[[a-z]+\]", [global]) of
+    case re:run(String, "\[[a-z|_]+\]", [global]) of
         {match, Matches} ->
             Values = lists:foldl(fun([{Pos, Len}], Result) ->
                 Key = binary:part(String, Pos + 1, Len - 2),
