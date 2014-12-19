@@ -67,6 +67,7 @@ start(_Type, _Args) ->
     life_cycle:before_start(),
     R = game_server_sup:start_link(),
     life_cycle:after_start(),
+    mtwist:seed(time_utils:now()),
     R.
 
 prep_stop(State) ->
