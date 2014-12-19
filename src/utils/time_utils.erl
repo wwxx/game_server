@@ -27,6 +27,7 @@
 -export([now/0,
          one_week/0,
          current_time/0,
+         get_now_daynum/0,
          remain_seconds_to_tomorrow/0,
          begin_of_today/0,
          end_of_today/0,
@@ -52,6 +53,11 @@ one_week() ->
 current_time() ->
     Datetime = calendar:universal_time(),
     calendar:datetime_to_gregorian_seconds(Datetime) - ?ORI_SECONDS.
+
+% 获取今天星期数
+get_now_daynum() ->
+    {Date, _} = calendar:universal_time(),
+    calendar:day_of_the_week(Date).
 
 remain_seconds_to_tomorrow() ->
     end_of_today() - current_time().
