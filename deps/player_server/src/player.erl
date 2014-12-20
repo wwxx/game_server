@@ -274,6 +274,7 @@ handle_cast(_Msg, State) ->
     {noreply, State}.
 
 handle_info(circulation_persist_data, State=#player_state{circulation_persist_timer=Timer}) ->
+    erlang:cancel_timer(Timer),
     ProcessInfo = erlang:process_info(player:player_pid(get(player_id))),
     PersistSql = model:persist_all(),
     IsExpired = time_utils:current_time() - get_last_active() >= ?EXPIRE_DURATION,
@@ -281,7 +282,6 @@ handle_info(circulation_persist_data, State=#player_state{circulation_persist_ti
         true ->
             {stop, {shutdown, data_persisted}, State};
         false ->
-            erlang:cancel_timer(Timer),
             NewTimer = erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
             {noreply, State#player_state{circulation_persist_timer=NewTimer}}
     end;

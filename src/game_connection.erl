@@ -38,10 +38,10 @@
          terminate/2,
          code_change/3]).
 
--record(protocol, {ref, socket, transport, playerID, last_active_time}).
+-record(protocol, {ref, socket, transport, playerID, last_active_time, timer}).
 
--define(ACTIVITY_CHECK_DURATION, 180000).
-
+-define(ACTIVITY_CHECK_DURATION, 30000).
+-define(EXPIRE_DURATION, 90000).
 
 -include("include/gproc_macros.hrl").
 -include("../app/include/secure.hrl").
@@ -94,8 +94,12 @@ sync_stop(Pid) ->
 %% @end
 %%--------------------------------------------------------------------
 init([Ref, Socket, Transport]) ->
-    %erlang:start_timer(ACTIVITY_CHECK_DURATION, self(), active_check),
-    {ok, #protocol{ref = Ref, socket = Socket, transport = Transport, last_active_time = time_utils:current_time()}, 0}.
+    Timer = erlang:send_after(?ACTIVITY_CHECK_DURATION, self(), active_check),
+    {ok, #protocol{ref = Ref, 
+                   socket = Socket, 
+                   transport = Transport, 
+                   timer = Timer,
+                   last_active_time = time_utils:now()}, 0}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -165,6 +169,14 @@ handle_cast({send_multi_data, MultiData},
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
+handle_info(active_check, State=#protocol{timer = Timer, last_active_time = ActiveAt}) ->
+    erlang:cancel_timer(Timer),
+    case time_utils:now() - ActiveAt >= ?EXPIRE_DURATION of
+        true -> {stop, normal, State};
+        false ->
+            NewTimer = erlang:send_after(?ACTIVITY_CHECK_DURATION, self(), active_check),
+            {noreply, State#protocol{timer = NewTimer}}
+    end;
 handle_info(timeout, State=#protocol{transport = Transport, socket = Socket}) ->
     ok = ranch:accept_ack(State#protocol.ref),
     ok = Transport:setopts(Socket, [{active, once}, {packet, 2}]),
@@ -179,7 +191,8 @@ handle_info({tcp, Socket, CipherData},
         {error, Msg} ->
             error_logger:info_msg("PlayerID: ~p, Route Error! Invalid RequestType: ~p~n", 
                                   [PlayerID, RequestType]),
-            send_single_socket_data(Transport, Socket, RequestId, {0, Msg});
+            send_single_socket_data(Transport, Socket, RequestId, {0, Msg}),
+            State#protocol{last_active_time = time_utils:now()};
         RoutePath ->
             {Params, _LeftData} = api_decoder:decode(RequestContent),
             error_logger:info_msg("PlayerID: ~p, Request Path: ~p Parmas: ~p~n", 
@@ -209,14 +222,14 @@ handle_request({Path = {sessions_controller, login}, Params, RequestId}, State) 
     register_connection(PlayerID),
     player_factory:start_player(PlayerID),
     player:request(PlayerID, Path, proplists_utils:values(Params), RequestId),
-    {noreply, State#protocol{playerID = PlayerID}};
+    {noreply, State#protocol{playerID = PlayerID, last_active_time = time_utils:now()}};
 handle_request({Path, Params, RequestId}, State=#protocol{playerID = PlayerID}) ->
     case PlayerID of
         undefined ->
             {stop, {playerID, undefined}, State};
         _ ->
             player:request(PlayerID, Path, proplists_utils:values(Params), RequestId),
-            {noreply, State}
+            {noreply, State#protocol{last_active_time = time_utils:now()}}
     end.
 
 encode_response(Response) ->
