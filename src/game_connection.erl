@@ -60,7 +60,6 @@
 %% @end
 %%--------------------------------------------------------------------
 start_link(Ref, Socket, Transport, Opts) ->
-    % gen_server:start_link({local, ?MODULE}, ?MODULE, [Ref, Socket, Transport], Opts).
     gen_server:start_link(?MODULE, [Ref, Socket, Transport], Opts).
 
 send_data(Pid, Data) ->
@@ -116,6 +115,7 @@ init([Ref, Socket, Transport]) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_call(stop, _From, State) ->
+    connection_will_stop(State),
     {stop, normal, ok, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
@@ -133,6 +133,7 @@ handle_call(_Request, _From, State) ->
 %% @end
 %%--------------------------------------------------------------------
 handle_cast(stop, State) ->
+    connection_will_stop(State),
     {stop, normal, State};
 handle_cast({send_data, RequestId, Data}, State=#protocol{transport = Transport, 
                                                           socket = Socket, 
@@ -169,19 +170,11 @@ handle_cast({send_multi_data, MultiData},
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(active_check, State=#protocol{playerID = PlayerID, 
-                                          transport = Transport,
-                                          socket = Socket,
-                                          timer = Timer, 
-                                          last_active_time = ActiveAt}) ->
+handle_info(active_check, State=#protocol{timer = Timer, last_active_time = ActiveAt}) ->
     erlang:cancel_timer(Timer),
     case time_utils:now() - ActiveAt >= ?EXPIRE_DURATION of
         true -> 
-            case State#protocol.playerID of
-                undefined -> ok;
-                PlayerID -> player:on_tcp_closed(PlayerID)
-            end,
-            Transport:close(Socket),
+            connection_will_stop(State),
             {stop, normal, State};
         false ->
             NewTimer = erlang:send_after(?ACTIVITY_CHECK_DURATION, self(), active_check),
@@ -210,20 +203,12 @@ handle_info({tcp, Socket, CipherData},
             handle_request({RoutePath, Params, RequestId}, State)
     end;
 handle_info({tcp_closed, _Socket}, State) ->
-    error_logger:info_msg("DISCONNECT: tcp_closed, PlayerID: ~p~n", 
-                          [State#protocol.playerID]),
-    case State#protocol.playerID of
-        undefined -> ok;
-        PlayerID -> player:on_tcp_closed(PlayerID)
-    end,
+    error_logger:info_msg("DISCONNECT: tcp_closed, PlayerID: ~p~n", [State#protocol.playerID]),
+    connection_will_stop(State),
     {stop, normal, State};
 handle_info({tcp_error, _Socket, _Msg}, State) ->
-    error_logger:info_msg("DISCONNECT: tcp_error, playerID: ~p~n", 
-                          [State#protocol.playerID]),
-    case State#protocol.playerID of
-        undefined -> ok;
-        PlayerID -> player:on_tcp_closed(PlayerID)
-    end,
+    error_logger:info_msg("DISCONNECT: tcp_error, playerID: ~p~n", [State#protocol.playerID]),
+    connection_will_stop(State),
     {stop, normal, State}.
 
 handle_request({Path = {sessions_controller, login}, Params, RequestId}, State) ->
@@ -236,6 +221,7 @@ handle_request({Path = {sessions_controller, login}, Params, RequestId}, State) 
 handle_request({Path, Params, RequestId}, State=#protocol{playerID = PlayerID}) ->
     case PlayerID of
         undefined ->
+            connection_will_stop(State),
             {stop, {playerID, undefined}, State};
         _ ->
             player:request(PlayerID, Path, proplists_utils:values(Params), RequestId),
@@ -329,6 +315,17 @@ pack_response_data(RequestId, Data) ->
 
 send_socket_data(Transport, Socket, PureData) ->
     CipherData = secure:encrypt(?AES_KEY, ?AES_IVEC, PureData),
-    % error_logger:info_msg("Socket Data Length: ~p~n", [erlang:byte_size(CipherData)]),
-    % error_logger:info_msg("Socket Data: ~p~n", [CipherData]),
     Transport:send(Socket, CipherData).
+
+connection_will_stop(_State=#protocol{playerID = PlayerID,
+                                      transport = Transport, socket = Socket}) ->
+    if
+        PlayerID =/= undefined ->
+            player:on_tcp_closed(PlayerID);
+        true -> ok
+    end,
+    if
+        Transport =/= undefined andalso Socket =/= undefined ->
+            Transport:close(Socket);
+        true -> ok
+    end.
