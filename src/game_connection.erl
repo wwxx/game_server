@@ -169,10 +169,17 @@ handle_cast({send_multi_data, MultiData},
 %%                                   {stop, Reason, State}
 %% @end
 %%--------------------------------------------------------------------
-handle_info(active_check, State=#protocol{timer = Timer, last_active_time = ActiveAt}) ->
+handle_info(active_check, State=#protocol{playerID = PlayerID, 
+                                          timer = Timer, 
+                                          last_active_time = ActiveAt}) ->
     erlang:cancel_timer(Timer),
     case time_utils:now() - ActiveAt >= ?EXPIRE_DURATION of
-        true -> {stop, normal, State};
+        true -> 
+            case State#protocol.playerID of
+                undefined -> ok;
+                PlayerID -> player:on_tcp_closed(PlayerID)
+            end,
+            {stop, normal, State};
         false ->
             NewTimer = erlang:send_after(?ACTIVITY_CHECK_DURATION, self(), active_check),
             {noreply, State#protocol{timer = NewTimer}}
