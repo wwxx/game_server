@@ -175,6 +175,8 @@ handle_info(active_check, State=#protocol{timer = Timer, last_active_time = Acti
     case time_utils:now() - ActiveAt >= ?EXPIRE_DURATION of
         true -> 
             connection_will_stop(State),
+            error_logger:info_msg("DISCONNECT: tcp_timeout, PlayerID: ~p~n", 
+                                  [State#protocol.playerID]),
             {stop, normal, State};
         false ->
             NewTimer = erlang:send_after(?ACTIVITY_CHECK_DURATION, self(), active_check),
