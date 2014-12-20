@@ -40,8 +40,8 @@
 
 -record(protocol, {ref, socket, transport, playerID, last_active_time, timer}).
 
--define(ACTIVITY_CHECK_DURATION, 30000).
--define(EXPIRE_DURATION, 90000).
+-define(ACTIVITY_CHECK_DURATION, 30000). %% millisecond
+-define(EXPIRE_DURATION, 90). %% seconds
 
 -include("include/gproc_macros.hrl").
 -include("../app/include/secure.hrl").
