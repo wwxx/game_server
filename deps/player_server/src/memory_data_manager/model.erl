@@ -224,7 +224,7 @@ create(Record) ->
         undefined ->
             NewId = uuid_factory:gen(),
             {record_mapper:set_field(Record, uuid, NewId), NewId};
-        _ -> {Record, record_mapper:get_field(Record, uuid)}
+        Uuid -> {Record, Uuid}
     end,
     [Table|_Values] = tuple_to_list(RecWithId),
     ensure_load_data(Table),
