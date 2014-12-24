@@ -48,7 +48,7 @@
 find(Selector) ->
     [Table|Values] = tuple_to_list(Selector),
     ensure_load_data(Table),
-    case hd(Values) of
+    case record_mapper:get_field(Selector, uuid) of
         undefined -> selectOne(Table, Values);
         Id -> get({Table, Id})
     end.
@@ -136,7 +136,8 @@ count(Selector) ->
     end.
 
 update(Record) ->
-    [Table, Id|_] = tuple_to_list(Record),
+    [Table|_] = tuple_to_list(Record),
+    Id = record_mapper:get_field(Record, uuid),
     case get({Table, Id}) of
         undefined -> ok;
         _ ->
@@ -146,9 +147,9 @@ update(Record) ->
     end.
 
 update(Selector, Modifier) ->
-    [Table|SelectorValues] = tuple_to_list(Selector),
+    [Table|_] = tuple_to_list(Selector),
     ensure_load_data(Table),
-    case hd(SelectorValues) of
+    case record_mapper:get_field(Selector, uuid) of
         undefined -> match_update(Table, Selector, Modifier);
         Id -> update_by_key(Table, Id, Modifier)
     end.
@@ -188,7 +189,7 @@ match_update(Table, Selector, Modifier) ->
 delete(Selector) ->
     [Table|Values] = tuple_to_list(Selector),
     ensure_load_data(Table),
-    case hd(Values) of
+    case record_mapper:get_field(Selector, uuid) of
         undefined ->
             Fields = record_mapper:get_mapping(Table),
             FieldsAndValues = makepat(Fields, Values),
@@ -219,13 +220,13 @@ match_delete(Table, FieldsAndValues) ->
 create(Records) when is_list(Records) ->
     lists:foreach(fun create/1, Records);
 create(Record) ->
-    RecWithId = case tuple_to_list(Record) of
-        [RTable, undefined|RValues] ->
+    {RecWithId, Id} = case record_mapper:get_field(Record, uuid) of
+        undefined ->
             NewId = uuid_factory:gen(),
-            list_to_tuple([RTable,NewId|RValues]);
-        _ -> Record
+            {record_mapper:set_field(Record, uuid, NewId), NewId};
+        _ -> {Record, record_mapper:get_field(Record, uuid)}
     end,
-    [Table, Id|_Values] = tuple_to_list(RecWithId),
+    [Table|_Values] = tuple_to_list(RecWithId),
     ensure_load_data(Table),
     update_status(Table, Id, ?MODEL_CREATE),
     put({Table, Id}, RecWithId),
@@ -233,7 +234,8 @@ create(Record) ->
 
 %% Load data from databse.
 create(Record, load) ->
-    [Table, Id|_] = tuple_to_list(Record),
+    [Table|_] = tuple_to_list(Record),
+    Id = record_mapper:get_field(Record, uuid),
     update_status(Table, Id, ?MODEL_ORIGIN),
     put({Table, Id}, Record).
 
@@ -454,7 +456,7 @@ sql(Rec, ?MODEL_CREATE) ->
                   [Table, join_fields(Fields), join_values(Values)]);
 sql(Rec, ?MODEL_UPDATE) ->
     {Table, Fields, Values} = rec_info(Rec),
-    Uuid = hd(Values),
+    Uuid = record_mapper:get_field(Rec, uuid),
     db_fmt:format("UPDATE `~s` SET ~s WHERE `uuid` = ~s", 
                   [Table, db_fmt:map(Fields, Values), db_fmt:encode(Uuid)]);
 sql({Table, Uuid}, ?MODEL_DELETE) ->
