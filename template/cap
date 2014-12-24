@@ -25,8 +25,8 @@
 
 
 require 'yaml'
-deploy_config = YAML.load_file(File.expand_path("./deploy.yml"))
-SERVERS = deploy_config["servers"]
+$deploy_config = YAML.load_file(File.expand_path("./deploy.yml"))
+SERVERS = $deploy_config["servers"]
 
 remotes = `git remote`.split("\n")
 locales = SERVERS.values.map{|v| v["locale"]}.uniq
@@ -44,10 +44,10 @@ remotes.each do |name|
 end
 
 cmd 	= ARGV[0]
-scope   = (ARGV[1] || 'game_server_debug')
+scope   = (ARGV[1] || 'game_server')
 branch 	= ARGV[2] || 'master'
 
-unless ['setup', 'deploy', 'rollback', 'rerun', 'restart', 'upload'].include?(cmd)
+unless ['setup', 'deploy', 'rollback', 'rerun', 'restart', 'upload', 'hooks'].include?(cmd)
   puts "USAGE:"
   puts "	Setup remotes with scope: #{__FILE__} setup [scope]"
   puts "	Deploy remotes with branch and scope: #{__FILE__} deploy [scope, [branch]]"
@@ -64,8 +64,64 @@ elsif locales.include?(scope)
       targets << k
     end
   end
-elsif scope == "all"
+elsif scope == "all_servers"
   targets = server_names
+end
+
+def generate_deploy_config(target)
+  info = SERVERS[target]
+  path = "./#{target}.server.config"
+  File.open(path, "w") do |io|
+    kvs = info['config'].map do |k, v|
+      "    {#{k}, #{v}}"
+    end
+    io.puts "["
+    io.puts "  {game_server, ["
+    io.puts kvs.join(",\n")
+    io.puts "  ]}"
+    io.puts "]."
+  end
+  system("git deploy upload #{path} -r #{target}")
+  `rm #{path}`
+
+  path = "./.#{target}.sname"
+  File.open(path, "w") do |io|
+    io.puts "#{target}"
+  end
+  system("git deploy upload #{path} -r #{target}")
+  `rm #{path}`
+
+  path = "./.#{target}.cookie"
+  File.open(path, "w") do |io|
+    io.puts "#{target}_cookie"
+  end
+  system("git deploy upload #{path} -r #{target}")
+  `rm #{path}`
+
+  path = "./.#{target}.server_env"
+  File.open(path, "w") do |io|
+    io.puts $deploy_config['deploy_env']
+  end
+  system("git deploy upload #{path} -r #{target}")
+  `rm #{path}`
+
+  path = "./.#{target}.server_locale"
+  File.open(path, "w") do |io|
+    io.puts info['locale']
+  end
+  system("git deploy upload #{path} -r #{target}")
+  `rm #{path}`
+
+  db_path = File.expand_path("./app/server_engine/config/database.yml")
+  database = YAML.load_file(db_path)
+  database['production']['database'] = "#{info["config"]["database"]}_production"
+  database['development']['database'] = "#{info["config"]["database"]}_development"
+  path = "./.#{target}.database"
+  File.open(path, "w") do |io|
+    io.puts database.to_yaml
+  end
+  system("git deploy upload #{path} -r #{target}")
+  `rm #{path}`
 end
 
 # Operate multi server with threads.
@@ -73,12 +129,16 @@ cmd and targets and targets.map do |target|
   Thread.new do
     if cmd == 'deploy'
       puts "============>Begin to DEPLOY #{target}"
+      unless branch.to_s == "master"
+        branch = "+#{branch}:master"
+      end
       system("git push #{target} #{branch}")
       puts "<===========Finished to DEPLOY #{target}"
 
     elsif cmd == 'setup'
       puts "============>Begin to SETUP #{target}"
       system("git deploy setup -r #{target}")
+      generate_deploy_config(target)
       puts "<===========Finished to SETUP #{target}"
 
     elsif cmd == 'rollback'
@@ -96,8 +156,14 @@ cmd and targets and targets.map do |target|
       system("git deploy restart -r #{target}")
       puts "<===========Finished to RESTART #{target}"
 
+    elsif cmd == 'hooks'
+      puts "============>Begin to UPDATE HOOKS #{target}"
+      system("git deploy hooks -r #{target}")
+      puts "<===========Finished to UPDATE HOOKS #{target}"
+
     else
       raise "Invalid cmd: #{cmd}"
     end
   end
 end.each(&:join)
+

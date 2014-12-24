@@ -21,33 +21,24 @@
 %% OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 %% SOFTWARE.
 
--module(push_helper).
--export([push/2, push/3, 
-         send_msg/2, batch_send_msg/2]).
--include("include/db_schema.hrl").
+-module(schedule_helper).
 
-push(UserIds, Text) ->
-    lists:foreach(fun(UserId) ->
-        player:async_wrap(UserId, fun() ->
-            User = model:find(#users{uuid = UserId}),
-            send_msg(User#users.device_token, Text)
-        end)
-    end, UserIds).
+-export([start/0, backup/0]).
 
-push(UserIds, PushId, Values) ->
-    lists:foreach(fun(UserId) ->
-        player:async_wrap(UserId, fun() ->
-            User = model:find(#users{uuid = UserId}),
-            Text = i18n:t(config_pushes, PushId, User#users.locale, Values),
-            send_msg(User#users.device_token, Text)
-        end)
-    end, UserIds).
+start() ->
+    timer:apply_interval(timer:hours(4), schedule_helper, backup, []).
 
-send_msg(undefined, _Text) -> ok;
-send_msg(DeviceToken, Text) -> 
-    apns:send_message(push, binary_to_list(DeviceToken), Text).
+backup() ->
+    safe_execute(fun() ->
+        os:cmd("cd .. && ./backup")
+    end).
 
-batch_send_msg(DeviceTokens, Text) ->
-    lists:foreach(fun(DeviceToken) ->
-        apns:send_message(push, binary_to_list(DeviceToken), Text)
-    end, DeviceTokens).
+safe_execute(Fun) ->
+    try Fun() of
+        Result ->
+            error_logger:info_msg("Schedule Result: ~p~n", [Result])
+    catch
+        Type:Msg ->
+            exception:notify(Type, schedule, Msg)
+    end.
+

@@ -21,3 +21,7 @@ user:
 ###########################Request Parameters###########################
 login_params:
   udid: string
+  server_id: integer
+  locale: string
+  channel: integer
+  device_type: string

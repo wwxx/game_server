@@ -48,5 +48,5 @@ stop(_Pid) ->
 login_tests(_) ->
     Udid = <<"eunit_test_udid">>,
     _PlayerID = player_data:get_player_id(Udid),
-    Response = fake_client:request(Udid, login_params, {Udid}),
+    Response = fake_client:request(Udid, login_params, {Udid, undefined, undefined, undefined, undefined}),
     [?assert_no_error_msg(Response)].

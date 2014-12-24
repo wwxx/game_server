@@ -31,16 +31,10 @@
 %% Player Module Callback
 -export([handle/3]).
 
-handle(Channel, PlayerID, Msg) ->
-    %% dispatch to your custom msg handler.
-    handle_msg(Channel, PlayerID, Msg).
-
-handle_msg({world_chat, _ServerId}, PlayerID, Msg) ->
-    player:send_data(PlayerID, {chat_msg, Msg});
-
-handle_msg({alliance_chat, _AllianceId}, PlayerID, Msg) ->
-    player:send_data(PlayerID, {chat_msg, Msg});
-
-handle_msg(Channel, PlayerID, Msg) ->
-    error_logger:info_msg("Unhandled Msg! PlayerID: ~p, Channel: ~p, Msg: ~p~n",
-                          [Channel, PlayerID, Msg]).
+% You add some special handlers avoid the msg sending to client.
+% handle(daily_refresh, PlayerID, Msg) ->
+    % User = model:find(#users{uuid = PlayerID}),
+    % users_model:refresh_ap(User);
+handle(MsgType, PlayerID, Msg) ->
+    logger:info("[BROADCAST] PlayerID: ~p, MsgType: ~p, Msg: ~p~n", [PlayerID, MsgType, Msg]),
+    player:send_data(PlayerID, {MsgType, Msg}).
