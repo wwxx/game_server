@@ -43,6 +43,10 @@ task :setup => :environment do
   Rake::Task['generate_database_record'].execute
   puts ""
 
+  puts ">>>>>>>>> Generate Wordfilter"
+  Rake::Task['generate_wordfilter'].execute
+  puts ""
+
   puts ">>>>>>>>> Generate API"
   Rake::Task['generate_api'].execute
   puts ""
