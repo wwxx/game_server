@@ -328,8 +328,8 @@ update_status(Table, Id, Status) ->
     case lists:keyfind(Id, 1, IdList) of
         false ->
             if 
-                Status =:= ?MODEL_ORIGIN orelse
-                Status =:= ?MODEL_CREATE ->
+                Status =:= ?MODEL_DELETE -> ok;
+                Status =:= ?MODEL_ORIGIN orelse Status =:= ?MODEL_CREATE ->
                     put({Table, idList}, [{Id, Status}|IdList])
             end;
         {Id, ?MODEL_CREATE} ->
