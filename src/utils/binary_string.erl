@@ -62,8 +62,7 @@ is_valid_for_mysql(BinString) ->
     end.
 
 clean_for_mysql(BinString) ->
-    Res = re:replace(unicode:characters_to_list(BinString), ?INVALID_MYSQL_UTF8_RE, "", [unicode]),
-    list_to_binary(Res).
+    re:replace(unicode:characters_to_list(BinString), ?INVALID_MYSQL_UTF8_RE, "", [unicode, {return, binary}]).
 
 %% Usage:
 %% binary_string:format(<<"hello [name], are you [age] years old?">>, 
