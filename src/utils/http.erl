@@ -109,7 +109,7 @@ handle_info({ibrowse_async_response, ReqId, _Response}, State) ->
             case mnesia:dirty_read(request, Uuid) of
                 [] -> ok;
                 [Request] -> 
-                    NewRequest = Request#request{retry = Request#request.retry},
+                    NewRequest = Request#request{retry = Request#request.retry + 1},
                     Retry = NewRequest#request.retry,
                     if
                         Retry > ?MAX_RETRY -> 
