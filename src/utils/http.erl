@@ -117,6 +117,7 @@ handle_info({ibrowse_async_response, ReqId, _Response}, State) ->
                         true ->
                             mnesia:dirty_write(NewRequest),
                             Delay = math:pow(2, Retry) * ?RESEND_AFTER_DELAY,
+                            logger:info("Http Resend Dealy: ~p, Uuid: ~p~n", [Delay, Uuid]),
                             erlang:send_after(trunc(Delay), self(), {resend_requst, Uuid})
                     end
             end
