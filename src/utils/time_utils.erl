@@ -31,14 +31,15 @@
          remain_seconds_to_tomorrow/0,
          begin_of_today/0,
          end_of_today/0,
+         datetime_to_timestamp/1,
          datetime_to_timestamp/2,
          current_time_to_now/1,
          time_to_seconds/3,
          datetime/0,
          to_i/1,
          date_number/0,
+         number_date/1,
          time_string_to_timestamp/1,
-         datetime_to_timestamp/1,
          day_diff/2,
          timestamp_to_datetime/1]).
 
@@ -71,6 +72,9 @@ begin_of_today() ->
 datetime_to_timestamp(Date, Time) ->
     calendar:datetime_to_gregorian_seconds({Date, Time}) - ?ORI_SECONDS.
 
+datetime_to_timestamp(Datetime) ->
+    calendar:datetime_to_gregorian_seconds(Datetime) - ?ORI_SECONDS.
+
 current_time_to_now(CurrentTime) ->
     MegaSecs = CurrentTime div 1000000,
     Secs = CurrentTime rem 1000000,
@@ -89,6 +93,12 @@ date_number() ->
     {Year, Month, Day} = date(),
     Year * 10000 + Month * 100 + Day.
 
+number_date(Datenumber) ->
+    Y = Datenumber div 10000,
+    M = Datenumber rem 10000 div 100,
+    D = Datenumber rem 100,
+    {Y, M, D}.
+
 time_string_to_timestamp(TimeString) ->
     [HourStr, MinutesStr] = binary_string:split(TimeString, <<":">>),
     Hour = binary_to_integer(HourStr),
@@ -97,9 +107,6 @@ time_string_to_timestamp(TimeString) ->
 
 timestamp_to_datetime(TimeStamp) ->
     calendar:now_to_datetime(time_utils:current_time_to_now(TimeStamp)).
-
-datetime_to_timestamp(Datetime) ->
-    calendar:datetime_to_gregorian_seconds(Datetime) - ?ORI_SECONDS.
 
 day_diff(T1, T2) ->
     N1 = current_time_to_now(T1),
