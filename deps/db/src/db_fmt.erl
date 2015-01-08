@@ -9,8 +9,9 @@ map(Fields, Values) ->
 
 map([], [], Result) ->
     binary_string:join(Result, <<", ">>);
-map([_Field|Fields], [Value|Values], Result) when Value =:= undefined ->
-    map(Fields, Values, Result);
+map([Field|Fields], [Value|Values], Result) when Value =:= undefined ->
+    Map = io_lib:format("`~s` = null", [Field]),
+    map(Fields, Values, [list_to_binary(Map)|Result]);
 map([Field|Fields], [Value|Values], Result) ->
     Map = io_lib:format("`~s` = ~s", [Field, encode(Value)]),
     map(Fields, Values, [list_to_binary(Map)|Result]).
