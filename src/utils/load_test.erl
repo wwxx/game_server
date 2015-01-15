@@ -69,7 +69,7 @@ bench(N, I) ->
     % UdidStr = io_lib:format("load_test_udid_~p", [Counter]),
     UdidStr = "load_test_udid_" ++ binary_to_list(uuid_factory:gen()),
     Udid = list_to_binary(UdidStr),
-    fake_client:send_request(login_params, Sock, {Udid, 1, <<"en">>, 1, <<"">>}),
+    fake_client:send_request(login_params, Sock, {Udid, 1, <<"en">>, 1, <<"">>, <<"guest">>}),
 
     StartTimeStamp = os:timestamp(),
     run(N, I, Sock, Udid),
@@ -93,7 +93,7 @@ run(N, I, Sock, Udid) ->
             do_nothing
     end,
     % fake_client:send_request(formation_info_params, Sock, {}),
-    fake_client:send_request(login_params, Sock, {Udid, 1, <<"en">>, 1, <<"">>}),
+    fake_client:send_request(login_params, Sock, {Udid, 1, <<"en">>, 1, <<"">>, <<"guest">>}),
     % gen_tcp:send(Sock, "hello, i'm erlang client!!!!!!!!!!!!!!!!!!!"),
     case gen_tcp:recv(Sock, 0) of
         {ok, _Packet} -> 
