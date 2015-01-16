@@ -29,9 +29,9 @@
 -define(TAB, ?MODULE).
 
 % -define(IP, "115.29.14.9").
-% -define(IP, "104.200.21.189").
--define(IP, "127.0.0.1").
--define(PORT, 5555).
+-define(IP, "104.200.21.189").
+% -define(IP, "127.0.0.1").
+-define(PORT, 5557).
 
 %% C: 并发客户端数量
 %% N: 每个客户端发送请求数量
@@ -63,7 +63,7 @@ times(N, F) ->
     times(N - 1, F).
 
 bench(N, I) ->
-    % timer:sleep(random:uniform(1000)),
+    timer:sleep(trunc(mtwist:uniform(I))),
     Sock = connect(),
     % Counter = ets:update_counter(?TAB, number, 1),
     % UdidStr = io_lib:format("load_test_udid_~p", [Counter]),
@@ -88,16 +88,17 @@ run(0, _I, Sock, _Udid) -> gen_tcp:close(Sock);
 run(N, I, Sock, Udid) ->
     if
         I > 0 ->
-            timer:sleep(I);
+            timer:sleep(trunc(mtwist:uniform(I)) + trunc(I/2));
         true ->
             do_nothing
     end,
-    % fake_client:send_request(formation_info_params, Sock, {}),
-    fake_client:send_request(login_params, Sock, {Udid, 1, <<"en">>, 1, <<"">>}),
+    fake_client:send_request(heartbeat_params, Sock, {}),
+    % fake_client:send_request(login_params, Sock, {Udid, 1, <<"en">>, 1, <<"">>}),
     % gen_tcp:send(Sock, "hello, i'm erlang client!!!!!!!!!!!!!!!!!!!"),
     case gen_tcp:recv(Sock, 0) of
         {ok, _Packet} -> 
-            ets:update_counter(?TAB, count, 1),
+            Res = ets:update_counter(?TAB, count, 1),
+            error_logger:info_msg("requested: ~p~n", [Res]),
             run(N-1, I, Sock, Udid);
         Error -> 
             gen_tcp:close(Sock),
