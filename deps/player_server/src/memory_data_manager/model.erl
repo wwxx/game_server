@@ -38,7 +38,8 @@
          count/1,
          sql/2,
          get_persist_all_sql/0,
-         persist_all/0]).
+         persist_all/0,
+         ensure_load_data/1]).
 
 -define(MODEL_ORIGIN, 1).
 -define(MODEL_UPDATE, 2).

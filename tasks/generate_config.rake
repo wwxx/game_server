@@ -64,7 +64,7 @@ task :generate_config => :environment do
           name, type = field.split(":")
           field_indexes[index] = type
           table_map[table_name][:field_names] << name
-          unless ['string', 'text', 'integer', 'int', 'float', 'boolean', 'integer-array', 'float-array'].include?(type)
+          unless ['string', 'text', 'integer', 'int', 'float', 'boolean', 'integer-array', 'float-array', 'origin'].include?(type)
             raise "TYPE ERROR: #{type} didn't defined."
           end
         rescue => e
