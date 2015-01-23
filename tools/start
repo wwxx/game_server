@@ -51,10 +51,12 @@ if [ -f $SERVER_CONFIG ]; then
       -config game_server.config \
       -config ../service.config \
       -config $SERVER_CONFIG \
-      -s game_server start $SERVER_ENV
+      -s game_server start $SERVER_ENV \
+      +K true
 else
   erl -pa ebin deps/*/ebin \
       -config game_server.config \
       -config ../service.config \
-      -s game_server start $SERVER_ENV
+      -s game_server start $SERVER_ENV \
+      +K true
 fi

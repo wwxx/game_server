@@ -64,7 +64,8 @@ if [ -f $SERVER_CONFIG ]; then
       -s game_server start $SERVER_ENV \
       -sname $SNAME \
       -setcookie $COOKIE \
-      -detached
+      -detached \
+      +K true
 else
   erl -pa ebin deps/*/ebin \
       -config game_server.config \
@@ -72,5 +73,6 @@ else
       -s game_server start $SERVER_ENV \
       -sname $SNAME \
       -setcookie $COOKIE \
-      -detached
+      -detached \
+      +K true
 fi
