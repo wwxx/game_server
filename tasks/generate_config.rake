@@ -99,7 +99,11 @@ task :generate_config => :environment do
               if value_class == Fixnum or value_class == Float
                 value = value.to_i.to_s
               end
-              value = "<<\"#{value}\">>"
+              if value.nil?
+                value = "<<\"\">>"
+              else
+                value = "<<\"#{value.gsub('"', '\"')}\">>"
+              end
             end
           end
           row_values << value
