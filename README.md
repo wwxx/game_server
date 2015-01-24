@@ -4,12 +4,12 @@ game_server is a game development framework written in the Erlang language.
 ![Architecture](Architecture.png)
 
 ##Key Features
-  * **Protocol Generator: generate raw tcp protocol from YAML config file.**
-  * **Routing: route client request to specific controller's handler.**
-  * **Hot Data Manager: load MySQL data to player's process dict when need and clocking to persist.**
-  * **Game Numerical Excel Parser: parse Excel file to erlang's tuple list.**
-  * **Leaderboard: base on redis, can dynamicly add,remove,update leaderboards.**
-  * **Database Base Migrations: base on rails's ActiveRecord.**
+  * Protocol Generator: generate raw tcp protocol from YAML config file.
+  * Routing: route client request to specific controller's handler.
+  * Hot Data Manager: load MySQL data to player's process dict when need and clocking to persist.
+  * Game Numerical Excel Parser: parse Excel file to erlang's tuple list.
+  * Leaderboard: base on redis, can dynamicly add,remove,update leaderboards.
+  * Database Base Migrations: base on rails's ActiveRecord.
 
 ## Installing on MacOS
 [Homebrew The missing package manager for OS X](http://brew.sh/)
