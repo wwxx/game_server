@@ -38,6 +38,7 @@
          async_proxy/4,
          wrap/2,
          async_wrap/2,
+         publish/3,
          subscribe/2,
          unsubscribe/2,
          on_tcp_closed/1,
@@ -135,6 +136,8 @@ async_wrap(PlayerID, Fun) ->
             gen_server:cast(player_pid(PlayerID), {wrap, Fun})
     end.
 
+publish(Channel, MsgType, Msg) ->
+    ?PUBLISH(Channel, {gproc_msg, MsgType, Msg}).
 subscribe(PlayerID, Channel) ->
     gen_server:cast(player_pid(PlayerID), {subscribe, Channel}).
 unsubscribe(PlayerID, Channel) ->
