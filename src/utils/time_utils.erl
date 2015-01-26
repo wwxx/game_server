@@ -28,6 +28,7 @@
          one_week/0,
          current_time/0,
          get_now_daynum/0,
+         current_month_days/0,
          remain_seconds_to_tomorrow/0,
          begin_of_today/0,
          end_of_today/0,
@@ -59,6 +60,11 @@ current_time() ->
 get_now_daynum() ->
     {Date, _} = calendar:universal_time(),
     calendar:day_of_the_week(Date).
+
+% 获取当前月的天数
+current_month_days() ->
+    {{Year, Month, _}, _} = calendar:universal_time(),
+    calendar:last_day_of_the_month(Year, Month).
 
 remain_seconds_to_tomorrow() ->
     end_of_today() - current_time().
