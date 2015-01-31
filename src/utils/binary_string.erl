@@ -28,7 +28,10 @@
 
 -module(binary_string).
 
--export([split/2, join/2, is_valid_for_mysql/1, clean_for_mysql/1, format/2]).
+-export([split/2, join/2, is_valid_for_mysql/1, clean_for_mysql/1, format/2, strip/1]).
+
+strip(BinaryString) ->
+    re:replace(BinaryString, "(^\\s+)|(\\s+$)", "", [global,{return,binary}]).
 
 split(BinaryString, Separator) ->
     split(BinaryString, Separator, []).
