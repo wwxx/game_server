@@ -260,7 +260,7 @@ persist_all() ->
             Result
     catch
         Type:Msg ->
-            exception:notify(Type, Msg)
+            exception:notify(Type, [<<"PlayerID">>, get(player_id)], Msg)
     end.
 
 do_persist_all() ->
