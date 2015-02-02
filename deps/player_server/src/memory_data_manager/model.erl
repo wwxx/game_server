@@ -274,7 +274,7 @@ do_persist_all() ->
 get_persist_all_sql() ->
     Tables = all_loaded_tables(),
     PlayerID = get(player_id),
-    logger:info("PERSIST FOR: ~p~n", [PlayerID]),
+    error_logger:info_msg("PERSIST FOR: ~p~n", [PlayerID]),
     Sqls = lists:foldl(fun(Table, Result) ->
         case generate_persist_sql(Table) of
             <<>> -> Result;
