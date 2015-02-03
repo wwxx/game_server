@@ -171,7 +171,7 @@ handle_call({proxy, Module, Fun, Args}, _From, State) ->
             {reply, Result, State}
     catch
         Type:Msg ->
-            exception:notify(Type, {Module, Fun, Args}, Msg),
+            exception:notify(Type, {Module, Fun, Args, [<<"PlayerID">>, get(player_id)]}, Msg),
             {reply, exception, State}
     end;
 handle_call({wrap, Fun}, _From, State) ->
@@ -180,7 +180,7 @@ handle_call({wrap, Fun}, _From, State) ->
                 Result -> Result
             catch
                 Type:Msg ->
-                    exception:notify(Type, undefined, Msg),
+                    exception:notify(Type, [<<"PlayerID">>, get(player_id)], Msg),
                     exception
             end,
     {reply, Reply, State};
@@ -197,7 +197,7 @@ handle_cast({proxy, Module, Fun, Args}, State) ->
         _ -> ok
     catch
         Type:Msg ->
-            exception:notify(Type, {Module, Fun, Args}, Msg)
+            exception:notify(Type, {Module, Fun, Args, [<<"PlayerID">>, get(player_id)]}, Msg)
     end,
     {noreply, State};
 handle_cast({wrap, Fun}, State) ->
@@ -206,7 +206,7 @@ handle_cast({wrap, Fun}, State) ->
         _ -> ok
     catch
         Type:Msg -> 
-            exception:notify(Type, undefined, Msg)
+            exception:notify(Type, [<<"PlayerID">>, get(player_id)], Msg)
     end,
     {noreply, State};
 handle_cast({request, {Controller, Action}, Params, RequestId},
@@ -293,7 +293,7 @@ handle_info({gproc_msg, MsgType, Msg}, State=#player_state{playerID=PlayerID}) -
         _Response -> ok
     catch 
         Exception:Msg ->
-            exception:notify(Exception, Msg)
+            exception:notify(Exception, [<<"PlayerID">>, get(player_id)], Msg)
     end,
     {noreply, State};
 handle_info({shutdown, From}, State) ->
@@ -389,7 +389,7 @@ invoke_on_tcp_closed() ->
                     _Response -> ok
                 catch
                     Exception:Msg ->
-                        exception:notify(Exception, Msg)
+                        exception:notify(Exception, [<<"PlayerID">>, get(player_id)], Msg)
                 end,
                 case Type of
                     callback_once -> Result;
