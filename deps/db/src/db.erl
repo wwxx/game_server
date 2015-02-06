@@ -142,37 +142,27 @@ procedure_name(Name, Suffix) ->
 execute_with_procedure(ProcedureName, Sql) ->
     DropProcedure = list_to_binary([<<"DROP PROCEDURE IF EXISTS ">>, ProcedureName, <<";">>]),
     ExecuteProcedure = list_to_binary([<<"CALL ">>, ProcedureName, <<"();">>]),
-    CreateProcedure = list_to_binary([DropProcedure,
-                                      <<"CREATE PROCEDURE ">>, ProcedureName, <<"()">>,
-                                      <<" BEGIN ">>,
-                                      <<" DECLARE exit handler for sqlexception ">>,
-                                      <<" BEGIN ">>,
-                                      <<" ROLLBACK; ">>,
-                                      <<" RESIGNAL; ">>,
-                                      <<" END; ">>,
-                                      <<" DECLARE exit handler for sqlwarning ">>,
-                                      <<" BEGIN ">>,
-                                      <<" ROLLBACK; ">>,
-                                      <<" RESIGNAL; ">>,
-                                      <<" END; ">>,
-                                      <<" START TRANSACTION; ">>,
-                                      Sql, <<";">>,
-                                      <<" COMMIT; ">>,
-                                      <<" END ">>, <<";">>,
-                                      ExecuteProcedure
-                                     ]),
+    ProcedureSQL = list_to_binary([DropProcedure,
+                                   <<"CREATE PROCEDURE ">>, ProcedureName, <<"()">>,
+                                   <<" BEGIN ">>,
+                                   <<" DECLARE exit handler for sqlexception ">>,
+                                   <<" BEGIN ">>,
+                                   <<" ROLLBACK; ">>,
+                                   <<" RESIGNAL; ">>,
+                                   <<" END; ">>,
+                                   <<" DECLARE exit handler for sqlwarning ">>,
+                                   <<" BEGIN ">>,
+                                   <<" ROLLBACK; ">>,
+                                   <<" RESIGNAL; ">>,
+                                   <<" END; ">>,
+                                   <<" START TRANSACTION; ">>,
+                                   Sql, <<";">>,
+                                   <<" COMMIT; ">>,
+                                   <<" END ">>, <<";">>,
+                                   ExecuteProcedure]),
     % error_logger:info_msg("EXECUTE PROCEDURE FOR [~p]: ~p~n", 
     %                       [get(player_id), CreateProcedure]),
-    %% clean old procedure
-    % db:execute(DropProcedure),
-    %% create procedure for palyer's current state
-    Result = db:execute(CreateProcedure),
-    %% call procedure
-    % Result = db:execute(ExecuteProcedure),
-    %% clean procedure
-    % db:execute(DropProcedure),
-    % error_logger:info_msg("EXECUTE PROCEDURE RESULT: ~p~n", [Result]),
-    Result.
+    db:execute(ProcedureSQL).
 
 %%--------------------------------------------------------------------
 %% @doc:    Execute SQL and return Result
