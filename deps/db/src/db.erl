@@ -159,7 +159,8 @@ execute_with_procedure(ProcedureName, Sql) ->
                                    Sql, <<";">>,
                                    <<" COMMIT; ">>,
                                    <<" END ">>, <<";">>,
-                                   ExecuteProcedure]),
+                                   ExecuteProcedure,
+                                   DropProcedure]),
     % error_logger:info_msg("EXECUTE PROCEDURE FOR [~p]: ~p~n", 
     %                       [get(player_id), CreateProcedure]),
     db:execute(ProcedureSQL).
