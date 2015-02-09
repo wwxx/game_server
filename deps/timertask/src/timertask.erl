@@ -113,17 +113,15 @@ handle_cast(_Msg, State) ->
 handle_info({start_timertask}, State) ->
     try_restart_timer(),
     {noreply, State};
-handle_info({timertask, Key, MFA}, State) ->
-    try dispatch_to_worker(MFA) of
-        _ -> 
-            erase(current_timer),
-            cancel_timer(Key),
-            try_restart_timer()
-    catch
-        Type:Msg ->
-            erase(current_timer),
-            cancel_timer(Key),
-            throw({Type, Msg})
+handle_info({timertask}, State) ->
+    erase(current_timer),
+    case first_timer() of
+        undefined -> ok;
+        {Key, RunAt, MFA} ->
+            case RunAt =< time_utils:now() of
+                true -> execute_timer(Key, MFA);
+                false -> try_restart_timer()
+            end
     end,
     {noreply, State}.
 
@@ -136,6 +134,16 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+execute_timer(Key, MFA) ->
+    try dispatch_to_worker(MFA) of
+        _ -> 
+            cancel_timer(Key)
+    catch
+        Type:Msg ->
+            cancel_timer(Key),
+            throw({Type, Msg})
+    end.
+
 add_timer(Key, RunAt, MFA) ->
     transaction(fun() ->
         redis_cmd(["zadd", ?KEY, RunAt, Key]),
@@ -178,29 +186,24 @@ get_timer(Key) ->
             {Key, binary_to_integer(RunAt), decode(MFA)}
     end.
 
-start_timer({Key, RunAt, MFA}) ->
+start_timer({_Key, RunAt, _MFA}) ->
     AfterTime = lists:max([(RunAt - current_time()) * 1000, 0]),
-    Timer = erlang:send_after(AfterTime, ?SERVER, {timertask, Key, MFA}),
-    put(current_timer, {Key, RunAt, Timer}).
+    Timer = erlang:send_after(AfterTime, ?SERVER, {timertask}),
+    put(current_timer, {RunAt, Timer}).
 
 try_restart_timer() ->
-    CurrentTimer = get(current_timer),
     FirstTimer = first_timer(),
-    if
-        CurrentTimer =:= undefined andalso FirstTimer =/= undefined ->
+    case get(current_timer) of
+        undefined ->
             start_timer(FirstTimer);
-        CurrentTimer =/= undefined andalso FirstTimer =:= undefined ->
-            {_, _, Timer} = CurrentTimer,
-            erlang:cancel_timer(Timer);
-        CurrentTimer =/= undefined andalso FirstTimer =/= undefined ->
-            case element(2, FirstTimer) < element(2, CurrentTimer) of
-                false -> ok;
-                true -> 
-                    erlang:cancel_timer(element(3, CurrentTimer)),
-                    start_timer(FirstTimer)
-            end;
-        true ->
-            ok
+        {RunAt, Timer} ->
+            FirstRunAt = element(2, FirstTimer),
+            if
+                FirstRunAt =/= RunAt ->
+                    erlang:cancel_timer(Timer),
+                    start_timer(FirstTimer);
+                true -> ok
+            end
     end.
 
 current_time() ->
