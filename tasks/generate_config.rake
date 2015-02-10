@@ -77,7 +77,7 @@ task :generate_config => :environment do
         s.row(row).each_with_index do |value, index|
           next if field_indexes[index].nil?
           if value == 'NULL'
-            value = 'undefined' if value == 'NULL'
+            value = 'undefined'
           else
             field_type = field_indexes[index]
             if field_type == 'integer' or field_type == 'int'
@@ -104,6 +104,8 @@ task :generate_config => :environment do
               else
                 value = "<<\"#{value.gsub('"', '\"')}\">>"
               end
+            elsif field_type == 'origin' and value.blank?
+              value = 'undefined'
             end
           end
           row_values << value
