@@ -163,7 +163,19 @@ execute_with_procedure(ProcedureName, Sql) ->
                                    DropProcedure]),
     % error_logger:info_msg("EXECUTE PROCEDURE FOR [~p]: ~p~n", 
     %                       [get(player_id), CreateProcedure]),
-    db:execute(ProcedureSQL).
+    % db:execute(ProcedureSQL).
+    Results = emysql:execute(?DB_POOL, ProcedureSQL),
+    lists:foreach(fun(Result) ->
+        case is_tuple(Result) of
+            true ->
+                case element(1, Result) of
+                    error_packet -> 
+                        erlang:error(Result);
+                    _ -> ok
+                end;
+            false -> ok
+        end
+    end, Results).
 
 %%--------------------------------------------------------------------
 %% @doc:    Execute SQL and return Result
