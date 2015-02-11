@@ -144,6 +144,7 @@ update(Record) ->
         _ ->
             update_status(Table, Id, ?MODEL_UPDATE),
             put({Table, Id}, Record),
+            invoke_after_update(Record),
             Record
     end.
 
@@ -162,6 +163,7 @@ update_by_key(Table, Id, Modifier) ->
             update_status(Table, Id, ?MODEL_UPDATE),
             NewRec = update_record(Rec, Modifier),
             put({Table, Id}, NewRec),
+            invoke_after_update(NewRec),
             NewRec
     end.
 
@@ -180,6 +182,7 @@ match_update(Table, Selector, Modifier) ->
                             update_status(Table, Id, ?MODEL_UPDATE),
                             NewRec = update_record(Rec, Modifier),
                             put({Table, Id}, NewRec),
+                            invoke_after_update(NewRec),
                             [NewRec|Result];
                         false -> 
                             Result
@@ -556,3 +559,11 @@ join_values([], Result) ->
     binary_string:join(lists:reverse(Result), <<", ">>);
 join_values([Value|Values], Result) -> 
     join_values(Values, [db_fmt:encode(Value)|Result]).
+
+invoke_after_update(Record) ->
+    Table = element(1, Record),
+    Module = list_to_atom(atom_to_list(Table) ++ "_model"),
+    case erlang:function_exported(Module, after_update_callback, 1) of
+        true -> Module:after_update_callback(Record);
+        false -> ok
+    end.
