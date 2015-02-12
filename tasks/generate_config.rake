@@ -74,6 +74,9 @@ task :generate_config => :environment do
       end
       4.upto(s.last_row).map do |row|
         row_values = []
+        if s.row(row)[0].blank?
+          next
+        end
         s.row(row).each_with_index do |value, index|
           next if field_indexes[index].nil?
           if value == 'NULL'
