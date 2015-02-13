@@ -48,6 +48,7 @@
 -define(MODEL_CREATE, 4).
 
 -define(QUEUE_PERSIST_KEY, {tmp, queue_persist_key}).
+-define(NO_CACHE_TABLES_KEY, {tmp, no_cache_tables}).
 
 find(Selector) ->
     [Table|Values] = tuple_to_list(Selector),
@@ -299,11 +300,18 @@ reset_status(Table) ->
     case id_status_list(Table) of
         [] -> [];
         IdList ->
-            NewIdList = lists:foldl(fun
-                            ({Id, _}, Result) ->
-                                [{Id, ?MODEL_ORIGIN}|Result]
-                        end, [], IdList),
-            put({Table, idList}, NewIdList)
+            case is_no_cache_table(Table) of
+                true ->
+                    lists:foreach(fun({Id, _}) ->
+                        erase({Table, Id})
+                    end, IdList),
+                    erase({Table, idList});
+                false ->
+                    NewIdList = lists:foldl(fun({Id, _}, Result) ->
+                                    [{Id, ?MODEL_ORIGIN}|Result]
+                                end, [], IdList),
+                    put({Table, idList}, NewIdList)
+            end
     end.
 
 execute_with_procedure(Sql, Version) ->
@@ -449,7 +457,8 @@ ensure_load_data(Table) ->
             PlayerID = get(player_id),
             Module = list_to_atom(atom_to_list(Table) ++ "_model"),
             case Module:load_data(PlayerID) of
-                {ok, []} -> undefined;
+                {ok, no_cache} -> record_no_cache_table(Table);
+                {ok, []} -> ok;
                 {ok, Recs} -> insert_recs(Recs, Module)
             end,
             record_loaded_table(Table),
@@ -457,6 +466,18 @@ ensure_load_data(Table) ->
                 true -> Module:after_load_data(PlayerID);
                 false -> ok
             end
+    end.
+
+record_no_cache_table(Table) ->
+    case get(?NO_CACHE_TABLES_KEY) of
+        undefined -> put(?NO_CACHE_TABLES_KEY, [Table]);
+        List -> put(?NO_CACHE_TABLES_KEY, [Table|List])
+    end.
+
+is_no_cache_table(Table) ->
+    case get(?NO_CACHE_TABLES_KEY) of
+        undefined -> false;
+        List -> lists:member(Table, List)
     end.
 
 is_table_loaded(Table) ->
