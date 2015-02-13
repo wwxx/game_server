@@ -229,7 +229,13 @@ handle_cast({request, {Controller, Action}, Params, RequestId},
     finish_request(),
     {noreply, State};
 handle_cast({stop, shutdown}, State) ->
-    {stop, shutdown, State};
+    model:persist_all(),
+    case model:is_persist_finished() of
+        true ->
+            {stop, {shutdown, data_persisted}, State};
+        false ->
+            {noreply, State}
+    end;
 handle_cast({save_data}, State) ->
     model:persist_all(),
     {noreply, State};
@@ -278,13 +284,13 @@ handle_cast(_Msg, State) ->
 
 handle_info(circulation_persist_data, State=#player_state{circulation_persist_timer=Timer}) ->
     erlang:cancel_timer(Timer),
-    ProcessInfo = erlang:process_info(player:player_pid(get(player_id))),
-    PersistSql = model:persist_all(),
+    model:persist_all(),
     IsExpired = time_utils:current_time() - get_last_active() >= ?EXPIRE_DURATION,
-    case IsExpired and check_persist(ProcessInfo, PersistSql) =:= true of
-        true ->
+    IsPersistFinished = model:is_persist_finished(),
+    if
+        IsExpired andalso IsPersistFinished ->
             {stop, {shutdown, data_persisted}, State};
-        false ->
+        true ->
             NewTimer = erlang:send_after(?PERSIST_DURATION, self(), circulation_persist_data),
             {noreply, State#player_state{circulation_persist_timer=NewTimer}}
     end;
@@ -298,8 +304,13 @@ handle_info({gproc_msg, MsgType, Msg}, State=#player_state{playerID=PlayerID}) -
     {noreply, State};
 handle_info({shutdown, From}, State) ->
     model:persist_all(),
-    From ! {finished_shutdown, self()},
-    {stop, {shutdown, data_persisted}, State};
+    case model:is_persist_finished() of
+        true ->
+            From ! {finished_shutdown, self()},
+            {stop, {shutdown, data_persisted}, State};
+        false ->
+            {noreply, State}
+    end;
 handle_info(Info, State) ->
     error_logger:info_msg("Player dropped handle_info: ~p~n", [Info]),
     {noreply, State}.
@@ -398,32 +409,3 @@ invoke_on_tcp_closed() ->
             end, [], Callbacks),
             put(tcp_closed_callback, NewCallbacks)
     end.
-
-check_persist(ProcessInfo, PersistSql) ->
-    PlayerID = get(player_id),
-    CanShutdown = case model:find(users, PlayerID) of
-                      undefined -> true;
-                      _ ->
-                          case db:find_by(users, uuid, PlayerID) of
-                              {ok, []} -> false;
-                              _ -> true
-                          end
-                  end,
-    if
-        CanShutdown =:= false ->
-            case get(has_checked_persist) of
-                true -> ok;
-                _ ->
-                    put(has_checked_persist, true),
-                    put(persist_failed_process_info, ProcessInfo),
-                    put(persist_failed_sql, PersistSql),
-                    spawn(fun() -> 
-                        Msg = io_lib:format("PlayerID: ~p~n", [PlayerID]),
-                        {ok, Path} = file:get_cwd(),
-                        BinMsg = list_to_binary(Msg),
-                        exception:notify(<<"Data Persist Failed!">>, list_to_binary(Path), BinMsg) 
-                    end)
-            end;
-        true -> ok
-    end,
-    CanShutdown.

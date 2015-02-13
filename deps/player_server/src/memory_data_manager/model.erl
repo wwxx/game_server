@@ -39,12 +39,15 @@
          sql/2,
          get_persist_all_sql/0,
          persist_all/0,
-         ensure_load_data/1]).
+         ensure_load_data/1,
+         is_persist_finished/0]).
 
 -define(MODEL_ORIGIN, 1).
 -define(MODEL_UPDATE, 2).
 -define(MODEL_DELETE, 3).
 -define(MODEL_CREATE, 4).
+
+-define(QUEUE_PERSIST_KEY, {tmp, queue_persist_key}).
 
 find(Selector) ->
     [Table|Values] = tuple_to_list(Selector),
@@ -268,21 +271,21 @@ persist_all() ->
 
 do_persist_all() ->
     case get_persist_all_sql() of
-        <<>> -> do_nothing;
+        <<>> -> ok;
         JoinedSql -> 
-            execute_with_procedure(JoinedSql),
-            JoinedSql
-    end.
+            persist_queue_add(JoinedSql)
+    end,
+    persist_queue_execute().
 
 get_persist_all_sql() ->
     Tables = all_loaded_tables(),
-    PlayerID = get(player_id),
-    logger:info("PERSIST FOR: ~p~n", [PlayerID]),
+    % PlayerID = get(player_id),
+    % logger:info("PERSIST FOR: ~p~n", [PlayerID]),
     Sqls = lists:foldl(fun(Table, Result) ->
         case generate_persist_sql(Table) of
             <<>> -> Result;
             Sql -> 
-                logger:info("[~p] Table: ~p SQL: ~p~n", [PlayerID, Table, Sql]),
+                % logger:info("[~p] Table: ~p SQL: ~p~n", [PlayerID, Table, Sql]),
                 [Sql|Result]
         end
     end, [], Tables),
@@ -303,10 +306,62 @@ reset_status(Table) ->
             put({Table, idList}, NewIdList)
     end.
 
-execute_with_procedure(Sql) ->
-    ProcedureName = db:procedure_name(<<"player">>, get(player_id)),
+execute_with_procedure(Sql, Version) ->
+    PlayerID = get(player_id),
+    ProcedureName = db:procedure_name(<<"player">>, PlayerID),
     % logger:info("PERSIST FOR [~p] Sql: ~p~n", [get(player_id), Sql]),
-    db:execute_with_procedure(ProcedureName, Sql).
+    case db:find_by(schema_persistances, uuid, PlayerID) of
+        {ok, []} ->
+            Insert = db_fmt:format("INSERT INTO `schema_persistances` (`uuid`, `version`) VALUES (~s, ~s)", 
+                                   [db_fmt:encode(PlayerID), db_fmt:encode(Version)]),
+            SQL = list_to_binary([Sql, <<";">>, Insert]),
+            db:execute_with_procedure(ProcedureName, SQL);
+        {ok, [Schema]} ->
+            OldVersion = record_mapper:get_field(Schema, version),
+            if 
+                OldVersion =:= Version -> ok;
+                OldVersion < Version ->
+                    Update = db_fmt:format("UPDATE `schema_persistances` SET `version` = ~s WHERE `schema_persistances`.`uuid` = ~s", 
+                                           [db_fmt:encode(Version), db_fmt:encode(PlayerID)]),
+                    SQL = list_to_binary([Sql, <<";">>, Update]),
+                    db:execute_with_procedure(ProcedureName, SQL)
+            end
+    end.
+
+persist_queue_add(Sql) ->
+    Value = {Sql, time_utils:now()},
+    case get(?QUEUE_PERSIST_KEY) of
+        undefined -> put(?QUEUE_PERSIST_KEY, [Value]);
+        List when is_list(List) ->
+            put(?QUEUE_PERSIST_KEY, [Value|List])
+    end.
+
+persist_queue_del(Value) ->
+    List = get(?QUEUE_PERSIST_KEY),
+    NewList = lists:delete(Value, List),
+    if
+        NewList =/= List ->
+            put(?QUEUE_PERSIST_KEY, NewList)
+    end.
+
+persist_queue_get() ->
+    case get(?QUEUE_PERSIST_KEY) of
+        undefined -> [];
+        Queue -> lists:reverse(Queue)
+    end.
+
+is_persist_finished() ->
+    Pending = persist_queue_get(),
+    if
+        Pending =:= [] orelse Pending =:= undefined -> true;
+        true -> false
+    end.
+
+persist_queue_execute() ->
+    lists:foreach(fun({Sql, Version}) ->
+        execute_with_procedure(Sql, Version),
+        persist_queue_del({Sql, Version})
+    end, persist_queue_get()).
 
 %% Private Methods
 selectOne(Table, Values) ->
