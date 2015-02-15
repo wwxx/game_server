@@ -40,7 +40,8 @@
          get_persist_all_sql/0,
          persist_all/0,
          ensure_load_data/1,
-         is_persist_finished/0]).
+         is_persist_finished/0,
+         persist_queue_del/1]).
 
 -define(MODEL_ORIGIN, 1).
 -define(MODEL_UPDATE, 2).
@@ -261,10 +262,7 @@ generate_persist_sql(Table) ->
 
 persist_all() ->
     try do_persist_all() of
-        Result -> 
-            Tables = all_loaded_tables(),
-            reset_tables_status(Tables),
-            Result
+        Result -> Result
     catch
         Type:Msg ->
             exception:notify(Type, [<<"PlayerID">>, get(player_id)], Msg)
@@ -274,7 +272,9 @@ do_persist_all() ->
     case get_persist_all_sql() of
         <<>> -> ok;
         JoinedSql -> 
-            persist_queue_add(JoinedSql)
+            persist_queue_add(JoinedSql),
+            Tables = all_loaded_tables(),
+            reset_tables_status(Tables)
     end,
     persist_queue_execute().
 
