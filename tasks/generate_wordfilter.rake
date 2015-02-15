@@ -54,7 +54,11 @@ task :generate_wordfilter => :environment do
     map.keys.map do |k|
       v = map[k]
       if v == {} then
-        %Q({"#{k}", stop})
+        if k == "stop" then
+          %Q({"#{k}", stop})
+        else
+          %Q({"#{k}", [{"stop", stop}]})
+        end
       else
         %Q({"#{k}", [#{make_tuple(v)}]})
       end
