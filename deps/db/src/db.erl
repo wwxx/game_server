@@ -185,7 +185,7 @@ execute_with_procedure(ProcedureName, Sql) ->
 -spec(execute(binary()) -> tuple() ).
 execute(SQL) ->
     % error_logger:info_msg("SQL: ~p~n", [SQL]),
-    Result = emysql:execute(?DB_POOL, SQL),
+    Result = emysql:execute(?DB_POOL, binary_string:clean_for_mysql(SQL)),
     % error_logger:info_msg("SQL EXECUTE RESULT: ~p~n", [Result]),
     case is_tuple(Result) of
         true ->
