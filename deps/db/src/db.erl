@@ -164,7 +164,7 @@ execute_with_procedure(ProcedureName, Sql) ->
     % error_logger:info_msg("EXECUTE PROCEDURE FOR [~p]: ~p~n", 
     %                       [get(player_id), CreateProcedure]),
     % db:execute(ProcedureSQL).
-    Results = emysql:execute(?DB_POOL, binary_string:clean_for_mysql(ProcedureSQL)),
+    Results = emysql:execute(?DB_POOL, ProcedureSQL),
     lists:foreach(fun(Result) ->
         case is_tuple(Result) of
             true ->
@@ -185,7 +185,7 @@ execute_with_procedure(ProcedureName, Sql) ->
 -spec(execute(binary()) -> tuple() ).
 execute(SQL) ->
     % error_logger:info_msg("SQL: ~p~n", [SQL]),
-    Result = emysql:execute(?DB_POOL, binary_string:clean_for_mysql(SQL)),
+    Result = emysql:execute(?DB_POOL, SQL),
     % error_logger:info_msg("SQL EXECUTE RESULT: ~p~n", [Result]),
     case is_tuple(Result) of
         true ->
