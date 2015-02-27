@@ -64,7 +64,8 @@ get_now_daynum() ->
 % 获取当前月的天数
 current_month_days() ->
     {{Year, Month, _}, _} = calendar:universal_time(),
-    calendar:last_day_of_the_month(Year, Month).
+    Days = calendar:last_day_of_the_month(Year, Month),
+    {Year, Month, Days}.
 
 remain_seconds_to_tomorrow() ->
     end_of_today() - current_time().
