@@ -11,10 +11,12 @@ times(_Fun, Acc, 0) -> Acc;
 times(Fun, Acc, N) ->
     times(Fun, Fun(Acc), N - 1).
 
-each([], _) -> ok;
+each([Item], Fun) -> Fun(Item);
 each([Item|List], Fun) ->
-    Fun(Item),
-    each(List, Fun).
+    case Fun(Item) of
+        {break, V} -> V;
+        _ -> each(List, Fun)
+    end.
 
 upto(To, To, Fun) -> Fun(To);
 upto(From, To, Fun) ->
