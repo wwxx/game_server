@@ -11,7 +11,11 @@ times(_Fun, Acc, 0) -> Acc;
 times(Fun, Acc, N) ->
     times(Fun, Fun(Acc), N - 1).
 
-each([Item], Fun) -> Fun(Item);
+each([Item], Fun) -> 
+    case Fun(Item) of
+        {break, V} -> V;
+        V -> V
+    end;
 each([Item|List], Fun) ->
     case Fun(Item) of
         {break, V} -> V;
