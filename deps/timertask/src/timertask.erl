@@ -192,17 +192,20 @@ start_timer({_Key, RunAt, _MFA}) ->
     put(current_timer, {RunAt, Timer}).
 
 try_restart_timer() ->
-    FirstTimer = first_timer(),
-    case get(current_timer) of
-        undefined ->
-            start_timer(FirstTimer);
-        {RunAt, Timer} ->
-            FirstRunAt = element(2, FirstTimer),
-            if
-                FirstRunAt =/= RunAt ->
-                    erlang:cancel_timer(Timer),
+    case first_timer() of
+        undefined -> ok;
+        FirstTimer ->
+            case get(current_timer) of
+                undefined ->
                     start_timer(FirstTimer);
-                true -> ok
+                {RunAt, Timer} ->
+                    FirstRunAt = element(2, FirstTimer),
+                    if
+                        FirstRunAt =/= RunAt ->
+                            erlang:cancel_timer(Timer),
+                            start_timer(FirstTimer);
+                        true -> ok
+                    end
             end
     end.
 
