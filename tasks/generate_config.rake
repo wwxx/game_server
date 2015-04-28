@@ -53,6 +53,8 @@ task :generate_config => :environment do
 
     s.sheets.each do |sheet|
       next if sheet !~ /^config_.+/
+      print "generating sheet: #{sheet} "
+      start_generate_at = Time.now
       s.default_sheet = sheet
       table_name = sheet.pluralize
       table_map[table_name] = {field_names: [], rows: []}
@@ -115,6 +117,7 @@ task :generate_config => :environment do
         end
         table_map[table_name][:rows] << row_values
       end
+      puts "used: #{Time.now - start_generate_at}"
     end
 
   end
