@@ -26,7 +26,7 @@
 -behaviour(supervisor).
 
 %% API.
--export([start_link/0]).
+-export([start_link/0, get_redis_config/0]).
 
 %% supervisor.
 -export([init/1]).
@@ -64,8 +64,9 @@ init([]) ->
     ApiServerSpec = ranch:child_spec(api_tcp_listener, 1,
         ranch_tcp, [{port, APIPort}], api_connection, []
     ),
+    RedisConfig = get_redis_config(),
     GameServerSpec = ?CHILD(game_server, game_server, worker, []),
-    RedisPoolSupSpec = ?CHILD(redis_pool_sup, redis_pool_sup, supervisor, []),
+    RedisPoolSupSpec = ?CHILD(redis_pool_sup, redis_pool_sup, supervisor, [RedisConfig]),
     NameServerSupSpec = ?CHILD(name_server_sup, name_server_sup, supervisor, []),
     IapServerSupSpec = ?CHILD(iap_server_sup, iap_server_sup, supervisor, []),
     HttpWorkerSpec = ?CHILD(http, http, worker, []),
@@ -73,3 +74,19 @@ init([]) ->
              ApiServerSpec, RedisPoolSupSpec, NameServerSupSpec,
              IapServerSupSpec, HttpWorkerSpec],
     {ok, {{one_for_one, 10, 10}, Specs}}.
+
+%% Private
+get_redis_config() ->
+    Host = case application:get_env(game_server, redis_host) of
+               undefined -> "127.0.0.1";
+               {ok, HostString} -> HostString
+           end,
+    Port = case application:get_env(game_server, redis_port) of
+               undefined -> 6379;
+               {ok, PortNum} -> PortNum
+           end,
+    DB = case application:get_env(game_server, redis_db) of
+             undefined -> 0;
+             {ok, DBNum} -> DBNum
+         end,
+    [Host, Port, DB].

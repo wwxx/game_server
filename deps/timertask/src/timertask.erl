@@ -82,7 +82,8 @@ lookup(Key) ->
 
 init([]) ->
     timer:send_after(1000, {start_timertask}),
-    {ok, Redis} = eredis:start_link(),
+    [Host, Port, DB] = get_redis_config(),
+    {ok, Redis} = eredis:start_link(Host, Port, DB),
     put(redis, Redis),
     {ok, #state{}}.
 
@@ -237,3 +238,19 @@ mfa_key(Key) when is_list(Key) ->
    "timertask:mfa_set:" ++ Key;
 mfa_key(Key) when is_binary(Key) ->
    "timertask:mfa_set:" ++ binary_to_list(Key).
+
+%% Private
+get_redis_config() ->
+    Host = case application:get_env(game_server, redis_host) of
+               undefined -> "127.0.0.1";
+               {ok, HostString} -> HostString
+           end,
+    Port = case application:get_env(game_server, redis_port) of
+               undefined -> 6379;
+               {ok, PortNum} -> PortNum
+           end,
+    DB = case application:get_env(game_server, redis_db) of
+             undefined -> 0;
+             {ok, DBNum} -> DBNum
+         end,
+    [Host, Port, DB].

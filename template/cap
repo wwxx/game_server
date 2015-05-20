@@ -29,7 +29,7 @@ $deploy_config = YAML.load_file(File.expand_path("./deploy.yml"))
 SERVERS = $deploy_config["servers"]
 
 remotes = `git remote`.split("\n")
-locales = SERVERS.values.map{|v| v["locale"]}.uniq
+locales = SERVERS.values.map{|v| v['config']['zone']}.uniq
 server_names = SERVERS.keys
 
 # Add the missing servers to git remote
@@ -60,7 +60,7 @@ if server_names.include?(scope)
 elsif locales.include?(scope)
   targets = []
   SERVERS.each do |k, v|
-    if v["locale"] == scope
+    if v['config']['zone'] == scope
       targets << k
     end
   end
@@ -77,6 +77,9 @@ def generate_deploy_config(target)
     end
     io.puts "["
     io.puts "  {game_server, ["
+    io.puts kvs.join(",\n")
+    io.puts "  ]},"
+    io.puts "  {timertask, ["
     io.puts kvs.join(",\n")
     io.puts "  ]}"
     io.puts "]."
@@ -107,7 +110,7 @@ def generate_deploy_config(target)
 
   path = "./.#{target}.server_locale"
   File.open(path, "w") do |io|
-    io.puts info['locale']
+    io.puts info['config']['zone']
   end
   system("git deploy upload #{path} -r #{target}")
   `rm #{path}`
@@ -166,4 +169,3 @@ cmd and targets and targets.map do |target|
     end
   end
 end.each(&:join)
-

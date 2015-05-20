@@ -3,7 +3,7 @@
 -behaviour(gen_server).
 
 %% API
--export([start_link/0, get_redis/1]).
+-export([start_link/3, get_redis/1]).
 
 %% gen_server callbacks
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -11,7 +11,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {}).
+-record(state, {host, port, db}).
 
 -include("include/gproc_macros.hrl").
 
@@ -19,8 +19,8 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
-start_link() ->
-    gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(Host, Port, DB) ->
+    gen_server:start_link({local, ?SERVER}, ?MODULE, [Host, Port, DB], []).
 
 get_redis(Name) ->
     gen_server:call(?SERVER, {get_redis, Name}).
@@ -29,17 +29,17 @@ get_redis(Name) ->
 %%% gen_server callbacks
 %%%===================================================================
 
-init([]) ->
-    {ok, #state{}}.
+init([Host, Port, DB]) ->
+    {ok, #state{host = Host, port = Port, db = DB}}.
 
 handle_call({get_redis, Name}, _From, State) ->
     Instance = case get({redis, Name}) of
-                   undefined ->
-                       {ok, Redis} = eredis:start_link(),
-                       put({redis, Name}, Redis),
-                       Redis;
-                   Redis -> Redis
-               end,
+        undefined ->
+            {ok, Redis} = eredis:start_link(State#state.host, State#state.port, State#state.db),
+            put({redis, Name}, Redis),
+            Redis;
+        Redis -> Redis
+    end,
     {reply, Instance, State};
 handle_call(_Request, _From, State) ->
     Reply = ok,
